@@ -1,6 +1,6 @@
 using HotshotLogistics.Application.Services;
 using HotshotLogistics.Data.Repositories;
-using HotshotLogistics.Domain.Models;
+using HotshotLogistics.Domain.Entities;
 using NetArchTest.Rules;
 namespace HotshotLogistics.Tests.Utils.Infrastructure
 {
@@ -15,7 +15,7 @@ public class ArchitectureTests
     [Fact]
     public void Domain_should_not_depend_on_other_layers()
     {
-        var result = Types.InAssembly(typeof(HotshotLogistics.Domain.Models.Driver).Assembly)
+        var result = Types.InAssembly(typeof(HotshotLogistics.Domain.Entities.Driver).Assembly)
             .ShouldNot()
             .HaveDependencyOnAny(Application, Data, Infrastructure, Presentation)
             .GetResult();

@@ -1,3 +1,4 @@
+#pragma warning disable SA1649
 using FluentMigrator;
 
 namespace HotshotLogistics.Data.Migrations;

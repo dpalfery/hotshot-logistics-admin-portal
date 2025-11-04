@@ -8,13 +8,20 @@ public class ArgumentParser
     public string? SaConnectionString { get; private set; }
     public string? DatabaseName { get; private set; }
     public string? AppUser { get; private set; }
-    public string? Password { get; private set; }
+    public string? Password { get; set; }
     public bool NonInteractive { get; private set; }
     public bool Force { get; private set; }
     public bool PersistEnvironment { get; private set; }
 
     public ArgumentParser(string[] args)
     {
+        // Check for help before setting up commands
+        if (args.Contains("--help") || args.Contains("-h") || args.Contains("-?"))
+        {
+            ShowHelp();
+            Environment.Exit(0);
+        }
+
         var serverOption = new Option<string>(
             name: "--server",
             description: "SQL Server instance (e.g., localhost\\SQLEXPRESS)")
@@ -99,6 +106,27 @@ public class ArgumentParser
         passwordOption, nonInteractiveOption, forceOption, persistEnvironmentOption);
 
         rootCommand.Invoke(args);
+    }
+
+    private static void ShowHelp()
+    {
+        Console.WriteLine("Description:");
+        Console.WriteLine("  Hotshot Logistics Database Setup CLI");
+        Console.WriteLine();
+        Console.WriteLine("Usage:");
+        Console.WriteLine("  HotshotLogistics.DbSetup [options]");
+        Console.WriteLine();
+        Console.WriteLine("Options:");
+        Console.WriteLine("  --server <server>                              SQL Server instance (e.g., localhost\\SQLEXPRESS)");
+        Console.WriteLine("  --sa-connection-string <sa-connection-string>  SA or privileged connection string for non-interactive mode");
+        Console.WriteLine("  --db-name <db-name>                            Target database name [default: hotshot_logistics]");
+        Console.WriteLine("  --app-user <app-user>                          Application database user/login name [default: hotshot_app]");
+        Console.WriteLine("  --password <password>                          Application user password (not recommended for CI; prefer env var)");
+        Console.WriteLine("  --non-interactive                              Run without interactive prompts for CI");
+        Console.WriteLine("  --force                                        Allow destructive operations");
+        Console.WriteLine("  --persist-env                                  Persist password to system environment variable (requires explicit consent)");
+        Console.WriteLine("  --version                                      Show version information");
+        Console.WriteLine("  -?, -h, --help                                 Show help and usage information");
     }
 
     public void ApplyEnvironmentOverrides()

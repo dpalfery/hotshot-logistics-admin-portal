@@ -1,21 +1,23 @@
-    // <copyright file="JobService.cs" company="PlaceholderCompany">
+// <copyright file="JobService.cs" company="PlaceholderCompany">
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using HotshotLogistics.Domain.Entities;
+using HotshotLogistics.Contracts.Repositories;
+using HotshotLogistics.Contracts.Services;
+using HotshotLogistics.Core.Exceptions;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
+using HotshotLogistics.Domain.DTOs;
+using HotshotLogistics.Domain.ValueObjects;
+using HotshotLogistics.Core.Enums;
 
 namespace HotshotLogistics.Application.Services
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using HotshotLogistics.Contracts.Models;
-    using HotshotLogistics.Contracts.Repositories;
-    using HotshotLogistics.Contracts.Services;
-    using HotshotLogistics.Core.Exceptions;
-    using Microsoft.Extensions.Logging;
-    using Microsoft.Extensions.Configuration;
-
     /// <summary>
     /// Service for managing jobs with lifecycle management.
     /// </summary>
@@ -54,7 +56,7 @@ namespace HotshotLogistics.Application.Services
         }
 
         /// <inheritdoc/>
-        public async Task<IJob> CreateJobAsync(IJob job, CancellationToken cancellationToken = default)
+        public async Task<Job> CreateJobAsync(Job job, CancellationToken cancellationToken = default)
         {
             logger.LogInformation("Creating job with ID: {JobId}", job.Id);
 
@@ -120,20 +122,20 @@ namespace HotshotLogistics.Application.Services
         }
 
         /// <inheritdoc/>
-        public Task<IJob?> GetJobByIdAsync(string id, CancellationToken cancellationToken = default)
+        public Task<Job?> GetJobByIdAsync(string id, CancellationToken cancellationToken = default)
         {
             return jobRepository.GetJobByIdAsync(id, cancellationToken);
         }
 
         /// <inheritdoc/>
-        public Task<IEnumerable<IJob>> GetJobsAsync(CancellationToken cancellationToken = default)
+        public Task<IEnumerable<Job>> GetJobsAsync(CancellationToken cancellationToken = default)
         {
             return jobRepository.GetJobsAsync(cancellationToken);
         }
 
         /// <inheritdoc/>
-        public Task<PagedResult<IJob>> GetJobsAsync(
-            JobFilter? filter = null,
+        public Task<PagedResult<Job>> GetJobsAsync(
+            JobFilterDto? filter = null,
             PaginationParameters? pagination = null,
             SortParameters? sort = null,
             CancellationToken cancellationToken = default)
@@ -145,7 +147,7 @@ namespace HotshotLogistics.Application.Services
         }
 
         /// <inheritdoc/>
-        public async Task<IJob?> UpdateJobAsync(string id, IJob jobDetails, CancellationToken cancellationToken = default)
+        public async Task<Job?> UpdateJobAsync(string id, Job jobDetails, CancellationToken cancellationToken = default)
         {
             logger.LogInformation("Updating job with ID: {JobId}", id);
 
@@ -182,7 +184,7 @@ namespace HotshotLogistics.Application.Services
             }
 
             // Check if job can be deleted (only allow deletion of jobs that haven't started)
-            if (job.Status != JobStatus.Pending && job.Status != JobStatus.Cancelled)
+            if (job.Status != JobStatus.Pending)
             {
                 logger.LogWarning("Cannot delete job with status: {Status}", job.Status);
                 throw new BusinessRuleException($"Cannot delete job with status: {job.Status}");
@@ -199,7 +201,7 @@ namespace HotshotLogistics.Application.Services
         }
 
         /// <inheritdoc/>
-        public async Task<IJob> AssignDriverAsync(string jobId, int driverId, CancellationToken cancellationToken = default)
+        public async Task<Job> AssignDriverAsync(string jobId, int driverId, CancellationToken cancellationToken = default)
         {
             logger.LogInformation("Assigning driver {DriverId} to job {JobId}", driverId, jobId);
 
@@ -252,7 +254,7 @@ namespace HotshotLogistics.Application.Services
         }
 
         /// <inheritdoc/>
-        public async Task<IJob> UpdateJobStatusAsync(string jobId, JobStatus status, CancellationToken cancellationToken = default)
+        public async Task<Job> UpdateJobStatusAsync(string jobId, JobStatus status, CancellationToken cancellationToken = default)
         {
             logger.LogInformation("Updating job {JobId} status to {Status}", jobId, status);
 
@@ -270,19 +272,11 @@ namespace HotshotLogistics.Application.Services
             switch (status)
             {
                 case JobStatus.EnRoute:
-                    // Driver is en route to pickup
-                    job.Tracking.CurrentStatus = "En route to pickup";
+                    // Driver is en route to pickup or delivery
+                    job.Tracking.CurrentStatus = "En route";
                     break;
-                case JobStatus.InProgress:
-                    // Pickup completed, en route to delivery
-                    job.Tracking.CurrentStatus = "In progress - en route to delivery";
-                    break;
-                case JobStatus.Completed:
-                    job.Tracking.CurrentStatus = "Delivered";
-                    job.Tracking.IsActive = false;
-                    break;
-                case JobStatus.Cancelled:
-                    job.Tracking.CurrentStatus = "Cancelled";
+                case JobStatus.Received:
+                    job.Tracking.CurrentStatus = "Delivered and received";
                     job.Tracking.IsActive = false;
                     break;
             }
@@ -308,80 +302,88 @@ namespace HotshotLogistics.Application.Services
         }
 
         /// <inheritdoc/>
-        public async Task<bool> ValidateJobAsync(IJob job, CancellationToken cancellationToken = default)
+        public async Task<bool> ValidateJobAsync(Job job, CancellationToken cancellationToken = default)
         {
+            var errors = new Dictionary<string, List<string>>();
+
             if (job == null)
             {
                 logger.LogWarning("Job validation failed: job is null");
-                return false;
+                errors["Job"].Add("Job is null");
+                throw new ValidationException("Job validation failed", errors.ToDictionary(kv => kv.Key, kv => kv.Value.ToArray()));
             }
 
             if (string.IsNullOrWhiteSpace(job.CustomerId))
             {
                 logger.LogWarning("Job validation failed: customer ID is empty");
-                return false;
+                errors["CustomerId"].Add("Customer ID is required");
             }
 
             if (string.IsNullOrWhiteSpace(job.Title))
             {
                 logger.LogWarning("Job validation failed: job title is empty");
-                return false;
+                errors["Title"].Add("Job title is required");
             }
 
             // Validate pickup location
             if (job.PickupLocation == null || !job.PickupLocation.IsValid())
             {
                 logger.LogWarning("Job validation failed: pickup location is invalid");
-                return false;
+                errors["PickupLocation"].Add("Pickup location is invalid");
             }
 
             // Validate pickup location with geocoding
             if (!await ValidateLocationWithGeocodingAsync(job.PickupLocation, "pickup", cancellationToken))
             {
                 logger.LogWarning("Job validation failed: pickup location geocoding validation failed");
-                return false;
+                errors["PickupLocation"].Add("Pickup location geocoding validation failed");
             }
 
             // Validate delivery location
             if (job.DeliveryLocation == null || !job.DeliveryLocation.IsValid())
             {
                 logger.LogWarning("Job validation failed: delivery location is invalid");
-                return false;
+                errors["DeliveryLocation"].Add("Delivery location is invalid");
             }
 
             // Validate delivery location with geocoding
             if (!await ValidateLocationWithGeocodingAsync(job.DeliveryLocation, "delivery", cancellationToken))
             {
                 logger.LogWarning("Job validation failed: delivery location geocoding validation failed");
-                return false;
+                errors["DeliveryLocation"].Add("Delivery location geocoding validation failed");
             }
 
             // Validate cargo details
             if (job.Cargo == null || !job.Cargo.IsValid())
             {
                 logger.LogWarning("Job validation failed: cargo details are invalid");
-                return false;
+                errors["Cargo"].Add("Cargo details are invalid");
             }
 
             // Validate pricing details
             if (job.Pricing == null || !job.Pricing.IsValid())
             {
                 logger.LogWarning("Job validation failed: pricing details are invalid");
-                return false;
+                errors["Pricing"].Add("Pricing details are invalid");
             }
 
             // Validate scheduled pickup time
             if (job.ScheduledPickupTime <= DateTime.UtcNow)
             {
                 logger.LogWarning("Job validation failed: scheduled pickup time is in the past");
-                return false;
+                errors["ScheduledPickupTime"].Add("Scheduled pickup time must be in the future");
             }
 
             // Validate estimated delivery time
             if (job.EstimatedDeliveryTime <= job.ScheduledPickupTime)
             {
                 logger.LogWarning("Job validation failed: estimated delivery time must be after pickup time");
-                return false;
+                errors["EstimatedDeliveryTime"].Add("Estimated delivery time must be after pickup time");
+            }
+
+            if (errors.Any())
+            {
+                throw new ValidationException("Job validation failed", errors.ToDictionary(kv => kv.Key, kv => kv.Value.ToArray()));
             }
 
             return true;
@@ -451,7 +453,7 @@ namespace HotshotLogistics.Application.Services
         /// <param name="job">The job to calculate delivery time for.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The estimated delivery time.</returns>
-        private async Task<DateTime> CalculateEstimatedDeliveryTimeAsync(IJob job, CancellationToken cancellationToken = default)
+        private async Task<DateTime> CalculateEstimatedDeliveryTimeAsync(Job job, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -532,7 +534,7 @@ namespace HotshotLogistics.Application.Services
                 return null;
             }
 
-            if (job.Status == JobStatus.Completed || job.Status == JobStatus.Cancelled)
+            if (job.Status == JobStatus.Received)
             {
                 return null; // No ETA needed for completed/cancelled jobs
             }
@@ -653,7 +655,6 @@ namespace HotshotLogistics.Application.Services
             var driverJobs = await jobRepository.GetByDriverIdAsync(driverId, cancellationToken);
             var activeJobs = driverJobs.Where(j =>
                 j.Status == JobStatus.Assigned ||
-                j.Status == JobStatus.InProgress ||
                 j.Status == JobStatus.EnRoute);
 
             foreach (var activeJob in activeJobs)
@@ -678,15 +679,13 @@ namespace HotshotLogistics.Application.Services
         /// <param name="previousStatus">The previous status.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
-        private async Task SendStatusChangeNotificationsAsync(IJob job, JobStatus previousStatus, CancellationToken cancellationToken)
+        private async Task SendStatusChangeNotificationsAsync(Job job, JobStatus previousStatus, CancellationToken cancellationToken)
         {
             var statusMessage = job.Status switch
             {
                 JobStatus.Assigned => "Your job has been assigned to a driver",
-                JobStatus.EnRoute => "Driver is en route for pickup",
-                JobStatus.InProgress => "Your job is now in progress - driver is en route to delivery",
-                JobStatus.Completed => "Your job has been completed successfully",
-                JobStatus.Cancelled => "Your job has been cancelled",
+                JobStatus.EnRoute => "Driver is en route",
+                JobStatus.Received => "Your job has been completed and cargo received",
                 _ => $"Your job status has been updated to {job.Status}"
             };
 
@@ -703,10 +702,8 @@ namespace HotshotLogistics.Application.Services
             {
                 var driverMessage = job.Status switch
                 {
-                    JobStatus.EnRoute => "Please proceed to pickup location",
-                    JobStatus.InProgress => "Pickup completed - proceed to delivery location",
-                    JobStatus.Completed => "Job has been marked as completed",
-                    JobStatus.Cancelled => "Job has been cancelled",
+                    JobStatus.EnRoute => "Please proceed to pickup/delivery location",
+                    JobStatus.Received => "Job has been marked as completed and received",
                     _ => $"Job status updated to {job.Status}"
                 };
 
@@ -720,3 +717,4 @@ namespace HotshotLogistics.Application.Services
         }
     }
 }
+

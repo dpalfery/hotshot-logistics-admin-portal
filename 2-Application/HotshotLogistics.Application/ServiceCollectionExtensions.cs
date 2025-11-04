@@ -2,9 +2,9 @@ using HotshotLogistics.Application.Services;
 using HotshotLogistics.Application.Validators;
 using HotshotLogistics.Contracts.Services;
 using HotshotLogistics.Contracts.Hubs;
-using HotshotLogistics.Data.Services;
 using Microsoft.Extensions.DependencyInjection;
 using FluentValidation;
+using HotshotLogistics.Contracts.Factories;
 
 namespace HotshotLogistics.Application;
 
@@ -27,7 +27,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IJobAssignmentService, JobAssignmentService>();
         services.AddScoped<IRealtimeService, RealtimeService>();
         services.AddScoped<ISignalRClientWrapper, SignalRClientWrapper>();
-        services.AddScoped<IUserProfileService, UserProfileService>();
+        services.AddScoped<UserProfileService, UserProfileService>();
 
         // Register billing and payment services
         services.AddScoped<IBillingService, BillingService>();
@@ -41,18 +41,12 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPaymentProcessorFactory, PaymentProcessorFactory>();
 
         // Register mapping services
-        services.AddScoped<MappingServiceFactory>();
+        services.AddSingleton<IMappingServiceFactory, MappingServiceFactory>();
         services.AddScoped<IMappingService>(sp =>
         {
-            var factory = sp.GetRequiredService<MappingServiceFactory>();
+            var factory = sp.GetRequiredService<IMappingServiceFactory>();
             return factory.CreateMappingService();
         });
-
-        // Register communication services
-        services.AddTransient<ICommunicationService, TwilioSmsService>();
-        services.AddTransient<ICommunicationService, SendGridEmailService>();
-        services.AddTransient<ICommunicationService, AzureNotificationHubService>();
-        services.AddTransient<ICommunicationServiceFactory, CommunicationServiceFactory>();
 
         // Register validators
         services.AddValidatorsFromAssemblyContaining<CreateJobValidator>();

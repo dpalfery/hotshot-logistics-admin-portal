@@ -1,4 +1,4 @@
-// <copyright file="IUserProfileService.cs" company="PlaceholderCompany">
+// <copyright file="UserProfileService.cs" company="PlaceholderCompany">
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
@@ -6,7 +6,7 @@ namespace HotshotLogistics.Contracts.Services
 {
     using System.Threading;
     using System.Threading.Tasks;
-    using HotshotLogistics.Contracts.Models;
+    using HotshotLogistics.Domain.Entities;
 
     /// <summary>
     /// Interface for user profile management using Microsoft Graph API.

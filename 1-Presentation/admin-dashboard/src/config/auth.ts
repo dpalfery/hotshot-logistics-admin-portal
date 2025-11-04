@@ -2,29 +2,31 @@
 const clientId = process.env.NEXT_PUBLIC_AZURE_CLIENT_ID;
 const tenantId = process.env.NEXT_PUBLIC_AZURE_TENANT_ID;
 
-// Enhanced validation for production
-if (!clientId || clientId === 'your-client-id-here') {
-  throw new Error(
-    'NEXT_PUBLIC_AZURE_CLIENT_ID is not configured. Please set your Azure AD client ID in environment variables. ' +
-    'Get this value from your Azure AD app registration in the Azure portal.'
-  );
-}
+// Enhanced validation for production only
+if (process.env.NODE_ENV === 'production') {
+  if (!clientId || clientId === 'your-client-id-here') {
+    throw new Error(
+      'NEXT_PUBLIC_AZURE_CLIENT_ID is not configured. Please set your Azure AD client ID in environment variables. ' +
+      'Get this value from your Azure AD app registration in the Azure portal.'
+    );
+  }
 
-if (!tenantId || tenantId === 'your-tenant-id-here') {
-  throw new Error(
-    'NEXT_PUBLIC_AZURE_TENANT_ID is not configured. Please set your Azure AD tenant ID in environment variables. ' +
-    'Get this value from your Azure AD app registration in the Azure portal.'
-  );
-}
+  if (!tenantId || tenantId === 'your-tenant-id-here') {
+    throw new Error(
+      'NEXT_PUBLIC_AZURE_TENANT_ID is not configured. Please set your Azure AD tenant ID in environment variables. ' +
+      'Get this value from your Azure AD app registration in the Azure portal.'
+    );
+  }
 
-// Validate GUID format for production
-const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-if (!guidRegex.test(clientId)) {
-  throw new Error('NEXT_PUBLIC_AZURE_CLIENT_ID is not a valid GUID format');
-}
+  // Validate GUID format for production
+  const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  if (!guidRegex.test(clientId)) {
+    throw new Error('NEXT_PUBLIC_AZURE_CLIENT_ID is not a valid GUID format');
+  }
 
-if (!guidRegex.test(tenantId)) {
-  throw new Error('NEXT_PUBLIC_AZURE_TENANT_ID is not a valid GUID format');
+  if (!guidRegex.test(tenantId)) {
+    throw new Error('NEXT_PUBLIC_AZURE_TENANT_ID is not a valid GUID format');
+  }
 }
 
 import { Configuration } from '@azure/msal-browser';
@@ -32,7 +34,7 @@ import { Configuration } from '@azure/msal-browser';
 // Production-ready MSAL configuration
 export const msalConfig: Configuration = {
   auth: {
-    clientId,
+    clientId: clientId!,
     authority: `https://login.microsoftonline.com/${tenantId}`,
     redirectUri: typeof window !== 'undefined' ? window.location.origin : '/',
     postLogoutRedirectUri: typeof window !== 'undefined' ? window.location.origin : '/',

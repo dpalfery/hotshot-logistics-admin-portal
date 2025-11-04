@@ -7,7 +7,7 @@ namespace HotshotLogistics.Application.Services
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using HotshotLogistics.Contracts.Models;
+    using HotshotLogistics.Domain.Entities;
     using HotshotLogistics.Contracts.Services;
     using Microsoft.Extensions.Logging;
 
@@ -16,7 +16,7 @@ namespace HotshotLogistics.Application.Services
     /// </summary>
     public class CommunicationServiceFactory : ICommunicationServiceFactory
     {
-        private readonly Dictionary<CommunicationType, ICommunicationService> _services;
+        private readonly Dictionary<string, ICommunicationService> _services;
         private readonly ILogger<CommunicationServiceFactory> _logger;
 
         /// <summary>
@@ -32,7 +32,8 @@ namespace HotshotLogistics.Application.Services
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             // Validate that all communication types are registered
-            foreach (CommunicationType type in Enum.GetValues<CommunicationType>())
+            var expectedTypes = new[] { "Sms", "Email", "Push" };
+            foreach (var type in expectedTypes)
             {
                 if (!_services.ContainsKey(type))
                 {
@@ -42,7 +43,7 @@ namespace HotshotLogistics.Application.Services
         }
 
         /// <inheritdoc/>
-        public ICommunicationService GetService(CommunicationType type)
+        public ICommunicationService GetService(string type)
         {
             if (_services.TryGetValue(type, out var service))
             {

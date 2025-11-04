@@ -2,23 +2,24 @@
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using HotshotLogistics.Contracts.Services;
+using HotshotLogistics.Domain.ValueObjects;
+using Microsoft.Azure.NotificationHubs;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 namespace HotshotLogistics.Data.Services
 {
-    using System;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using HotshotLogistics.Contracts.Models;
-    using HotshotLogistics.Contracts.Services;
-    using Microsoft.Azure.NotificationHubs;
-    using Microsoft.Extensions.Logging;
-    using Microsoft.Extensions.Options;
-
     /// <summary>
     /// Service for sending push notifications via Azure Notification Hubs.
     /// </summary>
     public class AzureNotificationHubService : ICommunicationService
     {
-        private readonly HotshotLogistics.Contracts.Models.NotificationHubSettings _settings;
+        private readonly HotshotLogistics.Domain.ValueObjects.NotificationHubSettings _settings;
         private readonly ILogger<AzureNotificationHubService> _logger;
 
         /// <summary>
@@ -27,7 +28,7 @@ namespace HotshotLogistics.Data.Services
         /// <param name="settings">The Notification Hub settings.</param>
         /// <param name="logger">The logger.</param>
         public AzureNotificationHubService(
-            IOptions<HotshotLogistics.Contracts.Models.NotificationHubSettings> settings,
+            IOptions<HotshotLogistics.Domain.ValueObjects.NotificationHubSettings> settings,
             ILogger<AzureNotificationHubService> logger)
         {
             _settings = settings?.Value ?? throw new ArgumentNullException(nameof(settings));
@@ -35,7 +36,7 @@ namespace HotshotLogistics.Data.Services
         }
 
         /// <inheritdoc/>
-        public CommunicationType Type => CommunicationType.Push;
+        public string Type => "Push";
 
         /// <inheritdoc/>
         public async Task<bool> SendAsync(CommunicationMessage message, CancellationToken cancellationToken = default)

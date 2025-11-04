@@ -1,12 +1,14 @@
 using FluentValidation;
-using HotshotLogistics.Contracts.Models;
+using HotshotLogistics.Domain.DTOs;
+using HotshotLogistics.Domain.Entities;
+using HotshotLogistics.Domain.ValueObjects;
 
 namespace HotshotLogistics.Application.Validators;
 
 /// <summary>
 /// Validator for job creation requests.
 /// </summary>
-public class CreateJobValidator : AbstractValidator<JobDto>
+public class CreateJobValidator : AbstractValidator<ContractsJobDto>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="CreateJobValidator"/> class.
@@ -29,14 +31,18 @@ public class CreateJobValidator : AbstractValidator<JobDto>
             .GreaterThan(0).WithMessage("Job amount must be greater than zero.")
             .LessThanOrEqualTo(100000).WithMessage("Job amount cannot exceed $100,000.");
 
-        RuleFor(x => x.ScheduledPickupTime)
-            .GreaterThan(DateTime.UtcNow).WithMessage("Scheduled pickup time must be in the future.")
-            .LessThan(DateTime.UtcNow.AddDays(365)).WithMessage("Scheduled pickup time cannot be more than 365 days in the future.");
+        RuleFor(x => (DateTime?)x.ScheduledPickupTime)
+            .NotNull().WithMessage("Scheduled pickup time is required.")
+            .Must(dt => dt > DateTime.UtcNow).WithMessage("Scheduled pickup time must be in the future.")
+            .Must(dt => dt < DateTime.UtcNow.AddDays(365)).WithMessage("Scheduled pickup time cannot be more than 365 days in the future.");
 
-        RuleFor(x => x.EstimatedDeliveryTime)
-            .GreaterThan(x => x.ScheduledPickupTime).WithMessage("Estimated delivery time must be after scheduled pickup time.")
-            .LessThan(x => x.ScheduledPickupTime.AddDays(30)).WithMessage("Estimated delivery time cannot be more than 30 days after pickup.")
-            .When(x => !string.IsNullOrEmpty(x.EstimatedDeliveryTimeString));
+        RuleFor(x => (DateTime?)x.EstimatedDeliveryTime)
+            .NotNull().WithMessage("Estimated delivery time is required.")
+            .Must((dto, etd) => etd > (DateTime?)dto.ScheduledPickupTime)
+                .WithMessage("Estimated delivery time must be after scheduled pickup time.")
+            .Must((dto, etd) => etd < ((DateTime?)dto.ScheduledPickupTime)?.AddDays(30))
+                .WithMessage("Estimated delivery time cannot be more than 30 days after pickup.")
+            .When(x => x.EstimatedDeliveryTime != null);
 
         RuleFor(x => x.CustomerId)
             .NotEmpty().WithMessage("Customer ID is required.");
@@ -58,143 +64,8 @@ public class CreateJobValidator : AbstractValidator<JobDto>
             .SetValidator(new PricingDetailsValidator());
 
         RuleFor(x => x.SpecialInstructions)
-            .MaximumLength(1000).WithMessage("Special instructions cannot exceed 1000 characters.");
+            .MaximumLength(1000).WithMessage("Special instructions cannot exceed 1000 characters.")
+            .When(x => x.SpecialInstructions != null);
     }
 }
 
-/// <summary>
-/// Validator for location coordinates.
-/// </summary>
-public class LocationValidator : AbstractValidator<Location?>
-{
-    /// <summary>
-    /// Initializes a new instance of the <see cref="LocationValidator"/> class.
-    /// </summary>
-    public LocationValidator()
-    {
-        // Guard for null Location when using with IValidator<Location?>
-        When(x => x != null, () =>
-        {
-            RuleFor(x => x!.Latitude)
-                .InclusiveBetween(-90, 90).WithMessage("Latitude must be between -90 and 90 degrees.")
-                .When(x => x!.Latitude.HasValue);
-
-            RuleFor(x => x!.Longitude)
-                .InclusiveBetween(-180, 180).WithMessage("Longitude must be between -180 and 180 degrees.")
-                .When(x => x!.Longitude.HasValue);
-
-            RuleFor(x => x!.Address)
-                .NotEmpty().WithMessage("Address is required.")
-                .MaximumLength(500).WithMessage("Address cannot exceed 500 characters.");
-
-            RuleFor(x => x!.City)
-                .NotEmpty().WithMessage("City is required.")
-                .MaximumLength(100).WithMessage("City cannot exceed 100 characters.");
-
-            RuleFor(x => x!.State)
-                .NotEmpty().WithMessage("State is required.")
-                .MaximumLength(50).WithMessage("State cannot exceed 50 characters.");
-
-            RuleFor(x => x!.PostalCode)
-                .NotEmpty().WithMessage("Postal code is required.")
-                .MaximumLength(20).WithMessage("Postal code cannot exceed 20 characters.");
-
-            RuleFor(x => x!.Country)
-                .NotEmpty().WithMessage("Country is required.")
-                .MaximumLength(50).WithMessage("Country cannot exceed 50 characters.");
-        });
-    }
-}
-
-/// <summary>
-/// Validator for cargo details.
-/// </summary>
-public class CargoDetailsValidator : AbstractValidator<CargoDetails?>
-{
-    /// <summary>
-    /// Initializes a new instance of the <see cref="CargoDetailsValidator"/> class.
-    /// </summary>
-    public CargoDetailsValidator()
-    {
-        When(x => x != null, () =>
-        {
-            RuleFor(x => x!.Description)
-                .NotEmpty().WithMessage("Cargo description is required.")
-                .MaximumLength(500).WithMessage("Cargo description cannot exceed 500 characters.");
-
-            RuleFor(x => x!.Weight)
-                .GreaterThan(0).WithMessage("Cargo weight must be greater than zero.")
-                .LessThanOrEqualTo(50000).WithMessage("Cargo weight cannot exceed 50,000 lbs.");
-
-            RuleFor(x => x!.Quantity)
-                .GreaterThan(0).WithMessage("Quantity must be greater than zero.")
-                .LessThanOrEqualTo(1000).WithMessage("Quantity cannot exceed 1,000 pieces.");
-
-            RuleFor(x => x!.Value)
-                .GreaterThanOrEqualTo(0).WithMessage("Cargo value cannot be negative.")
-                .LessThanOrEqualTo(1000000).WithMessage("Cargo value cannot exceed $1,000,000.");
-
-            RuleFor(x => x!.Dimensions)
-                .MaximumLength(100).WithMessage("Dimensions description cannot exceed 100 characters.");
-
-            RuleFor(x => x!.TemperatureRange)
-                .MaximumLength(50).WithMessage("Temperature range cannot exceed 50 characters.");
-
-            RuleFor(x => x!.SpecialInstructions)
-                .MaximumLength(500).WithMessage("Special instructions cannot exceed 500 characters.");
-
-            RuleFor(x => x!.PackagingType)
-                .MaximumLength(100).WithMessage("Packaging type cannot exceed 100 characters.");
-        });
-    }
-}
-
-
-/// <summary>
-/// Validator for pricing details.
-/// </summary>
-public class PricingDetailsValidator : AbstractValidator<PricingDetails?>
-{
-    /// <summary>
-    /// Initializes a new instance of the <see cref="PricingDetailsValidator"/> class.
-    /// </summary>
-    public PricingDetailsValidator()
-    {
-        When(x => x != null, () =>
-        {
-            RuleFor(x => x!.BaseRate)
-                .GreaterThanOrEqualTo(0).WithMessage("Base rate cannot be negative.");
-
-            RuleFor(x => x!.MileageRate)
-                .GreaterThanOrEqualTo(0).WithMessage("Mileage rate cannot be negative.");
-
-            RuleFor(x => x!.FuelSurcharge)
-                .GreaterThanOrEqualTo(0).WithMessage("Fuel surcharge cannot be negative.");
-
-            RuleFor(x => x!.TollCharges)
-                .GreaterThanOrEqualTo(0).WithMessage("Toll charges cannot be negative.");
-
-            RuleFor(x => x!.AdditionalCharges)
-                .GreaterThanOrEqualTo(0).WithMessage("Additional charges cannot be negative.");
-
-            RuleFor(x => x!.TotalAmount)
-                .GreaterThanOrEqualTo(0).WithMessage("Total amount cannot be negative.");
-
-            RuleFor(x => x!.Discount)
-                .GreaterThanOrEqualTo(0).WithMessage("Discount cannot be negative.");
-
-            RuleFor(x => x!.Tax)
-                .GreaterThanOrEqualTo(0).WithMessage("Tax cannot be negative.");
-
-            RuleFor(x => x!.TaxRate)
-                .InclusiveBetween(0, 100).WithMessage("Tax rate must be between 0 and 100 percent.");
-
-            RuleFor(x => x!.Currency)
-                .NotEmpty().WithMessage("Currency is required.")
-                .Length(3).WithMessage("Currency must be a 3-letter code.");
-
-            RuleFor(x => x!.Notes)
-                .MaximumLength(500).WithMessage("Notes cannot exceed 500 characters.");
-        });
-    }
-}

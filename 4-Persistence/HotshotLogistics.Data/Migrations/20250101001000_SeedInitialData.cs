@@ -1,3 +1,4 @@
+#pragma warning disable SA1649
 using FluentMigrator;
 
 namespace HotshotLogistics.Data.Migrations;
@@ -10,7 +11,7 @@ public class SeedInitialData : Migration
         // Seed Customers (string PKs) with Email and Phone
         Execute.Sql(@"
 INSERT INTO Customers (Id, CompanyName, TaxId, Email, Phone, BillingAddress, City, State, ZipCode, Country, Latitude, Longitude, CreditLimit, PaymentTermsDays, CreditStatus, IsActive, CreatedAt)
-VALUES 
+VALUES
 ('cust-1', 'Acme Logistics', 'TAX-001', 'contact@acmelogistics.com', '555-0001', '100 Logistics Way', 'Springfield', 'IL', '62701', 'USA', 39.7817, -89.6501, 10000.00, 30, 1, 1, GETUTCDATE()),
 ('cust-2', 'QuickShip Co', 'TAX-002', 'info@quickship.com', '555-0002', '200 Express Blvd', 'Chicago', 'IL', '60601', 'USA', 41.8781, -87.6298, 5000.00, 30, 1, 1, GETUTCDATE());
 ");

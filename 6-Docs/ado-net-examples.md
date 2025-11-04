@@ -96,7 +96,7 @@ public class CreateCustomersTable : Migration
 
 ```csharp
 // For unit testing application services
-public class MockCustomerRepository : ICustomerRepository
+public class MockCustomerRepository : CustomerRepository
 {
     private readonly List<Customer> _customers = new();
 

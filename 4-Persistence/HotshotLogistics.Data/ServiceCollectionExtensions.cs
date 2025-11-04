@@ -3,9 +3,15 @@
 // </copyright>
 
 using HotshotLogistics.Contracts.Repositories;
+using HotshotLogistics.Contracts.Services;
 using HotshotLogistics.Data.Repositories;
+using HotshotLogistics.Data.Services;
+using HotshotLogistics.Application.Services;
+using HotshotLogistics.Domain.DTOs;
 using HotshotLogistics.Domain.Repositories;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace HotshotLogistics.Data
 {
@@ -28,6 +34,43 @@ namespace HotshotLogistics.Data
             services.AddScoped<IInvoiceRepository, InvoiceRepository>();
             services.AddScoped<ILocationTrackingRepository, LocationTrackingRepository>();
             services.AddScoped<IPaymentRepository, PaymentRepository>();
+            return services;
+        }
+
+        public static IServiceCollection AddMappingServices(this IServiceCollection services)
+        {
+            services.AddHttpClient("MappingService");
+            services.AddTransient<IMappingService, MockMappingService>();
+            
+            // Register AzureMapsService with proper HttpClient factory and settings
+            services.AddTransient<IMappingService>(provider =>
+            {
+                var httpClientFactory = provider.GetRequiredService<IHttpClientFactory>();
+                var httpClient = httpClientFactory.CreateClient("MappingService");
+                var logger = provider.GetRequiredService<ILogger<AzureMapsService>>();
+                var settings = provider.GetRequiredService<IOptions<AzureMapsSettings>>();
+                return new AzureMapsService(httpClient, logger, settings);
+            });
+            
+            // Register GoogleMapsService with proper HttpClient factory
+            services.AddTransient<IMappingService>(provider =>
+            {
+                var httpClientFactory = provider.GetRequiredService<IHttpClientFactory>();
+                var httpClient = httpClientFactory.CreateClient("MappingService");
+                var logger = provider.GetRequiredService<ILogger<GoogleMapsService>>();
+                var settings = provider.GetRequiredService<IOptions<GoogleMapsSettings>>();
+                return new GoogleMapsService(httpClient, logger, settings);
+            });
+            
+            return services;
+        }
+
+        public static IServiceCollection AddCommunicationServices(this IServiceCollection services)
+        {
+            services.AddTransient<ICommunicationService, TwilioSmsService>();
+            services.AddTransient<ICommunicationService, SendGridEmailService>();
+            services.AddTransient<ICommunicationService, AzureNotificationHubService>();
+            services.AddTransient<ICommunicationServiceFactory, CommunicationServiceFactory>();
             return services;
         }
     }

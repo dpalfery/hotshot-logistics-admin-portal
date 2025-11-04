@@ -2,23 +2,24 @@
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using FluentAssertions;
+using HotshotLogistics.Api.Controllers;
+using HotshotLogistics.Application.Services;
+using HotshotLogistics.Domain.Entities;
+using HotshotLogistics.Core.Enums;
+using HotshotLogistics.Contracts.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Moq;
+using Xunit;
+
 namespace HotshotLogistics.Tests.Billing
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using FluentAssertions;
-    using HotshotLogistics.Api.Controllers;
-    using HotshotLogistics.Application.Services;
-    using HotshotLogistics.Contracts.Models;
-    using HotshotLogistics.Contracts.Services;
-    using Microsoft.AspNetCore.Mvc;
-    using Microsoft.Extensions.Logging;
-    using Moq;
-    using Xunit;
-
     /// <summary>
     /// Integration tests for the BillingController.
     /// </summary>
@@ -60,7 +61,7 @@ namespace HotshotLogistics.Tests.Billing
             // Assert
             result.Should().NotBeNull();
             var createdResult = result.Result.Should().BeOfType<CreatedAtActionResult>().Subject;
-            var returnedInvoice = createdResult.Value.Should().BeAssignableTo<IInvoice>().Subject;
+            var returnedInvoice = createdResult.Value.Should().BeAssignableTo<Invoice>().Subject;
             returnedInvoice.Id.Should().Be("invoice-1");
         }
 
@@ -115,7 +116,7 @@ namespace HotshotLogistics.Tests.Billing
         {
             // Arrange
             var customerId = "customer-1";
-            var expectedInvoices = new List<IInvoice>
+            var expectedInvoices = new List<Invoice>
             {
                 CreateTestInvoice("invoice-1", customerId),
                 CreateTestInvoice("invoice-2", customerId)
@@ -130,7 +131,7 @@ namespace HotshotLogistics.Tests.Billing
             // Assert
             result.Should().NotBeNull();
             var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
-            var returnedInvoices = okResult.Value.Should().BeAssignableTo<IEnumerable<IInvoice>>().Subject;
+            var returnedInvoices = okResult.Value.Should().BeAssignableTo<IEnumerable<Invoice>>().Subject;
             returnedInvoices.Should().HaveCount(2);
             returnedInvoices.All(i => i.CustomerId == customerId).Should().BeTrue();
         }
@@ -143,7 +144,7 @@ namespace HotshotLogistics.Tests.Billing
         public async Task GetOverdueInvoices_ReturnsOverdueInvoices()
         {
             // Arrange
-            var overdueInvoices = new List<IInvoice>
+            var overdueInvoices = new List<Invoice>
             {
                 CreateTestInvoice("overdue-1", "customer-1", InvoiceStatus.Overdue),
                 CreateTestInvoice("overdue-2", "customer-2", InvoiceStatus.Overdue)
@@ -158,7 +159,7 @@ namespace HotshotLogistics.Tests.Billing
             // Assert
             result.Should().NotBeNull();
             var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
-            var returnedInvoices = okResult.Value.Should().BeAssignableTo<IEnumerable<IInvoice>>().Subject;
+            var returnedInvoices = okResult.Value.Should().BeAssignableTo<IEnumerable<Invoice>>().Subject;
             returnedInvoices.Should().HaveCount(2);
             returnedInvoices.All(i => i.Status == InvoiceStatus.Overdue).Should().BeTrue();
         }
@@ -334,7 +335,7 @@ namespace HotshotLogistics.Tests.Billing
         public async Task GetAccountsReceivableReport_ReturnsReportWithOverdueInvoices()
         {
             // Arrange
-            var overdueInvoices = new List<IInvoice>
+            var overdueInvoices = new List<Invoice>
             {
                 CreateTestInvoice("overdue-1", "customer-1", InvoiceStatus.Overdue, 1000m, 500m),
                 CreateTestInvoice("overdue-2", "customer-2", InvoiceStatus.Overdue, 2000m, 1500m)
@@ -364,9 +365,9 @@ namespace HotshotLogistics.Tests.Billing
         /// <param name="totalAmount">The total amount.</param>
         /// <param name="balanceDue">The balance due.</param>
         /// <returns>A test invoice instance.</returns>
-        private static IInvoice CreateTestInvoice(string id, string customerId, InvoiceStatus status = InvoiceStatus.Sent, decimal totalAmount = 1000m, decimal balanceDue = 1000m)
+        private static Invoice CreateTestInvoice(string id, string customerId, InvoiceStatus status = InvoiceStatus.Sent, decimal totalAmount = 1000m, decimal balanceDue = 1000m)
         {
-            var mockInvoice = new Mock<IInvoice>();
+            var mockInvoice = new Mock<Invoice>();
             mockInvoice.Setup(i => i.Id).Returns(id);
             mockInvoice.Setup(i => i.CustomerId).Returns(customerId);
             mockInvoice.Setup(i => i.InvoiceNumber).Returns($"INV-{id}");

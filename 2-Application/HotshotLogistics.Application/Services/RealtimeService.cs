@@ -2,11 +2,14 @@ using Microsoft.Azure.SignalR.Management;
 using Microsoft.Extensions.Logging;
 using HotshotLogistics.Contracts.Services;
 using HotshotLogistics.Contracts.Hubs;
-using HotshotLogistics.Contracts.Models;
+using HotshotLogistics.Domain.Entities;
+using HotshotLogistics.Core.Enums;
+using HotshotLogistics.Domain.DTOs;
+
 
 namespace HotshotLogistics.Application.Services;
 
-/// <summary>
+/// <summary>   
 /// Service for managing real-time communications via SignalR
 /// </summary>
 public class RealtimeService : IRealtimeService
@@ -81,7 +84,7 @@ public class RealtimeService : IRealtimeService
     /// <summary>
     /// Broadcast new job availability to available drivers
     /// </summary>
-    public async Task BroadcastNewJobAvailable(JobDto job)
+    public async Task BroadcastNewJobAvailable(ContractsJobDto job)
     {
         try
         {
@@ -99,7 +102,7 @@ public class RealtimeService : IRealtimeService
     /// <summary>
     /// Send notification to specific user or broadcast to all
     /// </summary>
-    public async Task SendNotification(NotificationMessage message)
+    public async Task SendNotification(NotificationMessageDto message)
     {
         try
         {
@@ -202,5 +205,25 @@ public class RealtimeService : IRealtimeService
             _logger.LogError(ex, "Error sending message to user {UserId}", userId);
             throw;
         }
+    }
+
+    Task IRealtimeService.BroadcastJobStatusUpdate(string jobId, JobStatus status)
+    {
+        return BroadcastJobStatusUpdate(jobId, status);
+    }
+
+    Task IRealtimeService.BroadcastDriverStatusChange(int driverId, DriverStatus status)
+    {
+        return BroadcastDriverStatusChange(driverId, status);
+    }
+
+    Task IRealtimeService.BroadcastNewJobAvailable(ContractsJobDto job)
+    {
+        return BroadcastNewJobAvailable(job);
+    }
+
+    Task IRealtimeService.SendNotification(NotificationMessageDto message)
+    {
+        return SendNotification(message);
     }
 }

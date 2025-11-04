@@ -11,10 +11,11 @@ namespace HotshotLogistics.Tests.Customer
     using System.Threading.Tasks;
     using FluentAssertions;
     using HotshotLogistics.Api.Controllers;
-    using HotshotLogistics.Contracts.Models;
+    using HotshotLogistics.Domain.Entities;
     using HotshotLogistics.Contracts.Services;
 using HotshotLogistics.Tests.TestHelpers;
-    using HotshotLogistics.Domain.Models;
+using HotshotLogistics.Domain.Entities;
+using HotshotLogistics.Domain.ValueObjects;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Logging;
     using Moq;
@@ -47,7 +48,7 @@ using HotshotLogistics.Tests.TestHelpers;
         public async Task GetCustomers_ReturnsAllCustomers()
         {
             // Arrange
-            var expectedCustomers = new List<ICustomer>
+            var expectedCustomers = new List<Customer>
             {
                 CreateTestCustomer("customer1", "Test Company 1"),
                 CreateTestCustomer("customer2", "Test Company 2")
@@ -62,7 +63,7 @@ using HotshotLogistics.Tests.TestHelpers;
             // Assert
             result.Should().NotBeNull();
             var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
-            var returnedCustomers = okResult.Value.Should().BeAssignableTo<IEnumerable<ICustomer>>().Subject;
+            var returnedCustomers = okResult.Value.Should().BeAssignableTo<IEnumerable<Customer>>().Subject;
             returnedCustomers.Should().HaveCount(2);
         }
 
@@ -86,7 +87,7 @@ using HotshotLogistics.Tests.TestHelpers;
             // Assert
             result.Should().NotBeNull();
             var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
-            var returnedCustomer = okResult.Value.Should().BeAssignableTo<ICustomer>().Subject;
+            var returnedCustomer = okResult.Value.Should().BeAssignableTo<Customer>().Subject;
             returnedCustomer.Id.Should().Be(customerId);
         }
 
@@ -101,7 +102,7 @@ using HotshotLogistics.Tests.TestHelpers;
             var customerId = "non-existent-customer";
 
             mockCustomerService.Setup(s => s.GetCustomerByIdAsync(customerId, It.IsAny<CancellationToken>()))
-                .ReturnsAsync((ICustomer?)null);
+                .ReturnsAsync((Customer?)null);
 
             // Act
             var result = await controller.GetCustomerById(customerId);
@@ -122,7 +123,7 @@ using HotshotLogistics.Tests.TestHelpers;
             var customerData = CreateTestCustomer("new-customer-id", "New Test Company");
             var createdCustomer = CreateTestCustomer("new-customer-id", "New Test Company");
 
-            mockCustomerService.Setup(s => s.CreateCustomerAsync(It.IsAny<ICustomer>(), It.IsAny<CancellationToken>()))
+            mockCustomerService.Setup(s => s.CreateCustomerAsync(It.IsAny<Customer>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(createdCustomer);
 
             // Act
@@ -131,7 +132,7 @@ using HotshotLogistics.Tests.TestHelpers;
             // Assert
             result.Should().NotBeNull();
             var createdResult = result.Result.Should().BeOfType<CreatedAtActionResult>().Subject;
-            var returnedCustomer = createdResult.Value.Should().BeAssignableTo<ICustomer>().Subject;
+            var returnedCustomer = createdResult.Value.Should().BeAssignableTo<Customer>().Subject;
             returnedCustomer.Id.Should().Be("new-customer-id");
         }
 
@@ -160,7 +161,7 @@ using HotshotLogistics.Tests.TestHelpers;
             // Arrange
             var invalidCustomer = CreateTestCustomer("", ""); // Invalid data
 
-            mockCustomerService.Setup(s => s.CreateCustomerAsync(It.IsAny<ICustomer>(), It.IsAny<CancellationToken>()))
+            mockCustomerService.Setup(s => s.CreateCustomerAsync(It.IsAny<Customer>(), It.IsAny<CancellationToken>()))
                 .ThrowsAsync(new ArgumentException("Customer validation failed"));
 
             // Act
@@ -183,7 +184,7 @@ using HotshotLogistics.Tests.TestHelpers;
             var customerData = CreateTestCustomer(customerId, "Updated Company Name");
             var updatedCustomer = CreateTestCustomer(customerId, "Updated Company Name");
 
-            mockCustomerService.Setup(s => s.UpdateCustomerAsync(customerId, It.IsAny<ICustomer>(), It.IsAny<CancellationToken>()))
+            mockCustomerService.Setup(s => s.UpdateCustomerAsync(customerId, It.IsAny<Customer>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(updatedCustomer);
 
             // Act
@@ -192,7 +193,7 @@ using HotshotLogistics.Tests.TestHelpers;
             // Assert
             result.Should().NotBeNull();
             var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
-            var returnedCustomer = okResult.Value.Should().BeAssignableTo<ICustomer>().Subject;
+            var returnedCustomer = okResult.Value.Should().BeAssignableTo<Customer>().Subject;
             returnedCustomer.Id.Should().Be(customerId);
         }
 
@@ -207,8 +208,8 @@ using HotshotLogistics.Tests.TestHelpers;
             var customerId = "non-existent-customer";
             var customerData = CreateTestCustomer(customerId, "Test Company");
 
-            mockCustomerService.Setup(s => s.UpdateCustomerAsync(customerId, It.IsAny<ICustomer>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync((ICustomer?)null);
+            mockCustomerService.Setup(s => s.UpdateCustomerAsync(customerId, It.IsAny<Customer>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Customer?)null);
 
             // Act
             var result = await controller.UpdateCustomer(customerId, customerData);
@@ -266,7 +267,7 @@ using HotshotLogistics.Tests.TestHelpers;
         public async Task GetActiveCustomers_ReturnsActiveCustomers()
         {
             // Arrange
-            var activeCustomers = new List<ICustomer>
+            var activeCustomers = new List<Customer>
             {
                 CreateTestCustomer("active1", "Active Company 1", true),
                 CreateTestCustomer("active2", "Active Company 2", true)
@@ -281,7 +282,7 @@ using HotshotLogistics.Tests.TestHelpers;
             // Assert
             result.Should().NotBeNull();
             var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
-            var returnedCustomers = okResult.Value.Should().BeAssignableTo<IEnumerable<ICustomer>>().Subject;
+            var returnedCustomers = okResult.Value.Should().BeAssignableTo<IEnumerable<Customer>>().Subject;
             returnedCustomers.Should().HaveCount(2);
             returnedCustomers.All(c => c.IsActive).Should().BeTrue();
         }
@@ -294,7 +295,7 @@ using HotshotLogistics.Tests.TestHelpers;
         public async Task GetOverdueCustomers_ReturnsOverdueCustomers()
         {
             // Arrange
-            var overdueCustomers = new List<ICustomer>
+            var overdueCustomers = new List<Customer>
             {
                 CreateTestCustomer("overdue1", "Overdue Company 1"),
                 CreateTestCustomer("overdue2", "Overdue Company 2")
@@ -309,7 +310,7 @@ using HotshotLogistics.Tests.TestHelpers;
             // Assert
             result.Should().NotBeNull();
             var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
-            var returnedCustomers = okResult.Value.Should().BeAssignableTo<IEnumerable<ICustomer>>().Subject;
+            var returnedCustomers = okResult.Value.Should().BeAssignableTo<IEnumerable<Customer>>().Subject;
             returnedCustomers.Should().HaveCount(2);
         }
 
@@ -323,7 +324,7 @@ using HotshotLogistics.Tests.TestHelpers;
             // Arrange
             var customerId = "customer-with-jobs";
             var customer = CreateTestCustomer(customerId, "Test Company");
-            var jobs = new List<IJob>
+            var jobs = new List<Job>
             {
                 CreateTestJob("job1", customerId),
                 CreateTestJob("job2", customerId)
@@ -340,7 +341,7 @@ using HotshotLogistics.Tests.TestHelpers;
             // Assert
             result.Should().NotBeNull();
             var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
-            var returnedJobs = okResult.Value.Should().BeAssignableTo<IEnumerable<IJob>>().Subject;
+            var returnedJobs = okResult.Value.Should().BeAssignableTo<IEnumerable<Job>>().Subject;
             returnedJobs.Should().HaveCount(2);
             returnedJobs.All(j => j.CustomerId == customerId).Should().BeTrue();
         }
@@ -355,7 +356,7 @@ using HotshotLogistics.Tests.TestHelpers;
             // Arrange
             var customerId = "customer-with-invoices";
             var customer = CreateTestCustomer(customerId, "Test Company");
-            var invoices = new List<IInvoice>
+            var invoices = new List<Invoice>
             {
                 CreateTestInvoice("invoice1", customerId),
                 CreateTestInvoice("invoice2", customerId)
@@ -372,7 +373,7 @@ using HotshotLogistics.Tests.TestHelpers;
             // Assert
             result.Should().NotBeNull();
             var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
-            var returnedInvoices = okResult.Value.Should().BeAssignableTo<IEnumerable<IInvoice>>().Subject;
+            var returnedInvoices = okResult.Value.Should().BeAssignableTo<IEnumerable<Invoice>>().Subject;
             returnedInvoices.Should().HaveCount(2);
             returnedInvoices.All(i => i.CustomerId == customerId).Should().BeTrue();
         }
@@ -532,9 +533,9 @@ using HotshotLogistics.Tests.TestHelpers;
         /// <param name="id">The job ID.</param>
         /// <param name="customerId">The customer ID.</param>
         /// <returns>A test job instance.</returns>
-        private static IJob CreateTestJob(string id, string customerId)
+        private static Job CreateTestJob(string id, string customerId)
         {
-            var mockJob = new Mock<IJob>();
+            var mockJob = new Mock<Job>();
             mockJob.Setup(j => j.Id).Returns(id);
             mockJob.Setup(j => j.CustomerId).Returns(customerId);
             mockJob.Setup(j => j.Title).Returns($"Test Job {id}");
@@ -549,9 +550,9 @@ using HotshotLogistics.Tests.TestHelpers;
         /// <param name="id">The invoice ID.</param>
         /// <param name="customerId">The customer ID.</param>
         /// <returns>A test invoice instance.</returns>
-        private static IInvoice CreateTestInvoice(string id, string customerId)
+        private static Invoice CreateTestInvoice(string id, string customerId)
         {
-            var mockInvoice = new Mock<IInvoice>();
+            var mockInvoice = new Mock<Invoice>();
             mockInvoice.Setup(i => i.Id).Returns(id);
             mockInvoice.Setup(i => i.CustomerId).Returns(customerId);
             mockInvoice.Setup(i => i.InvoiceNumber).Returns($"INV-{id}");

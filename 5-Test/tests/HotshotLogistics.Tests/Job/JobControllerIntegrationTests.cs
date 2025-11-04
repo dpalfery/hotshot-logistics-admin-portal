@@ -6,14 +6,15 @@ namespace HotshotLogistics.Tests.Job
 {
     using System.Net;
     using System.Net.Http;
+    using System.Net.Http.Headers;
     using System.Text.Json;
     using System.Threading.Tasks;
     using HotshotLogistics.Api;
-    using HotshotLogistics.Domain.Models;
+using HotshotLogistics.Domain.Entities;
     using Microsoft.AspNetCore.Mvc.Testing;
     using Xunit;
     using FluentAssertions;
-    using HotshotLogistics.Contracts.Models;
+    using HotshotLogistics.Domain.Entities;
 
     /// <summary>
     /// Integration tests for the JobController.
@@ -28,6 +29,8 @@ namespace HotshotLogistics.Tests.Job
         public JobControllerIntegrationTests(WebApplicationFactory<Program> factory)
             : base(factory)
         {
+            // Set up test authentication
+            Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Test");
         }
 
         /// <summary>
@@ -48,7 +51,7 @@ namespace HotshotLogistics.Tests.Job
             response.StatusCode.Should().Be(HttpStatusCode.OK);
 
             var content = await response.Content.ReadAsStringAsync();
-            var job = JsonSerializer.Deserialize<Job>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            var job = JsonSerializer.Deserialize<Domain.Entities.Job>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
             job.Should().NotBeNull();
             job.Id.Should().Be(jobId);

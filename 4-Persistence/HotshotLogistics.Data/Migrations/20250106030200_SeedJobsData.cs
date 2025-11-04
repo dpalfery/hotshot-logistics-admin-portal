@@ -1,3 +1,4 @@
+#pragma warning disable SA1649
 using FluentMigrator;
 
 namespace HotshotLogistics.Data.Migrations;
@@ -13,12 +14,12 @@ public class SeedJobsData : Migration
     /// </summary>
     public override void Up()
     {
-        // Seed 20 jobs with various statuses and priorities
-        for (int i = 1; i <= 20; i++)
+        // Seed 200 jobs with various statuses and priorities
+        for (int i = 1; i <= 200; i++)
         {
             var jobId = $"job-{i:D3}";
             var customerId = $"cust-{(i % 10 == 0 ? 10 : i % 10):D3}"; // Cycle through first 10 customers
-            
+
             Insert.IntoTable("Jobs")
                 .Row(new
                 {
@@ -28,11 +29,11 @@ public class SeedJobsData : Migration
                     Description = $"Test job {i} description for integration testing",
                     PickupAddress = $"{100 + i} Pickup St",
                     PickupCity = "TestCity",
-                    PickupState = "TS", 
+                    PickupState = "TS",
                     PickupPostalCode = $"{10000 + i}",
                     PickupLatitude = 40.0m + (i * 0.01m),
                     PickupLongitude = -74.0m + (i * 0.01m),
-                    DeliveryAddress = $"{200 + i} Delivery Ave", 
+                    DeliveryAddress = $"{200 + i} Delivery Ave",
                     DeliveryCity = "TestTown",
                     DeliveryState = "TT",
                     DeliveryPostalCode = $"{20000 + i}",
@@ -40,7 +41,7 @@ public class SeedJobsData : Migration
                     DeliveryLongitude = -75.0m + (i * 0.01m),
                     CargoDescription = $"Test cargo {i}",
                     CargoWeight = 50.0m + i,
-                    IsHazardous = (i % 5 == 0), // Every 5th job is hazardous
+                    IsHazardous = i % 5 == 0, // Every 5th job is hazardous
                     Status = (i % 4) + 1, // Cycle through JobStatus values (1-4)
                     Priority = (i % 3) + 1, // Cycle through JobPriority values (1-3)
                     BaseRate = 100.0m + (i * 10),
@@ -50,7 +51,7 @@ public class SeedJobsData : Migration
                     EstimatedDeliveryTime = DateTime.UtcNow.AddDays(i + 1),
                     SpecialInstructions = i % 3 == 0 ? $"Special handling required for job {i}" : null,
                     CreatedAt = DateTime.UtcNow.AddDays(-i),
-                    UpdatedAt = (DateTime?)null
+                    UpdatedAt = (DateTime?)null,
                 });
         }
     }

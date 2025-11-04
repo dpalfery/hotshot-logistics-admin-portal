@@ -1,3 +1,4 @@
+#pragma warning disable SA1649
 using System;
 using System.Collections.Generic;
 using System.Data;

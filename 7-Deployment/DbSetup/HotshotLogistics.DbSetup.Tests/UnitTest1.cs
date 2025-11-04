@@ -321,7 +321,7 @@ public class DatabaseSetupIntegrationTests : IDisposable
         {
             // Fall back to environment variable or default
             return Environment.GetEnvironmentVariable("TEST_SA_CONNECTION_STRING");
-               
+
         }
     }
 

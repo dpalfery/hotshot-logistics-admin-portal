@@ -8,7 +8,8 @@ namespace HotshotLogistics.Api.Controllers
     using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
-    using HotshotLogistics.Contracts.Models;
+    using HotshotLogistics.Domain.Entities;
+using HotshotLogistics.Domain.Entities;
     using HotshotLogistics.Contracts.Services;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
@@ -153,10 +154,10 @@ namespace HotshotLogistics.Api.Controllers
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The created location tracking record.</returns>
         [HttpPost("location")]
-        [ProducesResponseType(typeof(ILocationTracking), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(LocationTracking), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<ILocationTracking>> UpdateLocation(
+        public async Task<ActionResult<LocationTracking>> UpdateLocation(
             [FromBody] UpdateLocationRequest request,
             CancellationToken cancellationToken = default)
         {
@@ -217,9 +218,9 @@ namespace HotshotLogistics.Api.Controllers
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The latest location tracking record.</returns>
         [HttpGet("location/{jobId}")]
-        [ProducesResponseType(typeof(ILocationTracking), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(LocationTracking), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<ILocationTracking>> GetCurrentLocation(string jobId, CancellationToken cancellationToken = default)
+        public async Task<ActionResult<LocationTracking>> GetCurrentLocation(string jobId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -247,9 +248,9 @@ namespace HotshotLogistics.Api.Controllers
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The location tracking history.</returns>
         [HttpGet("history/{jobId}")]
-        [ProducesResponseType(typeof(IEnumerable<ILocationTracking>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(IEnumerable<LocationTracking>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<IEnumerable<ILocationTracking>>> GetLocationHistory(
+        public async Task<ActionResult<IEnumerable<LocationTracking>>> GetLocationHistory(
             string jobId,
             [FromQuery] DateTime? startTime = null,
             [FromQuery] DateTime? endTime = null,

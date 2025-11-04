@@ -7,10 +7,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
-using HotshotLogistics.Contracts.Models;
+using HotshotLogistics.Domain.Entities;
 using HotshotLogistics.Contracts.Repositories;
 using HotshotLogistics.Data.Repositories;
-using HotshotLogistics.Domain.Models;
+using HotshotLogistics.Domain.Entities;
 using Microsoft.Extensions.Configuration;
 using Xunit;
 
@@ -21,7 +21,7 @@ namespace HotshotLogistics.Tests.Tracking
     /// </summary>
     public class LocationTrackingRepositoryTests : IClassFixture<DatabaseTestFixture>, IDisposable
     {
-        private readonly ILocationTrackingRepository _locationTrackingRepository;
+        private readonly LocationTrackingRepository _locationTrackingRepository;
         private readonly IConfiguration _configuration;
         private readonly List<long> _createdLocationTrackingIds = new();
 
@@ -379,7 +379,7 @@ namespace HotshotLogistics.Tests.Tracking
         {
             // Arrange
             var uniqueJobId = $"BATCH{Guid.NewGuid():N}";
-            var locationTrackingRecords = new List<ILocationTracking>
+            var locationTrackingRecords = new List<LocationTracking>
             {
                 CreateTestLocationTracking(uniqueJobId, 1, 40.7128m, -74.0060m),
                 CreateTestLocationTracking(uniqueJobId, 1, 40.7130m, -74.0062m),
@@ -434,7 +434,7 @@ namespace HotshotLogistics.Tests.Tracking
         /// Creates and saves a test location tracking record.
         /// </summary>
         /// <returns>A task representing the asynchronous operation.</returns>
-        private async Task<ILocationTracking> CreateAndSaveTestLocationTrackingAsync()
+        private async Task<LocationTracking> CreateAndSaveTestLocationTrackingAsync()
         {
             var locationTracking = CreateTestLocationTracking();
             var result = await _locationTrackingRepository.AddAsync(locationTracking);
@@ -446,9 +446,9 @@ namespace HotshotLogistics.Tests.Tracking
         /// Creates multiple test location tracking records for testing purposes.
         /// </summary>
         /// <returns>A task representing the asynchronous operation.</returns>
-        private async Task<List<ILocationTracking>> CreateTestLocationTrackingRecordsAsync()
+        private async Task<List<LocationTracking>> CreateTestLocationTrackingRecordsAsync()
         {
-            var locationTrackingRecords = new List<ILocationTracking>();
+            var locationTrackingRecords = new List<LocationTracking>();
 
             // Create location tracking records with different jobs and drivers
             var testData = new[]

@@ -1,24 +1,22 @@
 // <copyright file="BillingService.cs" company="PlaceholderCompany">
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
-
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using HotshotLogistics.Domain.Entities;
+using HotshotLogistics.Contracts.Repositories;
+using HotshotLogistics.Domain.Repositories;
+using HotshotLogistics.Contracts.Services;
+using HotshotLogistics.Core.Enums;
+using HotshotLogistics.Domain.ValueObjects;
+using Microsoft.Extensions.Logging;
+using Polly;
+using Polly.Retry;
 namespace HotshotLogistics.Application.Services
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using HotshotLogistics.Contracts.Models;
-    using HotshotLogistics.Contracts.Repositories;
-    using HotshotLogistics.Domain.Repositories;
-    using HotshotLogistics.Contracts.Services;
-    using HotshotLogistics.Domain.Models;
-    using HotshotLogistics.Core.Extensions;
-    using Microsoft.Extensions.Logging;
-    using Polly;
-    using Polly.Retry;
-
     /// <summary>
     /// Service for billing and invoice management operations.
     /// </summary>
@@ -85,7 +83,7 @@ namespace HotshotLogistics.Application.Services
         }
 
         /// <inheritdoc/>
-        public async Task<IInvoice> GenerateInvoiceAsync(string jobId, CancellationToken cancellationToken = default)
+        public async Task<Invoice> GenerateInvoiceAsync(string jobId, CancellationToken cancellationToken = default)
         {
             logger.LogInformation("Generating invoice for job");
 
@@ -95,7 +93,7 @@ namespace HotshotLogistics.Application.Services
                 throw new ArgumentException($"Job {jobId} not found", nameof(jobId));
             }
 
-            if (job.Status != JobStatus.Completed)
+            if (job.Status != JobStatus.Received)
             {
                 throw new InvalidOperationException($"Cannot generate invoice for job with status: {job.Status}");
             }
@@ -302,20 +300,20 @@ namespace HotshotLogistics.Application.Services
         }
 
         /// <inheritdoc/>
-        public Task<IEnumerable<IInvoice>> GetCustomerInvoicesAsync(string customerId, CancellationToken cancellationToken = default)
+        public Task<IEnumerable<Invoice>> GetCustomerInvoicesAsync(string customerId, CancellationToken cancellationToken = default)
         {
             return invoiceRepository.GetByCustomerIdAsync(customerId);
         }
 
         /// <inheritdoc/>
-        public async Task<IInvoice?> GetInvoiceByIdAsync(string invoiceId, CancellationToken cancellationToken = default)
+        public async Task<Invoice?> GetInvoiceByIdAsync(string invoiceId, CancellationToken cancellationToken = default)
         {
             logger.LogInformation("Retrieving invoice: {InvoiceId}", invoiceId);
             return await invoiceRepository.GetByIdAsync(invoiceId, cancellationToken);
         }
 
         /// <inheritdoc/>
-        public Task<IEnumerable<IInvoice>> GetOverdueInvoicesAsync(CancellationToken cancellationToken = default)
+        public Task<IEnumerable<Invoice>> GetOverdueInvoicesAsync(CancellationToken cancellationToken = default)
         {
             return invoiceRepository.GetOverdueInvoicesAsync();
         }
@@ -328,7 +326,7 @@ namespace HotshotLogistics.Application.Services
         /// <param name="notes">Optional notes for the invoice.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The created invoice.</returns>
-        public async Task<IInvoice> CreateCustomInvoiceAsync(string customerId, List<InvoiceLineItem> lineItems, string? notes = null, CancellationToken cancellationToken = default)
+        public async Task<Invoice> CreateCustomInvoiceAsync(string customerId, List<InvoiceLineItem> lineItems, string? notes = null, CancellationToken cancellationToken = default)
         {
             logger.LogInformation("Creating custom invoice for customer: {CustomerId}", customerId);
 
@@ -374,7 +372,7 @@ namespace HotshotLogistics.Application.Services
                 invoice.AddLineItem(lineItem);
             }
 
-            // Calculate tax based on customer location  
+            // Calculate tax based on customer location
             // Note: Assuming customer has a State property or we use a default
             var customerState = "CA"; // Default to California - in real implementation, get from customer.BillingAddress
             var taxRate = await CalculateTaxAsync(invoice.SubTotal, customerState, cancellationToken);
@@ -520,7 +518,7 @@ namespace HotshotLogistics.Application.Services
         /// <param name="invoice">The invoice to add line items to.</param>
         /// <param name="job">The job to create line items from.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
-        private async Task AddInvoiceLineItemsAsync(Invoice invoice, IJob job)
+        private async Task AddInvoiceLineItemsAsync(Invoice invoice, Job job)
         {
             // Base service charge
             if (job.Pricing?.BaseRate > 0)

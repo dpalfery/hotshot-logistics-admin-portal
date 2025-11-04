@@ -126,12 +126,23 @@ public class SqlServerProvisioner
         await using var connection = new SqlConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
 
-        // Use QUOTENAME for safe identifier handling
-        var query = $"CREATE DATABASE {GetQuotedIdentifier(databaseName)}";
+        // Use dynamic SQL with QUOTENAME for safe identifier handling
+        const string query = @"
+DECLARE @sql NVARCHAR(MAX) = 'CREATE DATABASE ' + QUOTENAME(@dbName);
+EXEC sp_executesql @sql, N'@dbName NVARCHAR(128)', @dbName;
+";
         await using var command = new SqlCommand(query, connection);
+        command.Parameters.AddWithValue("@dbName", databaseName);
 
-        await command.ExecuteNonQueryAsync(cancellationToken);
-        _logger.LogInformation("Created database {DatabaseName}", databaseName);
+        try
+        {
+            await command.ExecuteNonQueryAsync(cancellationToken);
+            _logger.LogInformation("Created database {DatabaseName}", databaseName);
+        }
+        catch (SqlException ex) when (ex.Number == 1801) // Database already exists
+        {
+            _logger.LogWarning("Database already exists: {Message}", ex.Message);
+        }
     }
 
     private async Task CreateLoginAsync(string connectionString, string loginName, string password, CancellationToken cancellationToken = default)
@@ -139,11 +150,14 @@ public class SqlServerProvisioner
         await using var connection = new SqlConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
 
-        // SQL Server doesn't support parameterized passwords in CREATE LOGIN
-        // Use dynamic SQL with proper escaping for the password
-        var escapedPassword = password.Replace("'", "''");
-        var query = $"CREATE LOGIN {GetQuotedIdentifier(loginName)} WITH PASSWORD = '{escapedPassword}'";
+        // Use dynamic SQL with QUOTENAME for login name and parameterized password
+        const string query = @"
+DECLARE @sql NVARCHAR(MAX) = 'CREATE LOGIN ' + QUOTENAME(@loginName) + ' WITH PASSWORD = @password';
+EXEC sp_executesql @sql, N'@loginName NVARCHAR(128), @password NVARCHAR(128)', @loginName, @password;
+";
         await using var command = new SqlCommand(query, connection);
+        command.Parameters.AddWithValue("@loginName", loginName);
+        command.Parameters.AddWithValue("@password", password);
 
         await command.ExecuteNonQueryAsync(cancellationToken);
         _logger.LogInformation("Created login {LoginName}", loginName);
@@ -159,8 +173,12 @@ public class SqlServerProvisioner
         await using var connection = new SqlConnection(builder.ConnectionString);
         await connection.OpenAsync(cancellationToken);
 
-        var query = $"CREATE USER {GetQuotedIdentifier(loginName)} FOR LOGIN {GetQuotedIdentifier(loginName)}";
+        const string query = @"
+DECLARE @sql NVARCHAR(MAX) = 'CREATE USER ' + QUOTENAME(@loginName) + ' FOR LOGIN ' + QUOTENAME(@loginName);
+EXEC sp_executesql @sql, N'@loginName NVARCHAR(128)', @loginName;
+";
         await using var command = new SqlCommand(query, connection);
+        command.Parameters.AddWithValue("@loginName", loginName);
 
         await command.ExecuteNonQueryAsync(cancellationToken);
         _logger.LogInformation("Created user {LoginName} in database {DatabaseName}", loginName, databaseName);
@@ -177,16 +195,24 @@ public class SqlServerProvisioner
         await connection.OpenAsync(cancellationToken);
 
         // Grant CONNECT permission
-        var connectQuery = $"GRANT CONNECT TO {GetQuotedIdentifier(loginName)}";
+        const string connectQuery = @"
+DECLARE @sql NVARCHAR(MAX) = 'GRANT CONNECT TO ' + QUOTENAME(@loginName);
+EXEC sp_executesql @sql, N'@loginName NVARCHAR(128)', @loginName;
+";
         await using (var command = new SqlCommand(connectQuery, connection))
         {
+            command.Parameters.AddWithValue("@loginName", loginName);
             await command.ExecuteNonQueryAsync(cancellationToken);
         }
 
         // Grant DML permissions on dbo schema
-        var dmlQuery = $"GRANT SELECT, INSERT, UPDATE, DELETE ON SCHEMA::dbo TO {GetQuotedIdentifier(loginName)}";
+        const string dmlQuery = @"
+DECLARE @sql NVARCHAR(MAX) = 'GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE ON SCHEMA::dbo TO ' + QUOTENAME(@loginName);
+EXEC sp_executesql @sql, N'@loginName NVARCHAR(128)', @loginName;
+";
         await using (var command = new SqlCommand(dmlQuery, connection))
         {
+            command.Parameters.AddWithValue("@loginName", loginName);
             await command.ExecuteNonQueryAsync(cancellationToken);
         }
 
@@ -249,8 +275,12 @@ public class SqlServerProvisioner
         await using var connection = new SqlConnection(builder.ConnectionString);
         await connection.OpenAsync(cancellationToken);
 
-        var query = $"DROP USER IF EXISTS {GetQuotedIdentifier(loginName)}";
+        const string query = @"
+DECLARE @sql NVARCHAR(MAX) = 'DROP USER IF EXISTS ' + QUOTENAME(@loginName);
+EXEC sp_executesql @sql, N'@loginName NVARCHAR(128)', @loginName;
+";
         await using var command = new SqlCommand(query, connection);
+        command.Parameters.AddWithValue("@loginName", loginName);
 
         await command.ExecuteNonQueryAsync(cancellationToken);
         _logger.LogInformation("Dropped user {LoginName} from database {DatabaseName}", loginName, databaseName);
@@ -261,10 +291,14 @@ public class SqlServerProvisioner
         await using var connection = new SqlConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
 
-        var query = $"DROP LOGIN IF EXISTS {GetQuotedIdentifier(loginName)}";
+        const string query = @"
+DECLARE @sql NVARCHAR(MAX) = 'DROP LOGIN IF EXISTS ' + QUOTENAME(@loginName);
+EXEC sp_executesql @sql, N'@loginName NVARCHAR(128)', @loginName;
+";
         await using var command = new SqlCommand(query, connection);
+        command.Parameters.AddWithValue("@loginName", loginName);
 
-        await command.ExecuteNonQueryAsync(cancellationToken);
+        await command.ExecuteNonQueryAsync(cancellationToken);  
         _logger.LogInformation("Dropped login {LoginName}", loginName);
     }
 
@@ -273,15 +307,14 @@ public class SqlServerProvisioner
         await using var connection = new SqlConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
 
-        var query = $"DROP DATABASE IF EXISTS {GetQuotedIdentifier(databaseName)}";
+        const string query = @"
+DECLARE @sql NVARCHAR(MAX) = 'DROP DATABASE IF EXISTS ' + QUOTENAME(@dbName);
+EXEC sp_executesql @sql, N'@dbName NVARCHAR(128)', @dbName;
+";
         await using var command = new SqlCommand(query, connection);
+        command.Parameters.AddWithValue("@dbName", databaseName);
 
         await command.ExecuteNonQueryAsync(cancellationToken);
         _logger.LogInformation("Dropped database {DatabaseName}", databaseName);
-    }
-
-    private static string GetQuotedIdentifier(string identifier)
-    {
-        return $"[{identifier.Replace("]", "]]")}]";
     }
 }

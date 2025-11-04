@@ -1,3 +1,4 @@
+#pragma warning disable SA1649
 using System;
 using System.Data;
 using FluentMigrator;
@@ -12,8 +13,7 @@ public class SeedDashboardTestData : Migration
         // This migration updates existing seed data to create:
         // - 41 active jobs (status = 1, InProgress)
         // - 33 overdue invoices (due date in the past)
-        // This ensures the dashboard displays meaningful test data
-        
+        // - This ensures the dashboard displays meaningful test data
         Execute.WithConnection((connection, transaction) =>
         {
             var rnd = new Random(54321); // deterministic randomness for dashboard data
@@ -23,8 +23,8 @@ public class SeedDashboardTestData : Migration
             {
                 updateJobsCmd.Transaction = transaction;
                 updateJobsCmd.CommandText = @"
-                    UPDATE TOP (41) Jobs 
-                    SET Status = 1 
+                    UPDATE TOP (41) Jobs
+                    SET Status = 1
                     WHERE Id LIKE 'job-cust-%' AND Status = 0";
                 updateJobsCmd.ExecuteNonQuery();
             }
@@ -34,7 +34,7 @@ public class SeedDashboardTestData : Migration
             {
                 updateInvoicesCmd.Transaction = transaction;
                 updateInvoicesCmd.CommandText = @"
-                    UPDATE TOP (33) Invoices 
+                    UPDATE TOP (33) Invoices
                     SET DueDate = DATEADD(day, -60, GETDATE()),
                         Status = 5,  -- Overdue
                         PaidAmount = 0
@@ -53,8 +53,8 @@ public class SeedDashboardTestData : Migration
             using var resetJobsCmd = connection.CreateCommand();
             resetJobsCmd.Transaction = transaction;
             resetJobsCmd.CommandText = @"
-                UPDATE Jobs 
-                SET Status = 0 
+                UPDATE Jobs
+                SET Status = 0
                 WHERE Id LIKE 'job-cust-%' AND Status = 1";
             resetJobsCmd.ExecuteNonQuery();
 
@@ -62,7 +62,7 @@ public class SeedDashboardTestData : Migration
             using var resetInvoicesCmd = connection.CreateCommand();
             resetInvoicesCmd.Transaction = transaction;
             resetInvoicesCmd.CommandText = @"
-                UPDATE Invoices 
+                UPDATE Invoices
                 SET DueDate = DATEADD(day, 30, InvoiceDate),
                     PaidAmount = 0,
                     Status = 0

@@ -2,8 +2,10 @@ namespace HotshotLogistics.Tests.TestHelpers
 {
     using System;
     using System.Collections.Generic;
-    using HotshotLogistics.Domain.Models;
-    using HotshotLogistics.Contracts.Models;
+    using HotshotLogistics.Domain.Entities;
+    using HotshotLogistics.Domain.Entities;
+    using HotshotLogistics.Domain.Entities;
+    using HotshotLogistics.Domain.ValueObjects;
 
     /// <summary>
     /// Test builder to create concrete Customer instances for unit tests.

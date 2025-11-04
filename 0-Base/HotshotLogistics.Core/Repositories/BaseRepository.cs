@@ -5,7 +5,6 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
-using HotshotLogistics.Contracts.Repositories;
 
 /// <summary>
 /// Base repository implementation using native ADO.NET.

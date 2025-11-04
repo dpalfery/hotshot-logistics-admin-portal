@@ -1,12 +1,20 @@
 namespace HotshotLogistics.Data.Repositories;
 #pragma warning disable SA1202 // False positive - public members are correctly ordered before protected members
 
-using Microsoft.Data.SqlClient;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
 using System.Text;
-using HotshotLogistics.Contracts.Models;
+using System.Threading;
+using System.Threading.Tasks;
 using HotshotLogistics.Contracts.Repositories;
+using HotshotLogistics.Core.Enums;
 using HotshotLogistics.Core.Repositories;
-using HotshotLogistics.Domain.Models;
+using HotshotLogistics.Domain.DTOs;
+using HotshotLogistics.Domain.Entities;
+using HotshotLogistics.Domain.ValueObjects;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 
 /// <summary>
@@ -24,7 +32,7 @@ internal class InvoiceRepository : BaseRepository<Invoice>, IInvoiceRepository
     }
 
     /// <inheritdoc/>
-    public async Task<IInvoice?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
+    public async Task<Invoice?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
     {
         var invoice = await base.GetByIdAsync(id, cancellationToken);
         if (invoice != null)
@@ -36,14 +44,14 @@ internal class InvoiceRepository : BaseRepository<Invoice>, IInvoiceRepository
     }
 
     /// <inheritdoc/>
-    public new async Task<IEnumerable<IInvoice>> GetAllAsync()
+    public new async Task<IEnumerable<Invoice>> GetAllAsync()
     {
         var invoices = await base.GetAllAsync();
-        return invoices.Cast<IInvoice>();
+        return invoices.Cast<Invoice>();
     }
 
     /// <inheritdoc/>
-    public async Task<IInvoice> AddAsync(IInvoice invoice)
+    public async Task<Invoice> AddAsync(Invoice invoice)
     {
         if (invoice is not Invoice invoiceEntity)
         {
@@ -66,7 +74,7 @@ internal class InvoiceRepository : BaseRepository<Invoice>, IInvoiceRepository
     }
 
     /// <inheritdoc/>
-    public async Task<IInvoice> UpdateAsync(IInvoice invoice)
+    public async Task<Invoice> UpdateAsync(Invoice invoice)
     {
         if (invoice is not Invoice invoiceEntity)
         {
@@ -89,7 +97,7 @@ internal class InvoiceRepository : BaseRepository<Invoice>, IInvoiceRepository
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<IInvoice>> GetByCustomerIdAsync(string customerId)
+    public async Task<IEnumerable<Invoice>> GetByCustomerIdAsync(string customerId)
     {
         const string sql = @"
             SELECT * FROM Invoices
@@ -101,7 +109,7 @@ internal class InvoiceRepository : BaseRepository<Invoice>, IInvoiceRepository
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<IInvoice>> GetByJobIdAsync(string jobId)
+    public async Task<IEnumerable<Invoice>> GetByJobIdAsync(string jobId)
     {
         const string sql = @"
             SELECT * FROM Invoices
@@ -113,7 +121,7 @@ internal class InvoiceRepository : BaseRepository<Invoice>, IInvoiceRepository
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<IInvoice>> GetByStatusAsync(InvoiceStatus status)
+    public async Task<IEnumerable<Invoice>> GetByStatusAsync(InvoiceStatus status)
     {
         const string sql = @"
             SELECT * FROM Invoices
@@ -125,7 +133,7 @@ internal class InvoiceRepository : BaseRepository<Invoice>, IInvoiceRepository
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<IInvoice>> GetOverdueInvoicesAsync()
+    public async Task<IEnumerable<Invoice>> GetOverdueInvoicesAsync()
     {
         const string sql = @"
             SELECT * FROM Invoices
@@ -144,7 +152,7 @@ internal class InvoiceRepository : BaseRepository<Invoice>, IInvoiceRepository
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<IInvoice>> GetInvoicesDueWithinDaysAsync(int days)
+    public async Task<IEnumerable<Invoice>> GetInvoicesDueWithinDaysAsync(int days)
     {
         const string sql = @"
             SELECT * FROM Invoices
@@ -164,7 +172,7 @@ internal class InvoiceRepository : BaseRepository<Invoice>, IInvoiceRepository
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<IInvoice>> GetByDateRangeAsync(DateTime startDate, DateTime endDate)
+    public async Task<IEnumerable<Invoice>> GetByDateRangeAsync(DateTime startDate, DateTime endDate)
     {
         const string sql = @"
             SELECT * FROM Invoices
@@ -181,7 +189,7 @@ internal class InvoiceRepository : BaseRepository<Invoice>, IInvoiceRepository
     }
 
     /// <inheritdoc/>
-    public async Task<PagedResult<IInvoice>> GetPagedAsync(InvoiceFilter filter)
+    public async Task<PagedResult<Invoice>> GetPagedAsync(InvoiceFilter filter)
     {
         var whereClause = new StringBuilder();
         var parameters = new List<SqlParameter>();
@@ -281,9 +289,9 @@ internal class InvoiceRepository : BaseRepository<Invoice>, IInvoiceRepository
 
         var invoices = await ExecuteQueryAsync(dataSql, dataParameters.ToArray());
 
-        return new PagedResult<IInvoice>
+        return new PagedResult<Invoice>
         {
-            Items = invoices.Cast<IInvoice>().ToList(),
+            Items = invoices.Cast<Invoice>().ToList(),
             TotalCount = totalCount,
             PageNumber = filter.PageNumber,
             PageSize = filter.PageSize,
@@ -419,7 +427,7 @@ internal class InvoiceRepository : BaseRepository<Invoice>, IInvoiceRepository
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<IInvoice>> SearchByInvoiceNumberAsync(string invoiceNumber)
+    public async Task<IEnumerable<Invoice>> SearchByInvoiceNumberAsync(string invoiceNumber)
     {
         const string sql = @"
             SELECT * FROM Invoices
@@ -478,7 +486,7 @@ internal class InvoiceRepository : BaseRepository<Invoice>, IInvoiceRepository
     }
 
     /// <inheritdoc/>
-    public async Task<IInvoice> GenerateInvoiceAsync(string jobId)
+    public async Task<Invoice> GenerateInvoiceAsync(string jobId)
     {
         // First, get the job data
         const string jobSql = @"
@@ -617,7 +625,7 @@ internal class InvoiceRepository : BaseRepository<Invoice>, IInvoiceRepository
     /// <param name="sql">The SQL query.</param>
     /// <param name="parameters">The query parameters.</param>
     /// <returns>A list of entities.</returns>
-    protected new async Task<IEnumerable<Invoice>> ExecuteQueryAsync(string sql, SqlParameter[] ? parameters = null)
+    protected new async Task<IEnumerable<Invoice>> ExecuteQueryAsync(string sql, SqlParameter[]? parameters = null)
     {
         var entities = new List<Invoice>();
 

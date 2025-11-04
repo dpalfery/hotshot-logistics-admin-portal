@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using HotshotLogistics.Contracts.Models;
+using HotshotLogistics.Core.Enums;
 
 namespace HotshotLogistics.Contracts.Services
 {

@@ -8,8 +8,10 @@ namespace HotshotLogistics.Data.Services
     using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
-    using HotshotLogistics.Contracts.Models;
     using HotshotLogistics.Contracts.Services;
+    using HotshotLogistics.Domain.DTOs;
+    using HotshotLogistics.Domain.Entities;
+    using HotshotLogistics.Domain.ValueObjects;
     using Microsoft.Extensions.Logging;
 
     /// <summary>
@@ -34,7 +36,7 @@ namespace HotshotLogistics.Data.Services
         public Task<GeocodingResult> GeocodeAddressAsync(string address, CancellationToken cancellationToken = default)
         {
             logger.LogInformation("Mock geocoding address: {Address}", address);
-            
+
             // Return mock coordinates based on a hash of the address
             var hash = Math.Abs(address.GetHashCode());
             var lat = 30.0m + (hash % 20);
@@ -183,9 +185,9 @@ namespace HotshotLogistics.Data.Services
             var dLat = ToRadians(lat2 - lat1);
             var dLon = ToRadians(lon2 - lon1);
 
-            var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
-                    Math.Cos(ToRadians(lat1)) * Math.Cos(ToRadians(lat2)) *
-                    Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+            var a = (Math.Sin(dLat / 2) * Math.Sin(dLat / 2)) +
+                    (Math.Cos(ToRadians(lat1)) * Math.Cos(ToRadians(lat2)) *
+                    Math.Sin(dLon / 2) * Math.Sin(dLon / 2));
 
             var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
 

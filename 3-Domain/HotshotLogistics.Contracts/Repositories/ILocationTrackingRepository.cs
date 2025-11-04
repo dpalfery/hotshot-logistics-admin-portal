@@ -1,4 +1,4 @@
-// <copyright file="ILocationTrackingRepository.cs" company="PlaceholderCompany">
+// <copyright file="LocationTrackingRepository.cs" company="PlaceholderCompany">
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
@@ -7,7 +7,7 @@ namespace HotshotLogistics.Contracts.Repositories
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
-    using HotshotLogistics.Contracts.Models;
+    using HotshotLogistics.Domain.Entities;
 
     /// <summary>
     /// Interface for location tracking repository operations.
@@ -19,28 +19,28 @@ namespace HotshotLogistics.Contracts.Repositories
         /// </summary>
         /// <param name="locationTracking">The location tracking record to add.</param>
         /// <returns>The added location tracking record.</returns>
-        Task<ILocationTracking> AddAsync(ILocationTracking locationTracking);
+        Task<LocationTracking> AddAsync(LocationTracking locationTracking);
 
         /// <summary>
         /// Gets a location tracking record by its identifier.
         /// </summary>
         /// <param name="id">The location tracking record identifier.</param>
         /// <returns>The location tracking record, or null if not found.</returns>
-        Task<ILocationTracking?> GetByIdAsync(long id);
+        Task<LocationTracking?> GetByIdAsync(long id);
 
         /// <summary>
         /// Gets all location tracking records for a specific job.
         /// </summary>
         /// <param name="jobId">The job identifier.</param>
         /// <returns>A collection of location tracking records for the job.</returns>
-        Task<IEnumerable<ILocationTracking>> GetByJobIdAsync(string jobId);
+        Task<IEnumerable<LocationTracking>> GetByJobIdAsync(string jobId);
 
         /// <summary>
         /// Gets all location tracking records for a specific driver.
         /// </summary>
         /// <param name="driverId">The driver identifier.</param>
         /// <returns>A collection of location tracking records for the driver.</returns>
-        Task<IEnumerable<ILocationTracking>> GetByDriverIdAsync(int driverId);
+        Task<IEnumerable<LocationTracking>> GetByDriverIdAsync(int driverId);
 
         /// <summary>
         /// Gets location tracking records for a job within a specific time range.
@@ -49,7 +49,7 @@ namespace HotshotLogistics.Contracts.Repositories
         /// <param name="startTime">The start time.</param>
         /// <param name="endTime">The end time.</param>
         /// <returns>A collection of location tracking records within the time range.</returns>
-        Task<IEnumerable<ILocationTracking>> GetByJobIdAndTimeRangeAsync(string jobId, DateTime startTime, DateTime endTime);
+        Task<IEnumerable<LocationTracking>> GetByJobIdAndTimeRangeAsync(string jobId, DateTime startTime, DateTime endTime);
 
         /// <summary>
         /// Gets location tracking records for a driver within a specific time range.
@@ -58,21 +58,21 @@ namespace HotshotLogistics.Contracts.Repositories
         /// <param name="startTime">The start time.</param>
         /// <param name="endTime">The end time.</param>
         /// <returns>A collection of location tracking records within the time range.</returns>
-        Task<IEnumerable<ILocationTracking>> GetByDriverIdAndTimeRangeAsync(int driverId, DateTime startTime, DateTime endTime);
+        Task<IEnumerable<LocationTracking>> GetByDriverIdAndTimeRangeAsync(int driverId, DateTime startTime, DateTime endTime);
 
         /// <summary>
         /// Gets the latest location tracking record for a specific job.
         /// </summary>
         /// <param name="jobId">The job identifier.</param>
         /// <returns>The latest location tracking record for the job, or null if none found.</returns>
-        Task<ILocationTracking?> GetLatestByJobIdAsync(string jobId);
+        Task<LocationTracking?> GetLatestByJobIdAsync(string jobId);
 
         /// <summary>
         /// Gets the latest location tracking record for a specific driver.
         /// </summary>
         /// <param name="driverId">The driver identifier.</param>
         /// <returns>The latest location tracking record for the driver, or null if none found.</returns>
-        Task<ILocationTracking?> GetLatestByDriverIdAsync(int driverId);
+        Task<LocationTracking?> GetLatestByDriverIdAsync(int driverId);
 
         /// <summary>
         /// Gets the latest location tracking records for a job up to a specified count.
@@ -80,7 +80,7 @@ namespace HotshotLogistics.Contracts.Repositories
         /// <param name="jobId">The job identifier.</param>
         /// <param name="count">The maximum number of records to return.</param>
         /// <returns>The latest location tracking records for the job.</returns>
-        Task<IEnumerable<ILocationTracking>> GetLatestByJobIdAsync(string jobId, int count);
+        Task<IEnumerable<LocationTracking>> GetLatestByJobIdAsync(string jobId, int count);
 
         /// <summary>
         /// Gets location tracking records within a geographic area.
@@ -91,7 +91,7 @@ namespace HotshotLogistics.Contracts.Repositories
         /// <param name="startTime">The start time for the search.</param>
         /// <param name="endTime">The end time for the search.</param>
         /// <returns>A collection of location tracking records within the geographic area.</returns>
-        Task<IEnumerable<ILocationTracking>> GetByGeographicAreaAsync(
+        Task<IEnumerable<LocationTracking>> GetByGeographicAreaAsync(
             decimal centerLatitude,
             decimal centerLongitude,
             double radiusMiles,
@@ -140,6 +140,6 @@ namespace HotshotLogistics.Contracts.Repositories
         /// </summary>
         /// <param name="locationTrackingRecords">The location tracking records to add.</param>
         /// <returns>The number of records added.</returns>
-        Task<int> AddBatchAsync(IEnumerable<ILocationTracking> locationTrackingRecords);
+        Task<int> AddBatchAsync(IEnumerable<LocationTracking> locationTrackingRecords);
     }
 }

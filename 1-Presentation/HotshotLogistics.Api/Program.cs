@@ -4,70 +4,32 @@
 
 using HotshotLogistics.Application;
 using HotshotLogistics.Data;
-using HotshotLogistics.Application.Authorization;
-using HotshotLogistics.Api.Middleware;
-using HotshotLogistics.Application.Hubs;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
-using System;
 using System.IO;
 using System.Text.Json;
 using Azure.Identity;
 using HotshotLogistics.Api;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Graph;
 using HotshotLogistics.Application.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Identity.Web;
-using Microsoft.OpenApi.Models; // Add this at the top if not present
-
+using Microsoft.OpenApi.Models;
+using HotshotLogistics.Domain.DTOs;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure configuration
-builder.Configuration.AddEnvironmentVariables();
-builder.Configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
-builder.Configuration.AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
+// Configure settings
+builder.Services.Configure<GoogleMapsSettings>(builder.Configuration.GetSection("Mapping:GoogleMaps"));
+builder.Services.Configure<AzureMapsSettings>(builder.Configuration.GetSection("Mapping:AzureMaps"));
+builder.Services.Configure<SendGridSettings>(builder.Configuration.GetSection("Communication:SendGrid"));
 
-// Load local.settings.json for local development (for compatibility with existing setup)
-if (builder.Environment.IsDevelopment())
-{
-    var localSettingsPath = Path.Combine(builder.Environment.ContentRootPath, "local.settings.json");
-    if (File.Exists(localSettingsPath))
-    {
-        using var stream = File.OpenRead(localSettingsPath);
-        using var doc = JsonDocument.Parse(stream);
-        if (doc.RootElement.TryGetProperty("Values", out var values))
-        {
-            foreach (var prop in values.EnumerateObject())
-            {
-                var key = prop.Name;
-                var value = prop.Value.GetString();
-                if (!string.IsNullOrEmpty(key) && value != null)
-                {
-                    builder.Configuration[key] = value;
-                }
-            }
-        }
-    }
-}
-
-// Get Azure App Configuration endpoint from configuration
-var appConfigEndpoint = builder.Configuration["AppConfig:Endpoint"];
-if (!string.IsNullOrEmpty(appConfigEndpoint))
-{
-    builder.Configuration.AddAzureAppConfiguration(options =>
-    {
-        options.Connect(new Uri(appConfigEndpoint), new DefaultAzureCredential())
-               .ConfigureRefresh(refresh =>
-               {
-                   refresh.Register("Sentinel", refreshAll: true)
-                          .SetRefreshInterval(TimeSpan.FromSeconds(30));
-               })
-               .Select("*");
-    });
-}
+// Add services to the container.
+builder.Services.AddHotshotRepositories();
+builder.Services.AddApplicationServices();
+builder.Services.AddMappingServices();
+builder.Services.AddCommunicationServices();
 
 // Add services to the container
 if (builder.Environment.IsDevelopment())
@@ -108,12 +70,6 @@ builder.Services.AddDistributedMemoryCache();
 // Register Azure App Configuration refresh service
 builder.Services.AddAzureAppConfiguration();
 
-// Register repositories (ADO.NET-based). DbContext removed in favor of native ADO.NET + FluentMigrator.
-builder.Services.AddHotshotRepositories();
-
-// Register application services
-builder.Services.AddApplicationServices();
-
 // Register GraphServiceClient
 builder.Services.AddScoped(sp =>
 {
@@ -123,7 +79,6 @@ builder.Services.AddScoped(sp =>
         ExcludeAzureCliCredential = true,
         ExcludeEnvironmentCredential = true,
         ExcludeManagedIdentityCredential = false,
-        ExcludeVisualStudioCodeCredential = true,
         ExcludeVisualStudioCredential = true,
         ExcludeInteractiveBrowserCredential = true
     };
@@ -134,80 +89,46 @@ builder.Services.AddScoped(sp =>
 // Add authorization
 builder.Services.AddAuthorization(options =>
 {
-    // Role-based policies
-    options.AddPolicy(AuthorizationPolicies.Admin, policy =>
-        policy.RequireRole("Admin"));
-    options.AddPolicy(AuthorizationPolicies.Manager, policy =>
-        policy.RequireRole("Manager"));
-    options.AddPolicy(AuthorizationPolicies.Driver, policy =>
-        policy.RequireRole("Driver"));
-    options.AddPolicy(AuthorizationPolicies.Customer, policy =>
-        policy.RequireRole("Customer"));
-
-    // Composite role policies
-    options.AddPolicy(AuthorizationPolicies.ManagerOrAdmin, policy =>
-        policy.RequireRole("Manager", "Admin"));
-    options.AddPolicy(AuthorizationPolicies.ManagerOrDriver, policy =>
-        policy.RequireRole("Manager", "Driver"));
-
-    // Resource-based policies
-    options.AddPolicy(AuthorizationPolicies.OwnResource, policy =>
-        policy.AddRequirements(new ResourceOwnerRequirement("Own")));
-    options.AddPolicy(AuthorizationPolicies.CustomerResource, policy =>
-        policy.AddRequirements(new ResourceOwnerRequirement("Customer")));
+    options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("Manager", policy => policy.RequireRole("Manager"));
+    options.AddPolicy("Driver", policy => policy.RequireRole("Driver"));
+    options.AddPolicy("Customer", policy => policy.RequireRole("Customer"));
+    options.AddPolicy("ManagerOrAdmin", policy => policy.RequireRole("Admin", "Manager"));
+    options.AddPolicy("ManagerOrDriver", policy => policy.RequireRole("Manager", "Driver"));
+    options.AddPolicy("OwnResource", policy => policy.RequireAuthenticatedUser()); // Placeholder for resource-based auth
+    options.AddPolicy("CustomerResource", policy => policy.RequireAuthenticatedUser()); // Placeholder for resource-based auth
 });
 
-// Register authorization handlers
-builder.Services.AddSingleton<IAuthorizationHandler, ResourceOwnerAuthorizationHandler>();
-
-// Add SignalR
-builder.Services.AddSignalR(options =>
-{
-    options.EnableDetailedErrors = true;
-    options.MaximumReceiveMessageSize = 1024 * 1024; // 1MB
-});
+// Configure SignalR
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline
+// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// Enable HTTPS redirection and security headers
+// Configure CORS policy - must be after UseHttpsRedirection but before UseAuthentication
 app.UseHttpsRedirection();
-app.UseHsts();
 
-// Enable CORS for development (configure appropriately for production)
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+
 app.UseCors(policy =>
 {
-    policy.AllowAnyOrigin()
-          .AllowAnyMethod()
-          .AllowAnyHeader();
+    policy.WithOrigins(allowedOrigins)
+          .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // Be specific
+          .WithHeaders("Content-Type", "Authorization", "X-Requested-With") // Be specific
+          .AllowCredentials();
 });
 
-// Use custom exception handling middleware
-app.UseExceptionHandling();
-
-// Enable authentication and authorization
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Map a root endpoint
-app.MapGet("/", () => Results.Redirect("/swagger"));
-
-// Map SignalR hub
-app.MapHub<RealtimeHub>("/hubs/realtime");
-        
-// Map controllers
 app.MapControllers();
 
 app.Run();
 
-
-/// &lt;summary&gt;
-/// Main entry point for the application. This partial class is required for WebApplicationFactory in integration tests.
-/// &lt;/summary&gt;
 public partial class Program { }

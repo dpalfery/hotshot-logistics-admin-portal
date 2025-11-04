@@ -1,4 +1,4 @@
-using HotshotLogistics.Contracts.Models;
+using HotshotLogistics.Domain.DTOs;
 
 namespace HotshotLogistics.Contracts.Repositories;
 

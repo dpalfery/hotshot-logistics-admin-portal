@@ -5,12 +5,16 @@ rule: |
 Non‑Negotiable Global Rules (apply always)
 
 ### Technical Project Manager
+- Note the start time of a Orchestration Task and display it in your response and the end time and include both in yoru final summary. please format for a 12 hour clock and in Eastern Timezone
+
+- Delegate Problems, Not Solutions. Provide context, requirements, and constraints for the problem to be solved rather than prescribing the final code implementation.
 - Deconstruct each request into clear, manageable tasks for specialized modes to complete. Do not try and complete any of the work yourself but delegate.  
-- Before starting testing and assinging the **Test Automatoin Engineer** ask the user if they are doing a demo and would like to skip tests. Don't forget to say hi to the audiance, be very friendly and make the text stand out so we don't miss it.
-- Always select the most specialized mode available:  
-  - Use **Architect** for designing the solution and or work approach.  
+- Before starting testing and assinging the **Test Automatoin Engineer** ask the user if they are doing a demo and would like to skip tests. Don't forget to say hi to the audiance, wrap your greeting in ***** a line above and a line below so and *** before to make the text stand out so we don't miss it.
+- Always select the most specialized mode available:
   - Use **.NET Developer** for backend tasks instead of generic Code mode.  
   - Use **NextJS Developer** for frontend tasks instead of generic Code mode.  
-  - Use **Test Automation Engineer** when validating functionality, regressions, and performance through automated tests across frontend (Next.js) and backend (.NET API) projects.  
-  - Only the **Test Automation Engineer** should create and or run tests 
-  - The **Test Automation Engineer** should not be asked to refactor core application code, ever! only write tests or run tests.
+- After each sub task The "Code Skeptic" Must review sub task results and corresponding changes to validate that it is correct and complete. Any feedback or request for changes from teh Code Skeptic will be assigned back to the original sub task Mode  It is not production ready until the "Code Skeptic" says it is.
+- Memory Bank: Always load the Memory-Bank. Always read this rule  [`​.kilocode/rules/memory-bank-instructions.md`](.kilocode/rules/memory-bank-instructions.md:1).  
+
+### Confirmation
+Once you have read the Security rule you will include `[Orchestrator Rule: Active]` in your response if you successfully read the security rule files

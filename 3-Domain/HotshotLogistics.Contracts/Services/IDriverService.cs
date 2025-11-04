@@ -1,12 +1,12 @@
-using HotshotLogistics.Contracts.Models;
+using HotshotLogistics.Domain.Entities;
 
 namespace HotshotLogistics.Contracts.Services;
 
 public interface IDriverService
 {
-    Task<IEnumerable<IDriver>> GetDriversAsync();
-    Task<IDriver?> GetDriverByIdAsync(int id);
-    Task<IDriver> CreateDriverAsync(IDriver driver);
-    Task<IDriver> UpdateDriverAsync(IDriver driver);
+    Task<IEnumerable<Driver>> GetDriversAsync();
+    Task<Driver?> GetDriverByIdAsync(int id);
+    Task<Driver> CreateDriverAsync(Driver driver);
+    Task<Driver> UpdateDriverAsync(Driver driver);
     Task<bool> DeleteDriverAsync(int id);
 }

@@ -1,3 +1,4 @@
+#pragma warning disable SA1649
 using FluentMigrator;
 
 namespace HotshotLogistics.Data.Migrations;
@@ -13,36 +14,39 @@ public class SeedContactsData : Migration
     /// </summary>
     public override void Up()
     {
-        // Seed primary contacts for the first 10 customers
-        for (int i = 1; i <= 10; i++)
+        // Seed primary contacts for the existing customers (cust-1, cust-2)
+        var existingCustomerIds = new[] { "cust-1", "cust-2" };
+
+        for (int i = 0; i < existingCustomerIds.Length; i++)
         {
-            var customerId = $"cust-{i:D3}";
-            
+            var customerId = existingCustomerIds[i];
+            var contactIndex = i + 1;
+
             Insert.IntoTable("Contacts")
                 .Row(new
                 {
                     CustomerId = customerId,
-                    Name = $"Primary Contact {i}",
-                    Email = $"contact{i:D3}@seedtest.com",
-                    Phone = $"555-30{i:D2}",
+                    Name = $"Primary Contact {contactIndex}",
+                    Email = $"contact{contactIndex:D3}@seedtest.com",
+                    Phone = $"555-30{contactIndex:D2}",
                     Title = "Operations Manager",
                     IsPrimary = true,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
                 });
-                
-            // Add a secondary contact for every 3rd customer
-            if (i % 3 == 0)
+
+            // Add a secondary contact for the first customer
+            if (i == 0)
             {
                 Insert.IntoTable("Contacts")
                     .Row(new
                     {
                         CustomerId = customerId,
-                        Name = $"Secondary Contact {i}",
-                        Email = $"secondary{i:D3}@seedtest.com",
-                        Phone = $"555-31{i:D2}",
+                        Name = $"Secondary Contact {contactIndex}",
+                        Email = $"secondary{contactIndex:D3}@seedtest.com",
+                        Phone = $"555-31{contactIndex:D2}",
                         Title = "Account Manager",
                         IsPrimary = false,
-                        CreatedAt = DateTime.UtcNow
+                        CreatedAt = DateTime.UtcNow,
                     });
             }
         }

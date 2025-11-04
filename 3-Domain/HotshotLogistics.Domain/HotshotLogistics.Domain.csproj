@@ -5,6 +5,6 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\HotshotLogistics.Contracts\HotshotLogistics.Contracts.csproj" />
+    <ProjectReference Include="..\..\0-Base\HotshotLogistics.Core\HotshotLogistics.Core.csproj" />
   </ItemGroup>
 </Project>

@@ -9,11 +9,12 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-
-using HotshotLogistics.Contracts.Models;
 using HotshotLogistics.Contracts.Repositories;
+using HotshotLogistics.Core.Enums;
 using HotshotLogistics.Core.Repositories;
-using HotshotLogistics.Domain.Models;
+using HotshotLogistics.Domain.DTOs;
+using HotshotLogistics.Domain.Entities;
+using HotshotLogistics.Domain.ValueObjects;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 
@@ -23,7 +24,7 @@ namespace HotshotLogistics.Data.Repositories
     /// <summary>
     /// Repository for managing Job entities using native ADO.NET.
     /// </summary>
-    internal class JobRepository : BaseRepository<JobDto>, IJobRepository
+internal class JobRepository : BaseRepository<Job>, IJobRepository
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="JobRepository"/> class.
@@ -35,27 +36,26 @@ namespace HotshotLogistics.Data.Repositories
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<IJob>> GetJobsAsync(CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<Job>> GetJobsAsync(CancellationToken cancellationToken = default)
         {
             return await GetAllAsync();
         }
 
         /// <inheritdoc/>
-        public async Task<IJob?> GetJobByIdAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<Job?> GetJobByIdAsync(string id, CancellationToken cancellationToken = default)
         {
             return await GetByIdAsync(id);
         }
 
         /// <inheritdoc/>
-        public async Task<IJob> CreateJobAsync(IJob job, CancellationToken cancellationToken = default)
+        public async Task<Job> CreateJobAsync(Job job, CancellationToken cancellationToken = default)
         {
-            var jobDto = (JobDto)job;
-            jobDto.CreatedAt = DateTime.UtcNow;
-            return await AddAsync(jobDto);
+            job.CreatedAt = DateTime.UtcNow;
+            return await AddAsync(job);
         }
 
         /// <inheritdoc/>
-        public async Task<IJob?> UpdateJobAsync(string id, IJob jobDetails, CancellationToken cancellationToken = default)
+        public async Task<Job?> UpdateJobAsync(string id, Job jobDetails, CancellationToken cancellationToken = default)
         {
             var existingJob = await GetByIdAsync(id);
             if (existingJob == null)
@@ -63,23 +63,20 @@ namespace HotshotLogistics.Data.Repositories
                 return null;
             }
 
-            var jobDto = (JobDto)existingJob;
-            var detailsDto = (JobDto)jobDetails;
+            existingJob.Title = jobDetails.Title;
+            existingJob.CustomerId = jobDetails.CustomerId;
+            existingJob.PickupLocation = jobDetails.PickupLocation;
+            existingJob.DeliveryLocation = jobDetails.DeliveryLocation;
+            existingJob.Status = jobDetails.Status;
+            existingJob.Priority = jobDetails.Priority;
+            existingJob.Pricing = jobDetails.Pricing;
+            existingJob.EstimatedDeliveryTime = jobDetails.EstimatedDeliveryTime;
+            existingJob.ScheduledPickupTime = jobDetails.ScheduledPickupTime;
+            existingJob.AssignedDriverId = jobDetails.AssignedDriverId;
+            existingJob.SpecialInstructions = jobDetails.SpecialInstructions;
+            existingJob.UpdatedAt = DateTime.UtcNow;
 
-            jobDto.Title = detailsDto.Title;
-            jobDto.CustomerId = detailsDto.CustomerId;
-            jobDto.PickupAddress = detailsDto.PickupAddress;
-            jobDto.DropoffAddress = detailsDto.DropoffAddress;
-            jobDto.Status = detailsDto.Status;
-            jobDto.Priority = detailsDto.Priority;
-            jobDto.Amount = detailsDto.Amount;
-            jobDto.EstimatedDeliveryTimeString = detailsDto.EstimatedDeliveryTimeString;
-            jobDto.ScheduledPickupTime = detailsDto.ScheduledPickupTime;
-            jobDto.AssignedDriverId = detailsDto.AssignedDriverId;
-            jobDto.SpecialInstructions = detailsDto.SpecialInstructions;
-            jobDto.UpdatedAt = DateTime.UtcNow;
-
-            return await UpdateAsync(jobDto);
+            return await UpdateAsync(existingJob);
         }
 
         /// <inheritdoc/>
@@ -89,8 +86,8 @@ namespace HotshotLogistics.Data.Repositories
         }
 
         /// <inheritdoc/>
-        public async Task<PagedResult<IJob>> GetJobsAsync(
-            JobFilter? filter = null,
+        public async Task<PagedResult<Job>> GetJobsAsync(
+            JobFilterDto? filter = null,
             PaginationParameters? pagination = null,
             SortParameters? sort = null,
             CancellationToken cancellationToken = default)
@@ -101,6 +98,11 @@ namespace HotshotLogistics.Data.Repositories
             var (whereClause, parameters) = BuildWhereClause(filter);
             var orderByClause = BuildOrderByClause(sort);
 
+            // Log the query details for debugging
+            Console.WriteLine($"[DEBUG] JobRepository.GetJobsAsync - Filter: {filter}, Pagination: {pagination}, Sort: {sort}");
+            Console.WriteLine($"[DEBUG] JobRepository.GetJobsAsync - WhereClause: {whereClause}");
+            Console.WriteLine($"[DEBUG] JobRepository.GetJobsAsync - OrderByClause: {orderByClause}");
+
             var countQuery = $"SELECT COUNT(*) FROM {GetTableName()}{whereClause}";
             var dataQuery = $@"
                 SELECT * FROM {GetTableName()}
@@ -109,7 +111,7 @@ namespace HotshotLogistics.Data.Repositories
                 OFFSET @Skip ROWS
                 FETCH NEXT @PageSize ROWS ONLY";
 
-            var jobs = new List<IJob>();
+            var jobs = new List<Job>();
             int totalCount = 0;
 
             await using var connection = new SqlConnection(ConnectionString);
@@ -136,20 +138,26 @@ namespace HotshotLogistics.Data.Repositories
                 }
             }
 
-            return new PagedResult<IJob>
+            var result = new PagedResult<Job>
             {
                 Items = jobs,
                 TotalCount = totalCount,
                 PageNumber = pagination.PageNumber,
                 PageSize = pagination.PageSize,
             };
+
+            // Log the results for debugging
+            Console.WriteLine($"[DEBUG] JobRepository.GetJobsAsync - TotalCount: {totalCount}, Items returned: {jobs.Count}");
+            Console.WriteLine($"[DEBUG] JobRepository.GetJobsAsync - PageNumber: {pagination.PageNumber}, PageSize: {pagination.PageSize}");
+
+            return result;
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<IJob>> GetJobsByStatusAsync(JobStatus status, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<Job>> GetJobsByStatusAsync(JobStatus status, CancellationToken cancellationToken = default)
         {
             var query = $"SELECT * FROM {GetTableName()} WHERE Status = @Status ORDER BY CreatedAt DESC";
-            var jobs = new List<IJob>();
+            var jobs = new List<Job>();
 
             await using var connection = new SqlConnection(ConnectionString);
             await connection.OpenAsync(cancellationToken);
@@ -167,10 +175,10 @@ namespace HotshotLogistics.Data.Repositories
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<IJob>> GetJobsByDriverAsync(int driverId, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<Job>> GetJobsByDriverAsync(int driverId, CancellationToken cancellationToken = default)
         {
             var query = $"SELECT * FROM {GetTableName()} WHERE AssignedDriverId = @DriverId ORDER BY ScheduledPickupTime ASC";
-            var jobs = new List<IJob>();
+            var jobs = new List<Job>();
 
             await using var connection = new SqlConnection(ConnectionString);
             await connection.OpenAsync(cancellationToken);
@@ -188,10 +196,10 @@ namespace HotshotLogistics.Data.Repositories
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<IJob>> GetJobsByCustomerAsync(string customerId, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<Job>> GetJobsByCustomerAsync(string customerId, CancellationToken cancellationToken = default)
         {
             var query = $"SELECT * FROM {GetTableName()} WHERE CustomerId = @CustomerId ORDER BY CreatedAt DESC";
-            var jobs = new List<IJob>();
+            var jobs = new List<Job>();
 
             await using var connection = new SqlConnection(ConnectionString);
             await connection.OpenAsync(cancellationToken);
@@ -209,22 +217,22 @@ namespace HotshotLogistics.Data.Repositories
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<IJob>> GetOverdueJobsAsync(CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<Job>> GetOverdueJobsAsync(CancellationToken cancellationToken = default)
         {
             var query = $@"
                 SELECT * FROM {GetTableName()}
                 WHERE EstimatedDeliveryTime < @CurrentTime
                 AND Status NOT IN (@DeliveredStatus, @CancelledStatus)
                 ORDER BY EstimatedDeliveryTime ASC";
-            var jobs = new List<IJob>();
+            var jobs = new List<Job>();
 
             await using var connection = new SqlConnection(ConnectionString);
             await connection.OpenAsync(cancellationToken);
 
             using var command = new SqlCommand(query, connection);
             command.Parameters.AddWithValue("@CurrentTime", DateTime.UtcNow);
-            command.Parameters.AddWithValue("@DeliveredStatus", (int)JobStatus.Completed);
-            command.Parameters.AddWithValue("@CancelledStatus", (int)JobStatus.Cancelled);
+            command.Parameters.AddWithValue("@DeliveredStatus", (int)JobStatus.Received);
+            command.Parameters.AddWithValue("@CancelledStatus", (int)JobStatus.Pending);
 
             await using var reader = await command.ExecuteReaderAsync(cancellationToken);
             while (await reader.ReadAsync(cancellationToken))
@@ -236,7 +244,7 @@ namespace HotshotLogistics.Data.Repositories
         }
 
         /// <inheritdoc/>
-        public async Task<int> GetJobCountAsync(JobFilter? filter = null, CancellationToken cancellationToken = default)
+        public async Task<int> GetJobCountAsync(JobFilterDto? filter = null, CancellationToken cancellationToken = default)
         {
             var (whereClause, parameters) = BuildWhereClause(filter);
             var query = $"SELECT COUNT(*) FROM {GetTableName()}{whereClause}";
@@ -250,7 +258,7 @@ namespace HotshotLogistics.Data.Repositories
             return (int)await command.ExecuteScalarAsync(cancellationToken);
         }
 
-        public async Task<IEnumerable<IJob>> GetByDriverIdAsync(int driverId, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<Job>> GetByDriverIdAsync(int driverId, CancellationToken cancellationToken = default)
         {
             return await GetJobsByDriverAsync(driverId, cancellationToken);
         }
@@ -262,20 +270,25 @@ namespace HotshotLogistics.Data.Repositories
         protected override string GetPrimaryKeyColumnName() => "Id";
 
         /// <inheritdoc/>
-        protected override JobDto MapReaderToEntity(SqlDataReader reader)
+        protected override Job MapReaderToEntity(SqlDataReader reader)
         {
-            return new JobDto
+            return new Job
             {
                 Id = reader.GetString(reader.GetOrdinal("Id")),
                 CustomerId = reader.IsDBNull(reader.GetOrdinal("CustomerId")) ? string.Empty : reader.GetString(reader.GetOrdinal("CustomerId")),
                 Title = reader.GetString(reader.GetOrdinal("Title")),
-                PickupAddress = reader.GetString(reader.GetOrdinal("PickupAddress")),
-                DropoffAddress = reader.GetString(reader.GetOrdinal("DeliveryAddress")),
+                PickupLocation = new Location
+                {
+                    Address = reader.GetString(reader.GetOrdinal("PickupAddress"))
+                },
+                DeliveryLocation = new Location
+                {
+                    Address = reader.GetString(reader.GetOrdinal("DeliveryAddress"))
+                },
                 Status = (JobStatus)reader.GetInt32(reader.GetOrdinal("Status")),
                 Priority = (JobPriority)reader.GetInt32(reader.GetOrdinal("Priority")),
-                Amount = reader.GetDecimal(reader.GetOrdinal("TotalAmount")),
                 Pricing = new PricingDetails { TotalAmount = reader.GetDecimal(reader.GetOrdinal("TotalAmount")) },
-                EstimatedDeliveryTimeString = reader.GetDateTime(reader.GetOrdinal("EstimatedDeliveryTime")).ToString("O"),
+                EstimatedDeliveryTime = reader.GetDateTime(reader.GetOrdinal("EstimatedDeliveryTime")),
                 ScheduledPickupTime = reader.IsDBNull(reader.GetOrdinal("ScheduledPickupTime")) ? DateTime.UtcNow : reader.GetDateTime(reader.GetOrdinal("ScheduledPickupTime")),
                 AssignedDriverId = reader.IsDBNull(reader.GetOrdinal("AssignedDriverId")) ? null : reader.GetInt32(reader.GetOrdinal("AssignedDriverId")),
                 CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
@@ -285,19 +298,19 @@ namespace HotshotLogistics.Data.Repositories
         }
 
         /// <inheritdoc/>
-        protected override SqlParameter[] GetInsertParameters(JobDto entity)
+        protected override SqlParameter[] GetInsertParameters(Job entity)
         {
             return new[]
             {
                 new SqlParameter("@Id", SqlDbType.NVarChar) { Value = entity.Id },
                 new SqlParameter("@CustomerId", SqlDbType.NVarChar) { Value = entity.CustomerId },
                 new SqlParameter("@Title", SqlDbType.NVarChar) { Value = entity.Title },
-                new SqlParameter("@PickupAddress", SqlDbType.NVarChar) { Value = entity.PickupAddress },
-                new SqlParameter("@DeliveryAddress", SqlDbType.NVarChar) { Value = entity.DropoffAddress },
+                new SqlParameter("@PickupAddress", SqlDbType.NVarChar) { Value = entity.PickupLocation.Address },
+                new SqlParameter("@DeliveryAddress", SqlDbType.NVarChar) { Value = entity.DeliveryLocation.Address },
                 new SqlParameter("@Status", SqlDbType.Int) { Value = (int)entity.Status },
                 new SqlParameter("@Priority", SqlDbType.Int) { Value = (int)entity.Priority },
-                new SqlParameter("@TotalAmount", SqlDbType.Decimal) { Value = entity.Amount },
-                new SqlParameter("@EstimatedDeliveryTime", SqlDbType.DateTime2) { Value = DateTime.Parse(entity.EstimatedDeliveryTimeString) },
+                new SqlParameter("@TotalAmount", SqlDbType.Decimal) { Value = entity.Pricing.TotalAmount },
+                new SqlParameter("@EstimatedDeliveryTime", SqlDbType.DateTime2) { Value = entity.EstimatedDeliveryTime },
                 new SqlParameter("@ScheduledPickupTime", SqlDbType.DateTime2) { Value = entity.ScheduledPickupTime },
                 new SqlParameter("@AssignedDriverId", SqlDbType.Int) { Value = (object?)entity.AssignedDriverId ?? DBNull.Value },
                 new SqlParameter("@SpecialInstructions", SqlDbType.NVarChar) { Value = (object?)entity.SpecialInstructions ?? DBNull.Value },
@@ -305,19 +318,19 @@ namespace HotshotLogistics.Data.Repositories
         }
 
         /// <inheritdoc/>
-        protected override SqlParameter[] GetUpdateParameters(JobDto entity)
+        protected override SqlParameter[] GetUpdateParameters(Job entity)
         {
             return new[]
             {
                 new SqlParameter("@Id", SqlDbType.NVarChar) { Value = entity.Id },
                 new SqlParameter("@CustomerId", SqlDbType.NVarChar) { Value = entity.CustomerId },
                 new SqlParameter("@Title", SqlDbType.NVarChar) { Value = entity.Title },
-                new SqlParameter("@PickupAddress", SqlDbType.NVarChar) { Value = entity.PickupAddress },
-                new SqlParameter("@DeliveryAddress", SqlDbType.NVarChar) { Value = entity.DropoffAddress },
+                new SqlParameter("@PickupAddress", SqlDbType.NVarChar) { Value = entity.PickupLocation.Address },
+                new SqlParameter("@DeliveryAddress", SqlDbType.NVarChar) { Value = entity.DeliveryLocation.Address },
                 new SqlParameter("@Status", SqlDbType.Int) { Value = (int)entity.Status },
                 new SqlParameter("@Priority", SqlDbType.Int) { Value = (int)entity.Priority },
-                new SqlParameter("@TotalAmount", SqlDbType.Decimal) { Value = entity.Amount },
-                new SqlParameter("@EstimatedDeliveryTime", SqlDbType.DateTime2) { Value = DateTime.Parse(entity.EstimatedDeliveryTimeString) },
+                new SqlParameter("@TotalAmount", SqlDbType.Decimal) { Value = entity.Pricing.TotalAmount },
+                new SqlParameter("@EstimatedDeliveryTime", SqlDbType.DateTime2) { Value = entity.EstimatedDeliveryTime },
                 new SqlParameter("@ScheduledPickupTime", SqlDbType.DateTime2) { Value = entity.ScheduledPickupTime },
                 new SqlParameter("@AssignedDriverId", SqlDbType.Int) { Value = (object?)entity.AssignedDriverId ?? DBNull.Value },
                 new SqlParameter("@SpecialInstructions", SqlDbType.NVarChar) { Value = (object?)entity.SpecialInstructions ?? DBNull.Value },
@@ -329,7 +342,7 @@ namespace HotshotLogistics.Data.Repositories
         /// </summary>
         /// <param name="filter">The job filter criteria.</param>
         /// <returns>A tuple containing the WHERE clause and SQL parameters.</returns>
-        private static (string whereClause, IEnumerable<SqlParameter> parameters) BuildWhereClause(JobFilter? filter)
+        private static (string WhereClause, IEnumerable<SqlParameter> Parameters) BuildWhereClause(JobFilterDto? filter)
         {
             if (filter == null)
             {
@@ -461,24 +474,21 @@ namespace HotshotLogistics.Data.Repositories
             {
                 if (filter.IsActive.Value)
                 {
-                    conditions.Add("Status NOT IN (@CancelledStatus, @CompletedStatus)");
-                    parameters.Add(new SqlParameter("@CancelledStatus", SqlDbType.Int) { Value = (int)JobStatus.Cancelled });
-                    parameters.Add(new SqlParameter("@CompletedStatus", SqlDbType.Int) { Value = (int)JobStatus.Completed });
+                    conditions.Add("Status NOT IN (@ReceivedStatus)");
+                    parameters.Add(new SqlParameter("@ReceivedStatus", SqlDbType.Int) { Value = (int)JobStatus.Received });
                 }
                 else
                 {
-                    conditions.Add("Status IN (@CancelledStatus, @CompletedStatus)");
-                    parameters.Add(new SqlParameter("@CancelledStatus", SqlDbType.Int) { Value = (int)JobStatus.Cancelled });
-                    parameters.Add(new SqlParameter("@CompletedStatus", SqlDbType.Int) { Value = (int)JobStatus.Completed });
+                    conditions.Add("Status IN (@ReceivedStatus)");
+                    parameters.Add(new SqlParameter("@ReceivedStatus", SqlDbType.Int) { Value = (int)JobStatus.Received });
                 }
             }
 
             if (filter.IsOverdue.HasValue && filter.IsOverdue.Value)
             {
-                conditions.Add("EstimatedDeliveryTime < @CurrentTime AND Status NOT IN (@DeliveredStatus, @CancelledStatus)");
+                conditions.Add("EstimatedDeliveryTime < @CurrentTime AND Status NOT IN (@DeliveredStatus)");
                 parameters.Add(new SqlParameter("@CurrentTime", SqlDbType.DateTime2) { Value = DateTime.UtcNow });
-                parameters.Add(new SqlParameter("@DeliveredStatus", SqlDbType.Int) { Value = (int)JobStatus.Completed });
-                parameters.Add(new SqlParameter("@CancelledStatus", SqlDbType.Int) { Value = (int)JobStatus.Cancelled });
+                parameters.Add(new SqlParameter("@DeliveredStatus", SqlDbType.Int) { Value = (int)JobStatus.Received });
             }
 
             var whereClause = conditions.Any() ? $" WHERE {string.Join(" AND ", conditions)}" : string.Empty;
@@ -533,26 +543,24 @@ namespace HotshotLogistics.Data.Repositories
         }
 
         // Explicit interface implementations to bridge concrete/interface types
-        async Task<IJob?> IJobRepository.GetByIdAsync(object id)
+        async Task<Job?> IJobRepository.GetByIdAsync(object id)
         {
             return await GetByIdAsync(id);
         }
 
-        async Task<IEnumerable<IJob>> IJobRepository.GetAllAsync()
+        async Task<IEnumerable<Job>> IJobRepository.GetAllAsync()
         {
             return await GetAllAsync();
         }
 
-        async Task<IJob> IJobRepository.AddAsync(IJob entity)
+        async Task<Job> IJobRepository.AddAsync(Job entity)
         {
-            var jobDto = entity as JobDto ?? throw new ArgumentException("Entity must be JobDto", nameof(entity));
-            return await AddAsync(jobDto);
+            return await AddAsync(entity);
         }
 
-        async Task<IJob> IJobRepository.UpdateAsync(IJob entity)
+        async Task<Job> IJobRepository.UpdateAsync(Job entity)
         {
-            var jobDto = entity as JobDto ?? throw new ArgumentException("Entity must be JobDto", nameof(entity));
-            return await UpdateAsync(jobDto);
+            return await UpdateAsync(entity);
         }
 
         async Task<bool> IJobRepository.DeleteAsync(object id)

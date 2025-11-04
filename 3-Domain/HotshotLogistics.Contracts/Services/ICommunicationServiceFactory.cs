@@ -1,4 +1,4 @@
-using HotshotLogistics.Contracts.Models;
+using HotshotLogistics.Domain.Entities;
 
 namespace HotshotLogistics.Contracts.Services;
 
@@ -12,5 +12,5 @@ public interface ICommunicationServiceFactory
     /// </summary>
     /// <param name="type">The communication type.</param>
     /// <returns>The communication service instance.</returns>
-    ICommunicationService GetService(CommunicationType type);
+    ICommunicationService GetService(string type);
 }

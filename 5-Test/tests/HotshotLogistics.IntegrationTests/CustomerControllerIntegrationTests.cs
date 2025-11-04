@@ -1,7 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
-using HotshotLogistics.Contracts.Models;
-using HotshotLogistics.Domain.Models;
+using HotshotLogistics.Domain.Entities;
+using HotshotLogistics.Domain.Entities;
+using HotshotLogistics.Domain.ValueObjects;
 using Microsoft.AspNetCore.Mvc.Testing;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,6 +10,7 @@ using System.Threading.Tasks;
 using Xunit;
 using System;
 using System.Net.Http.Headers;
+using HotshotLogistics.Core.Enums;
 
 namespace HotshotLogistics.IntegrationTests
 {
@@ -175,11 +177,11 @@ namespace HotshotLogistics.IntegrationTests
                 Email = "updated.customer@test.com",
                 Phone = "555-UPDATED",
                 TaxId = "TAX-UPDATED-001",
-                BillingAddress = new Address 
-                { 
-                    Street = "456 Update Ave", 
-                    City = "UpdateCity", 
-                    State = "UP", 
+                BillingAddress = new Address
+                {
+                    Street = "456 Update Ave",
+                    City = "UpdateCity",
+                    State = "UP",
                     ZipCode = "54321",
                     Country = "USA",
                     Latitude = 41.0,
@@ -301,7 +303,7 @@ namespace HotshotLogistics.IntegrationTests
 
             // Assert
             response.EnsureSuccessStatusCode();
-            var jobs = await response.Content.ReadFromJsonAsync<IEnumerable<Job>>();
+            var jobs = await response.Content.ReadFromJsonAsync<IEnumerable<Domain.Entities.Job>>();
             Assert.NotNull(jobs);
             Assert.NotEmpty(jobs);
         }

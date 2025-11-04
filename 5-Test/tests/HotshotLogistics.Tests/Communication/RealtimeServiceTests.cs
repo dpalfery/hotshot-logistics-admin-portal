@@ -4,7 +4,8 @@ using Xunit;
 using FluentAssertions;
 using HotshotLogistics.Application.Services;
 using HotshotLogistics.Contracts.Hubs;
-using HotshotLogistics.Contracts.Models;
+using HotshotLogistics.Domain.Entities;
+using HotshotLogistics.Domain.Entities;
 namespace HotshotLogistics.Tests.Communication
 {
     /// <summary>
@@ -27,7 +28,7 @@ public class RealtimeServiceTests
     {
         // Arrange
         var jobId = "job-123";
-        var status = JobStatus.InProgress;
+        var status = JobStatus.EnRoute;
 
         // Act
         await _realtimeService.BroadcastJobStatusUpdate(jobId, status);
@@ -107,7 +108,7 @@ public class RealtimeServiceTests
     public async Task BroadcastNewJobAvailable_ShouldSendToAvailableDrivers()
     {
         // Arrange
-        var job = new JobDto
+        var job = new Domain.Entities.JobDto
         {
             Id = "job-123",
             CustomerId = "customer-456",
@@ -139,7 +140,7 @@ public class RealtimeServiceTests
     public async Task SendNotification_WithUserId_ShouldSendToSpecificUser()
     {
         // Arrange
-        var message = new NotificationMessage
+        var message = new NotificationMessageDto
         {
             Id = "notif-123",
             Title = "Test Notification",
@@ -170,7 +171,7 @@ public class RealtimeServiceTests
     public async Task SendNotification_WithoutUserId_ShouldBroadcastToAll()
     {
         // Arrange
-        var message = new NotificationMessage
+        var message = new NotificationMessageDto
         {
             Id = "notif-123",
             Title = "System Alert",
@@ -252,7 +253,7 @@ public class RealtimeServiceTests
     {
         // Arrange
         var jobId = "job-123";
-        var status = JobStatus.InProgress;
+        var status = JobStatus.EnRoute;
         var expectedException = new Exception("SignalR error");
 
         _mockSignalRClient.Setup(x => x.SendToGroupAsync($"job-{jobId}", "JobStatusUpdated", jobId, status))

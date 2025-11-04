@@ -10,9 +10,12 @@ namespace HotshotLogistics.Data.Services
     using System.Text.Json;
     using System.Threading;
     using System.Threading.Tasks;
-    using HotshotLogistics.Contracts.Models;
     using HotshotLogistics.Contracts.Services;
+    using HotshotLogistics.Domain.DTOs;
+    using HotshotLogistics.Domain.Entities;
+    using HotshotLogistics.Domain.ValueObjects;
     using Microsoft.Extensions.Logging;
+    using Microsoft.Extensions.Options;
 
     /// <summary>
     /// Google Maps implementation of the mapping service.
@@ -28,12 +31,13 @@ namespace HotshotLogistics.Data.Services
         /// </summary>
         /// <param name="httpClient">The HTTP client for API calls.</param>
         /// <param name="logger">The logger.</param>
-        /// <param name="apiKey">The Google Maps API key.</param>
-        public GoogleMapsService(HttpClient httpClient, ILogger<GoogleMapsService> logger, string apiKey)
+        /// <param name="settings">The Google Maps settings.</param>
+        public GoogleMapsService(HttpClient httpClient, ILogger<GoogleMapsService> logger, IOptions<GoogleMapsSettings> settings)
         {
             this.httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            this.apiKey = apiKey ?? throw new ArgumentNullException(nameof(apiKey));
+            var googleMapsSettings = settings?.Value ?? throw new ArgumentNullException(nameof(settings));
+            this.apiKey = googleMapsSettings.ApiKey ?? throw new ArgumentNullException(nameof(googleMapsSettings.ApiKey));
         }
 
         /// <inheritdoc/>

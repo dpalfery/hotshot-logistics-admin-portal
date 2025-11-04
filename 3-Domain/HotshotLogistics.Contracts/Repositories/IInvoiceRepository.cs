@@ -1,6 +1,8 @@
-namespace HotshotLogistics.Contracts.Repositories;
+using HotshotLogistics.Domain.Entities;
+using HotshotLogistics.Core.Enums;
+using HotshotLogistics.Domain.DTOs;
 
-using HotshotLogistics.Contracts.Models;
+namespace HotshotLogistics.Contracts.Repositories;
 
 /// <summary>
 /// Repository interface for invoice operations.
@@ -13,27 +15,27 @@ public interface IInvoiceRepository
     /// <param name="id">The invoice identifier.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The invoice if found, null otherwise.</returns>
-    Task<IInvoice?> GetByIdAsync(string id, CancellationToken cancellationToken = default);
+    Task<Invoice?> GetByIdAsync(string id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets all invoices.
     /// </summary>
     /// <returns>A list of all invoices.</returns>
-    Task<IEnumerable<IInvoice>> GetAllAsync();
+    Task<IEnumerable<Invoice>> GetAllAsync();
 
     /// <summary>
     /// Adds a new invoice.
     /// </summary>
     /// <param name="invoice">The invoice to add.</param>
     /// <returns>The added invoice.</returns>
-    Task<IInvoice> AddAsync(IInvoice invoice);
+    Task<Invoice> AddAsync(Invoice invoice);
 
     /// <summary>
     /// Updates an existing invoice.
     /// </summary>
     /// <param name="invoice">The invoice to update.</param>
     /// <returns>The updated invoice.</returns>
-    Task<IInvoice> UpdateAsync(IInvoice invoice);
+    Task<Invoice> UpdateAsync(Invoice invoice);
 
     /// <summary>
     /// Deletes an invoice by its identifier.
@@ -54,34 +56,34 @@ public interface IInvoiceRepository
     /// </summary>
     /// <param name="customerId">The customer identifier.</param>
     /// <returns>A list of invoices for the customer.</returns>
-    Task<IEnumerable<IInvoice>> GetByCustomerIdAsync(string customerId);
+    Task<IEnumerable<Invoice>> GetByCustomerIdAsync(string customerId);
 
     /// <summary>
     /// Gets invoices by job identifier.
     /// </summary>
     /// <param name="jobId">The job identifier.</param>
     /// <returns>A list of invoices for the job.</returns>
-    Task<IEnumerable<IInvoice>> GetByJobIdAsync(string jobId);
+    Task<IEnumerable<Invoice>> GetByJobIdAsync(string jobId);
 
     /// <summary>
     /// Gets invoices by status.
     /// </summary>
     /// <param name="status">The invoice status.</param>
     /// <returns>A list of invoices with the specified status.</returns>
-    Task<IEnumerable<IInvoice>> GetByStatusAsync(InvoiceStatus status);
+    Task<IEnumerable<Invoice>> GetByStatusAsync(InvoiceStatus status);
 
     /// <summary>
     /// Gets overdue invoices.
     /// </summary>
     /// <returns>A list of overdue invoices.</returns>
-    Task<IEnumerable<IInvoice>> GetOverdueInvoicesAsync();
+    Task<IEnumerable<Invoice>> GetOverdueInvoicesAsync();
 
     /// <summary>
     /// Gets invoices due within a specified number of days.
     /// </summary>
     /// <param name="days">The number of days to look ahead.</param>
     /// <returns>A list of invoices due within the specified days.</returns>
-    Task<IEnumerable<IInvoice>> GetInvoicesDueWithinDaysAsync(int days);
+    Task<IEnumerable<Invoice>> GetInvoicesDueWithinDaysAsync(int days);
 
     /// <summary>
     /// Gets invoices by date range.
@@ -89,14 +91,14 @@ public interface IInvoiceRepository
     /// <param name="startDate">The start date.</param>
     /// <param name="endDate">The end date.</param>
     /// <returns>A list of invoices within the date range.</returns>
-    Task<IEnumerable<IInvoice>> GetByDateRangeAsync(DateTime startDate, DateTime endDate);
+    Task<IEnumerable<Invoice>> GetByDateRangeAsync(DateTime startDate, DateTime endDate);
 
     /// <summary>
     /// Gets invoices with pagination and filtering.
     /// </summary>
     /// <param name="filter">The invoice filter criteria.</param>
     /// <returns>A paged result of invoices.</returns>
-    Task<PagedResult<IInvoice>> GetPagedAsync(InvoiceFilter filter);
+    Task<PagedResult<Invoice>> GetPagedAsync(InvoiceFilter filter);
 
     /// <summary>
     /// Gets the next invoice number.
@@ -128,7 +130,7 @@ public interface IInvoiceRepository
     /// </summary>
     /// <param name="invoiceNumber">The invoice number to search for.</param>
     /// <returns>A list of matching invoices.</returns>
-    Task<IEnumerable<IInvoice>> SearchByInvoiceNumberAsync(string invoiceNumber);
+    Task<IEnumerable<Invoice>> SearchByInvoiceNumberAsync(string invoiceNumber);
 
     /// <summary>
     /// Updates the paid amount for an invoice.
@@ -151,7 +153,7 @@ public interface IInvoiceRepository
     /// </summary>
     /// <param name="jobId">The job identifier to generate invoice for.</param>
     /// <returns>The generated invoice.</returns>
-    Task<IInvoice> GenerateInvoiceAsync(string jobId);
+    Task<Invoice> GenerateInvoiceAsync(string jobId);
 }
 
 /// <summary>

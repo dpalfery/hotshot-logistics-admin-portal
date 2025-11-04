@@ -1,5 +1,7 @@
 using FluentMigrator;
 
+#pragma warning disable SA1649 // File name should match first type name
+
 namespace HotshotLogistics.Data.Migrations;
 
 [Migration(20250101000000)]

@@ -4,15 +4,18 @@
 
 namespace HotshotLogistics.Tests.Utils.Integration
 {
+    using HotshotLogistics.Domain.Entities;
     using System;
     using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
     using HotshotLogistics.Application.Services;
-    using HotshotLogistics.Contracts.Models;
+    using HotshotLogistics.Domain.ValueObjects;
     using HotshotLogistics.Contracts.Repositories;
     using HotshotLogistics.Contracts.Services;
-    using HotshotLogistics.Domain.Models;
+    using HotshotLogistics.Domain.Entities;
+    using HotshotLogistics.Domain.Entities;
+    using HotshotLogistics.Domain.Entities;
     using Microsoft.Extensions.Logging;
     using Moq;
     using Xunit;
@@ -26,7 +29,7 @@ namespace HotshotLogistics.Tests.Utils.Integration
         [Fact]
         public async Task DriverService_CreateDriver_CallsRepository()
         {
-            var mockRepo = new Mock<IDriverRepository>(MockBehavior.Strict);
+            var mockRepo = new Mock<DriverRepository>(MockBehavior.Strict);
             var driver = new Driver
             {
                 PersonalInfo = new PersonalInfo
@@ -44,8 +47,8 @@ namespace HotshotLogistics.Tests.Utils.Integration
                 IsActive = true
             };
 
-            mockRepo.Setup(r => r.CreateDriverAsync(It.IsAny<IDriver>(), It.IsAny<CancellationToken>()))
-                    .ReturnsAsync((IDriver d, CancellationToken _) => d)
+            mockRepo.Setup(r => r.CreateDriverAsync(It.IsAny<Driver>(), It.IsAny<CancellationToken>()))
+                    .ReturnsAsync((Driver d, CancellationToken _) => d)
                     .Verifiable();
 
             var service = new DriverService(mockRepo.Object);
@@ -53,14 +56,14 @@ namespace HotshotLogistics.Tests.Utils.Integration
             var created = await service.CreateDriverAsync(driver);
 
             Assert.NotNull(created);
-            mockRepo.Verify(r => r.CreateDriverAsync(It.Is<IDriver>(x => x == driver), It.IsAny<CancellationToken>()), Times.Once);
+            mockRepo.Verify(r => r.CreateDriverAsync(It.Is<Driver>(x => x == driver), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
         public async Task JobService_CreateJob_CallsRepository()
         {
-            var mockRepo = new Mock<IJobRepository>(MockBehavior.Strict);
-            var newJob = new JobDto
+            var mockRepo = new Mock<JobRepository>(MockBehavior.Strict);
+            var newJob = new Domain.Entities.JobDto
             {
                 Id = Guid.NewGuid().ToString(),
                 CustomerId = "CUST001",
@@ -114,12 +117,12 @@ namespace HotshotLogistics.Tests.Utils.Integration
 
             var customer = new Customer { Id = "CUST001", IsActive = true };
 
-            mockRepo.Setup(r => r.CreateJobAsync(It.IsAny<IJob>(), It.IsAny<CancellationToken>()))
-                    .ReturnsAsync((IJob j, CancellationToken _) => j)
+            mockRepo.Setup(r => r.CreateJobAsync(It.IsAny<Job>(), It.IsAny<CancellationToken>()))
+                    .ReturnsAsync((Job j, CancellationToken _) => j)
                     .Verifiable();
 
-            var customerRepoMock = new Mock<ICustomerRepository>();
-            var driverRepoMock = new Mock<IDriverRepository>();
+            var customerRepoMock = new Mock<CustomerRepository>();
+            var driverRepoMock = new Mock<DriverRepository>();
             var notificationServiceMock = new Mock<INotificationService>();
             var mappingServiceMock = new Mock<IMappingService>();
             var loggerMock = new Mock<ILogger<JobService>>();
@@ -139,20 +142,20 @@ namespace HotshotLogistics.Tests.Utils.Integration
             var created = await service.CreateJobAsync(newJob);
 
             Assert.NotNull(created);
-            mockRepo.Verify(r => r.CreateJobAsync(It.Is<IJob>(x => x == newJob), It.IsAny<CancellationToken>()), Times.Once);
+            mockRepo.Verify(r => r.CreateJobAsync(It.Is<Job>(x => x == newJob), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
         public async Task JobAssignmentService_AssignJobAsync_CreatesAssignment()
         {
-            var mockAssignmentRepo = new Mock<IJobAssignmentRepository>(MockBehavior.Strict);
-            var mockJobRepo = new Mock<IJobRepository>(MockBehavior.Strict);
-            var mockDriverRepo = new Mock<IDriverRepository>(MockBehavior.Strict);
+            var mockAssignmentRepo = new Mock<JobAssignmentRepository>(MockBehavior.Strict);
+            var mockJobRepo = new Mock<JobRepository>(MockBehavior.Strict);
+            var mockDriverRepo = new Mock<DriverRepository>(MockBehavior.Strict);
 
             var jobId = Guid.NewGuid().ToString();
             var driverId = 123;
 
-            var existingJob = new JobDto { Id = jobId, Title = "Job A" };
+            var existingJob = new Domain.Entities.JobDto { Id = jobId, Title = "Job A" };
             var existingDriver = new Driver { Id = driverId, PersonalInfo = new PersonalInfo { FirstName = "Alice", LastName = "Smith" } };
 
             mockJobRepo.Setup(r => r.GetJobByIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))

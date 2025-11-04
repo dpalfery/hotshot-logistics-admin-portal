@@ -34,10 +34,12 @@ namespace HotshotLogistics.IntegrationTests
                 }
 
                 // Read the connection string from environment to match application configuration
-                var conn = Environment.GetEnvironmentVariable("CONNECTIONSTRINGS__DEFAULTCONNECTION");
+                var conn = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
                 if (string.IsNullOrWhiteSpace(conn))
                 {
-                    throw new InvalidOperationException("Environment variable 'CONNECTIONSTRINGS__DEFAULTCONNECTION' is required for tests");
+                    // if the env var is not set raise an error and stop. never put connection strings in code
+                    //throw error here
+                    throw new InvalidOperationException("DB_CONNECTION_STRING environment variable is required for tests");
                 }
 
                 cachedConnectionString = conn;
@@ -45,53 +47,7 @@ namespace HotshotLogistics.IntegrationTests
             }
         }
 
-        private static IEnumerable<SqlConnectionStringBuilder> BuildCredentialBuilders(string server)
-        {
-            var builders = new List<SqlConnectionStringBuilder>();
-
-            var saPassword = Environment.GetEnvironmentVariable("SQL_SA_PASSWORD");
-            if (!string.IsNullOrWhiteSpace(saPassword))
-            {
-                builders.Add(new SqlConnectionStringBuilder
-                {
-                    DataSource = server,
-                    UserID = "sa",
-                    Password = saPassword,
-                    TrustServerCertificate = true,
-                    MultipleActiveResultSets = true
-                });
-            }
-
-            var saConnectionString = Environment.GetEnvironmentVariable("CI_SA_CONNECTION_STRING");
-            if (!string.IsNullOrWhiteSpace(saConnectionString))
-            {
-                var builder = new SqlConnectionStringBuilder(saConnectionString)
-                {
-                    DataSource = server,
-                    TrustServerCertificate = true,
-                    MultipleActiveResultSets = true
-                };
-
-                builders.Add(builder);
-            }
-
-            var appUser = Environment.GetEnvironmentVariable("HOTSHOT_DB_APP_USER");
-            var appPassword = Environment.GetEnvironmentVariable("HOTSHOT_DB_PASSWORD");
-            if (!string.IsNullOrWhiteSpace(appUser) && !string.IsNullOrWhiteSpace(appPassword))
-            {
-                builders.Add(new SqlConnectionStringBuilder
-                {
-                    DataSource = server,
-                    UserID = appUser,
-                    Password = appPassword,
-                    TrustServerCertificate = true,
-                    MultipleActiveResultSets = true
-                });
-            }
-
-            return builders;
-        }
-
+        
         private static IEnumerable<string> BuildCandidateDatabases(string? baseDatabaseName)
         {
             var candidates = new List<string>();

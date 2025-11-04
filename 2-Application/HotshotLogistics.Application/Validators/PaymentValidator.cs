@@ -1,6 +1,6 @@
 using FluentValidation;
-using HotshotLogistics.Contracts.Models;
-using HotshotLogistics.Domain.Models;
+using HotshotLogistics.Core.Enums;
+using HotshotLogistics.Domain.Entities;
 
 namespace HotshotLogistics.Application.Validators;
 

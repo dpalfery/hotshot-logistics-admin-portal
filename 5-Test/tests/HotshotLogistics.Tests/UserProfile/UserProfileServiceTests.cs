@@ -6,7 +6,7 @@ using Microsoft.Graph;
 using Microsoft.Graph.Models;
 using HotshotLogistics.Application.Services;
 using HotshotLogistics.Contracts.Services;
-using HotshotLogistics.Contracts.Models;
+using HotshotLogistics.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -21,7 +21,7 @@ public class UserProfileServiceTests
 {
     private readonly Mock<GraphServiceClient> _graphClientMock;
     private readonly Mock<ILogger<UserProfileService>> _loggerMock;
-    private readonly IUserProfileService _service;
+    private readonly UserProfileService _service;
 
     public UserProfileServiceTests()
     {

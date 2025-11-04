@@ -23,28 +23,40 @@ public class SignalRClientWrapper : ISignalRClientWrapper
     /// <inheritdoc/>
     public async Task SendToGroupAsync(string groupName, string methodName, params object[] args)
     {
-        await (Task)_hubContext.Clients.Group(groupName)
+        var result = _hubContext.Clients.Group(groupName)
             .GetType()
             .GetMethod(methodName)
             ?.Invoke(_hubContext.Clients.Group(groupName), args);
+        if (result is Task task)
+        {
+            await task;
+        }
     }
 
     /// <inheritdoc/>
     public async Task SendToUserAsync(string userId, string methodName, params object[] args)
     {
-        await (Task)_hubContext.Clients.User(userId)
+        var result = _hubContext.Clients.User(userId)
             .GetType()
             .GetMethod(methodName)
             ?.Invoke(_hubContext.Clients.User(userId), args);
+        if (result is Task task)
+        {
+            await task;
+        }
     }
 
     /// <inheritdoc/>
     public async Task SendToAllAsync(string methodName, params object[] args)
     {
-        await (Task)_hubContext.Clients.All
+        var result = _hubContext.Clients.All
             .GetType()
             .GetMethod(methodName)
             ?.Invoke(_hubContext.Clients.All, args);
+        if (result is Task task)
+        {
+            await task;
+        }
     }
 
     /// <inheritdoc/>

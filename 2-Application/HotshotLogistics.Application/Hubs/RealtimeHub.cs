@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using HotshotLogistics.Contracts.Hubs;
-using HotshotLogistics.Contracts.Models;
+using HotshotLogistics.Domain.Entities;
+using HotshotLogistics.Core.Enums;
 using HotshotLogistics.Contracts.Services;
-using System.Text.Json;
+using HotshotLogistics.Domain.DTOs;
+
 
 namespace HotshotLogistics.Application.Hubs;
 
@@ -100,7 +102,7 @@ public class RealtimeHub : Hub<IRealtimeHubClient>
     /// <summary>
     /// Broadcast new job availability to available drivers
     /// </summary>
-    public async Task NewJobAvailable(JobDto job)
+    public async Task NewJobAvailable(ContractsJobDto job)
     {
         try
         {
@@ -116,7 +118,7 @@ public class RealtimeHub : Hub<IRealtimeHubClient>
     /// <summary>
     /// Send notification to specific user or broadcast to all
     /// </summary>
-    public async Task NotificationReceived(NotificationMessage message)
+    public async Task NotificationReceived(NotificationMessageDto message)
     {
         try
         {

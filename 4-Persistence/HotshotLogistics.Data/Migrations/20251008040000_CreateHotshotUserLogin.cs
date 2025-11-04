@@ -1,3 +1,4 @@
+#pragma warning disable SA1649
 using System;
 using System.Data;
 using FluentMigrator;
@@ -14,7 +15,7 @@ public class CreateHotshotUserLogin : Migration
     public override void Up()
     {
         var password = Environment.GetEnvironmentVariable("HOT_SHOT_USER_PASSWORD");
-        
+
         if (string.IsNullOrWhiteSpace(password))
         {
             throw new InvalidOperationException(
@@ -45,7 +46,7 @@ public class CreateHotshotUserLogin : Migration
                             DECLARE @pwd NVARCHAR(128) = N'" + escapedPassword + @"';
                             DECLARE @sql NVARCHAR(MAX) = N'CREATE LOGIN [hotshot_user] WITH PASSWORD = ''' + @pwd + '''';
                             EXEC sp_executesql @sql;";
-                        
+
                         // DO NOT log the actual command text as it contains the password
                         createLoginCmd.ExecuteNonQuery();
                         Console.WriteLine("Created server-level login: hotshot_user (password sourced from HOT_SHOT_USER_PASSWORD environment variable)");

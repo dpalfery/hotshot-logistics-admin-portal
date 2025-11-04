@@ -5,10 +5,14 @@
 namespace HotshotLogistics.Data.Services
 {
     using System;
+    using System.Collections.Generic;
+    using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
-    using HotshotLogistics.Contracts.Models;
     using HotshotLogistics.Contracts.Services;
+    using HotshotLogistics.Domain.DTOs;
+    using HotshotLogistics.Domain.Entities;
+    using HotshotLogistics.Domain.ValueObjects;
     using Microsoft.Extensions.Logging;
     using Microsoft.Extensions.Options;
     using SendGrid;
@@ -36,7 +40,7 @@ namespace HotshotLogistics.Data.Services
         }
 
         /// <inheritdoc/>
-        public CommunicationType Type => CommunicationType.Email;
+        public string Type => "Email";
 
         /// <inheritdoc/>
         public async Task<bool> SendAsync(CommunicationMessage message, CancellationToken cancellationToken = default)

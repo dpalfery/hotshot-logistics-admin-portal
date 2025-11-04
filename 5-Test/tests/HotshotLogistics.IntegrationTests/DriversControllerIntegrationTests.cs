@@ -1,24 +1,38 @@
 using System.Net;
 using System.Net.Http.Json;
-using HotshotLogistics.Contracts.Models;
-using HotshotLogistics.Domain.Models;
-using Microsoft.AspNetCore.Mvc.Testing;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Xunit;
+using HotshotLogistics.Domain.Entities;
 using System.Net.Http.Headers;
 using FluentAssertions;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Xunit;
+using System;
+using HotshotLogistics.Domain.DTOs;
+using HotshotLogistics.Api;
+using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace HotshotLogistics.IntegrationTests
 {
+    // <copyright file="DriversControllerIntegrationTests.cs" company="PlaceholderCompany">
+    // Copyright (c) PlaceholderCompany. All rights reserved.
+    // </copyright>
+
     [Collection("DatabaseCollection")]
-    public class DriversControllerIntegrationTests : IntegrationTestBase
+    public class DriversControllerIntegrationTests : IntegrationTestBase, IClassFixture<CustomWebApplicationFactory<Program>>
     {
+        private readonly HttpClient client;
+        private readonly CustomWebApplicationFactory<Program> factory;
+
         public DriversControllerIntegrationTests(CustomWebApplicationFactory<Program> factory) : base(factory)
         {
             // Set the test authentication header
             Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Test");
+
+            this.factory = factory;
+            this.client = factory.CreateClient(new WebApplicationFactoryClientOptions
+            {
+                AllowAutoRedirect = false,
+            });
         }
 
         [Fact]
@@ -123,7 +137,7 @@ namespace HotshotLogistics.IntegrationTests
         // Assert
         response.EnsureSuccessStatusCode();
             var updatedDriver = await response.Content.ReadFromJsonAsync<DriverDto>();
-            
+
             updatedDriver.Should().NotBeNull();
             updatedDriver.FirstName.Should().Be("Updated");
             updatedDriver.IsActive.Should().BeFalse();

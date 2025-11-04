@@ -9,9 +9,10 @@ namespace HotshotLogistics.Api.Controllers
     using System.Threading;
     using System.Threading.Tasks;
     using HotshotLogistics.Application.Authorization;
-    using HotshotLogistics.Contracts.Models;
+    using HotshotLogistics.Domain.Entities;
     using HotshotLogistics.Contracts.Services;
-    using HotshotLogistics.Domain.Models;
+    using HotshotLogistics.Domain.Entities;
+    using HotshotLogistics.Domain.ValueObjects;
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
@@ -48,8 +49,8 @@ namespace HotshotLogistics.Api.Controllers
         /// <returns>A list of customers.</returns>
         [HttpGet]
         [Authorize(Policy = AuthorizationPolicies.ManagerOrAdmin)]
-        [ProducesResponseType(typeof(IEnumerable<ICustomer>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<IEnumerable<ICustomer>>> GetCustomers(CancellationToken cancellationToken = default)
+        [ProducesResponseType(typeof(IEnumerable<Customer>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<IEnumerable<Customer>>> GetCustomers(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -71,9 +72,9 @@ namespace HotshotLogistics.Api.Controllers
         /// <returns>The customer if found; otherwise, 404 Not Found.</returns>
         [HttpGet("{id}")]
         [Authorize(Policy = AuthorizationPolicies.OwnResource)]
-        [ProducesResponseType(typeof(ICustomer), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(Customer), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<ICustomer>> GetCustomerById(string id, CancellationToken cancellationToken = default)
+        public async Task<ActionResult<Customer>> GetCustomerById(string id, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -100,10 +101,10 @@ namespace HotshotLogistics.Api.Controllers
         /// <returns>The created customer.</returns>
         [HttpPost]
         [Authorize(Policy = AuthorizationPolicies.ManagerOrAdmin)]
-        [ProducesResponseType(typeof(ICustomer), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(Customer), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<ActionResult<ICustomer>> CreateCustomer(
+        public async Task<ActionResult<Customer>> CreateCustomer(
             [FromBody] Customer customer,
             CancellationToken cancellationToken = default)
         {
@@ -141,11 +142,11 @@ namespace HotshotLogistics.Api.Controllers
         /// <returns>The updated customer.</returns>
         [HttpPut("{id}")]
         [Authorize(Policy = AuthorizationPolicies.ManagerOrAdmin)]
-        [ProducesResponseType(typeof(ICustomer), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(Customer), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<ICustomer>> UpdateCustomer(
+        public async Task<ActionResult<Customer>> UpdateCustomer(
             string id,
             [FromBody] Customer customer,
             CancellationToken cancellationToken = default)
@@ -217,8 +218,8 @@ namespace HotshotLogistics.Api.Controllers
         /// <returns>A list of active customers.</returns>
         [HttpGet("active")]
         [Authorize(Policy = AuthorizationPolicies.ManagerOrAdmin)]
-        [ProducesResponseType(typeof(IEnumerable<ICustomer>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<IEnumerable<ICustomer>>> GetActiveCustomers(CancellationToken cancellationToken = default)
+        [ProducesResponseType(typeof(IEnumerable<Customer>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<IEnumerable<Customer>>> GetActiveCustomers(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -239,8 +240,8 @@ namespace HotshotLogistics.Api.Controllers
         /// <returns>A list of customers with overdue invoices.</returns>
         [HttpGet("overdue")]
         [Authorize(Policy = AuthorizationPolicies.ManagerOrAdmin)]
-        [ProducesResponseType(typeof(IEnumerable<ICustomer>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<IEnumerable<ICustomer>>> GetOverdueCustomers(CancellationToken cancellationToken = default)
+        [ProducesResponseType(typeof(IEnumerable<Customer>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<IEnumerable<Customer>>> GetOverdueCustomers(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -262,9 +263,9 @@ namespace HotshotLogistics.Api.Controllers
         /// <returns>A list of jobs for the customer.</returns>
         [HttpGet("{id}/jobs")]
         [Authorize(Policy = AuthorizationPolicies.CustomerResource)]
-        [ProducesResponseType(typeof(IEnumerable<IJob>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(IEnumerable<Job>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<IEnumerable<IJob>>> GetCustomerJobs(string id, CancellationToken cancellationToken = default)
+        public async Task<ActionResult<IEnumerable<Job>>> GetCustomerJobs(string id, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -293,9 +294,9 @@ namespace HotshotLogistics.Api.Controllers
         /// <returns>A list of invoices for the customer.</returns>
         [HttpGet("{id}/invoices")]
         [Authorize(Policy = AuthorizationPolicies.CustomerResource)]
-        [ProducesResponseType(typeof(IEnumerable<IInvoice>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(IEnumerable<Invoice>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<IEnumerable<IInvoice>>> GetCustomerInvoices(string id, CancellationToken cancellationToken = default)
+        public async Task<ActionResult<IEnumerable<Invoice>>> GetCustomerInvoices(string id, CancellationToken cancellationToken = default)
         {
             try
             {

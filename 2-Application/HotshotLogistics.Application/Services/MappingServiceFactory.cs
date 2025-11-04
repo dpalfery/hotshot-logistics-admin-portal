@@ -5,35 +5,37 @@
 namespace HotshotLogistics.Application.Services
 {
     using System;
-    using System.Net.Http;
+    using System.Collections.Generic;
+    using System.Linq;
+    using HotshotLogistics.Contracts.Factories;
     using HotshotLogistics.Contracts.Services;
-    using HotshotLogistics.Data.Services;
     using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Logging;
 
     /// <summary>
     /// Factory for creating mapping service instances based on configuration.
     /// </summary>
-    public class MappingServiceFactory
+    public class MappingServiceFactory : IMappingServiceFactory
     {
         private readonly IConfiguration configuration;
-        private readonly ILoggerFactory loggerFactory;
-        private readonly IHttpClientFactory httpClientFactory;
+        private readonly ILogger<MappingServiceFactory> logger;
+        private readonly IServiceProvider serviceProvider;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MappingServiceFactory"/> class.
         /// </summary>
         /// <param name="configuration">The application configuration.</param>
-        /// <param name="loggerFactory">The logger factory.</param>
-        /// <param name="httpClientFactory">The HTTP client factory.</param>
+        /// <param name="logger">The logger for the factory.</param>
+        /// <param name="serviceProvider">The service provider to resolve mapping services.</param>
         public MappingServiceFactory(
             IConfiguration configuration,
-            ILoggerFactory loggerFactory,
-            IHttpClientFactory httpClientFactory)
+            ILogger<MappingServiceFactory> logger,
+            IServiceProvider serviceProvider)
         {
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            this.loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
-            this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            this.serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         }
 
         /// <summary>
@@ -42,41 +44,23 @@ namespace HotshotLogistics.Application.Services
         /// <returns>The mapping service instance.</returns>
         public IMappingService CreateMappingService()
         {
-            var provider = configuration["Mapping:Provider"] ?? "Mock";
+            var providerName = configuration["Mapping:Provider"] ?? "Mock";
+            var mappingServices = serviceProvider.GetServices<IMappingService>();
+            var mappingServiceDict = mappingServices.ToDictionary(s => s.GetType().Name.Replace("Service", string.Empty), StringComparer.OrdinalIgnoreCase);
 
-            switch (provider.ToLowerInvariant())
+            if (mappingServiceDict.TryGetValue(providerName, out var service))
             {
-                case "mock":
-                    var mockLogger = loggerFactory.CreateLogger<MockMappingService>();
-                    return new MockMappingService(mockLogger);
-
-                case "azuremaps":
-                    var azureMapsKey = configuration["Mapping:AzureMaps:SubscriptionKey"];
-                    if (string.IsNullOrEmpty(azureMapsKey) || azureMapsKey == "YOUR_AZURE_MAPS_KEY_HERE")
-                    {
-                        throw new InvalidOperationException("Azure Maps subscription key is not configured. Set 'Mapping:AzureMaps:SubscriptionKey' in appsettings.json or use 'Mock' provider for development.");
-                    }
-
-                    var httpClient = httpClientFactory.CreateClient("MappingService");
-                    httpClient.Timeout = TimeSpan.FromSeconds(30);
-                    var azureLogger = loggerFactory.CreateLogger<AzureMapsService>();
-                    return new AzureMapsService(httpClient, azureLogger, azureMapsKey);
-
-                case "googlemaps":
-                    var googleMapsKey = configuration["Mapping:GoogleMaps:ApiKey"];
-                    if (string.IsNullOrEmpty(googleMapsKey) || googleMapsKey == "YOUR_GOOGLE_MAPS_KEY_HERE")
-                    {
-                        throw new InvalidOperationException("Google Maps API key is not configured. Set 'Mapping:GoogleMaps:ApiKey' in appsettings.json or use 'Mock' provider for development.");
-                    }
-
-                    var googleHttpClient = httpClientFactory.CreateClient("MappingService");
-                    googleHttpClient.Timeout = TimeSpan.FromSeconds(30);
-                    var googleLogger = loggerFactory.CreateLogger<GoogleMapsService>();
-                    return new GoogleMapsService(googleHttpClient, googleLogger, googleMapsKey);
-
-                default:
-                    throw new InvalidOperationException($"Unsupported mapping provider: {provider}. Supported providers are: Mock, AzureMaps, GoogleMaps.");
+                logger.LogInformation("Using mapping service: {ProviderName}", providerName);
+                return service;
             }
+
+            logger.LogError("Unsupported mapping provider: {ProviderName}. Falling back to Mock.", providerName);
+            if (mappingServiceDict.TryGetValue("Mock", out var mockService))
+            {
+                return mockService;
+            }
+
+            throw new InvalidOperationException($"Unsupported mapping provider: {providerName} and no Mock service found.");
         }
     }
 }

@@ -43,3 +43,5 @@ next-env.d.ts
 # Playwright artifacts
 playwright-report/
 test-results/
+
+certificates

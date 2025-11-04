@@ -1,6 +1,7 @@
-namespace HotshotLogistics.Contracts.Repositories;
+using HotshotLogistics.Domain.Entities;
+using HotshotLogistics.Domain.ValueObjects;
 
-using HotshotLogistics.Contracts.Models;
+namespace HotshotLogistics.Contracts.Repositories;
 
 /// <summary>
 /// Repository interface for customer data access operations.
@@ -13,27 +14,27 @@ public interface ICustomerRepository
     /// <param name="id">The customer identifier.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The customer if found, null otherwise.</returns>
-    Task<ICustomer?> GetByIdAsync(object id, CancellationToken cancellationToken = default);
+    Task<Customer?> GetByIdAsync(object id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets all customers.
     /// </summary>
     /// <returns>A list of all customers.</returns>
-    Task<IEnumerable<ICustomer>> GetAllAsync();
+    Task<IEnumerable<Customer>> GetAllAsync();
 
     /// <summary>
     /// Adds a new customer.
     /// </summary>
     /// <param name="entity">The customer to add.</param>
     /// <returns>The added customer.</returns>
-    Task<ICustomer> AddAsync(ICustomer entity);
+    Task<Customer> AddAsync(Customer entity);
 
     /// <summary>
     /// Updates an existing customer.
     /// </summary>
     /// <param name="entity">The customer to update.</param>
     /// <returns>The updated customer.</returns>
-    Task<ICustomer> UpdateAsync(ICustomer entity);
+    Task<Customer> UpdateAsync(Customer entity);
 
     /// <summary>
     /// Deletes a customer by their identifier.
@@ -53,7 +54,7 @@ public interface ICustomerRepository
     /// </summary>
     /// <param name="taxId">The tax identification number.</param>
     /// <returns>The customer if found, null otherwise.</returns>
-    Task<ICustomer?> GetByTaxIdAsync(string taxId);
+    Task<Customer?> GetByTaxIdAsync(string taxId);
 
     /// <summary>
     /// Gets customers within a credit limit range.
@@ -61,19 +62,19 @@ public interface ICustomerRepository
     /// <param name="minLimit">The minimum credit limit.</param>
     /// <param name="maxLimit">The maximum credit limit.</param>
     /// <returns>A list of customers within the specified credit limit range.</returns>
-    Task<IEnumerable<ICustomer>> GetByCreditLimitRangeAsync(decimal minLimit, decimal maxLimit);
+    Task<IEnumerable<Customer>> GetByCreditLimitRangeAsync(decimal minLimit, decimal maxLimit);
 
     /// <summary>
     /// Gets all active customers.
     /// </summary>
     /// <returns>A list of active customers.</returns>
-    Task<IEnumerable<ICustomer>> GetActiveCustomersAsync();
+    Task<IEnumerable<Customer>> GetActiveCustomersAsync();
 
     /// <summary>
     /// Gets customers with overdue invoices.
     /// </summary>
     /// <returns>A list of customers with overdue invoices.</returns>
-    Task<IEnumerable<ICustomer>> GetOverdueCustomersAsync();
+    Task<IEnumerable<Customer>> GetOverdueCustomersAsync();
 
     /// <summary>
     /// Gets the total credit limit for all active customers.

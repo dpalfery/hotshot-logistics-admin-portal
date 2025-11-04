@@ -40,9 +40,9 @@ namespace HotshotLogistics.IntegrationTests
             try
             {
                 // Log the request details
-                logger.LogInformation("TEST REQUEST: {Method} {Path} {QueryString}", 
-                    context.Request.Method, 
-                    context.Request.Path, 
+                logger.LogInformation("TEST REQUEST: {Method} {Path} {QueryString}",
+                    context.Request.Method,
+                    context.Request.Path,
                     context.Request.QueryString);
 
                 // Capture request body if needed
@@ -60,15 +60,15 @@ namespace HotshotLogistics.IntegrationTests
                 await next(context);
 
                 // Log successful response
-                logger.LogInformation("TEST RESPONSE: {StatusCode} for {Method} {Path}", 
-                    context.Response.StatusCode, 
-                    context.Request.Method, 
+                logger.LogInformation("TEST RESPONSE: {StatusCode} for {Method} {Path}",
+                    context.Response.StatusCode,
+                    context.Request.Method,
                     context.Request.Path);
             }
             catch (Exception ex)
             {
                 // Log detailed exception information
-                logger.LogError(ex, 
+                logger.LogError(ex,
                     "TEST EXCEPTION: {ExceptionType} during {Method} {Path}\n" +
                     "Message: {Message}\n" +
                     "Stack Trace: {StackTrace}\n" +

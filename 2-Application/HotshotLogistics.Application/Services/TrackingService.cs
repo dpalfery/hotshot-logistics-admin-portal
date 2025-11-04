@@ -9,10 +9,10 @@ namespace HotshotLogistics.Application.Services
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
-    using HotshotLogistics.Contracts.Models;
+    using HotshotLogistics.Core.Enums;
+    using HotshotLogistics.Domain.Entities;
     using HotshotLogistics.Contracts.Repositories;
     using HotshotLogistics.Contracts.Services;
-    using HotshotLogistics.Domain.Models;
     using Microsoft.Extensions.Caching.Distributed;
     using Microsoft.Extensions.Logging;
     using System.Text.Json;
@@ -105,7 +105,7 @@ namespace HotshotLogistics.Application.Services
         }
 
         /// <inheritdoc/>
-        public async Task<ILocationTracking> UpdateLocationAsync(string jobId, int driverId, LocationUpdate locationUpdate, CancellationToken cancellationToken = default)
+        public async Task<LocationTracking> UpdateLocationAsync(string jobId, int driverId, LocationUpdate locationUpdate, CancellationToken cancellationToken = default)
         {
             logger.LogDebug("Updating location for job {JobId} with driver {DriverId}", jobId, driverId);
 
@@ -181,7 +181,7 @@ namespace HotshotLogistics.Application.Services
         }
 
         /// <inheritdoc/>
-        public async Task<ILocationTracking?> GetCurrentLocationAsync(string jobId, CancellationToken cancellationToken = default)
+        public async Task<LocationTracking?> GetCurrentLocationAsync(string jobId, CancellationToken cancellationToken = default)
         {
             // Try to get from cache first
             var cacheKey = $"location:current:{jobId}";
@@ -213,7 +213,7 @@ namespace HotshotLogistics.Application.Services
         }
 
         /// <inheritdoc/>
-        public Task<IEnumerable<ILocationTracking>> GetLocationHistoryAsync(string jobId, DateTime startTime, DateTime endTime, CancellationToken cancellationToken = default)
+        public Task<IEnumerable<LocationTracking>> GetLocationHistoryAsync(string jobId, DateTime startTime, DateTime endTime, CancellationToken cancellationToken = default)
         {
             return locationTrackingRepository.GetByJobIdAndTimeRangeAsync(jobId, startTime, endTime);
         }
@@ -377,7 +377,7 @@ namespace HotshotLogistics.Application.Services
         /// <param name="currentLocation">The current location.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
-        private async Task UpdateJobStatusBasedOnLocationAsync(IJob job, LocationUpdate currentLocation, CancellationToken cancellationToken)
+        private async Task UpdateJobStatusBasedOnLocationAsync(Job job, LocationUpdate currentLocation, CancellationToken cancellationToken)
         {
             const double proximityThresholdMiles = 0.5; // Within 0.5 miles
 
@@ -386,22 +386,22 @@ namespace HotshotLogistics.Application.Services
 
             var statusChanged = false;
 
-            // Check if driver has arrived at pickup location
+            // Check if driver has arrived at pickup or delivery location
             if (job.Status == JobStatus.EnRoute &&
                 distanceToPickup.HasValue &&
                 distanceToPickup.Value <= proximityThresholdMiles)
             {
-                job.Status = JobStatus.InProgress;
                 job.Tracking.CurrentStatus = "Arrived at pickup location";
                 statusChanged = true;
             }
             // Check if driver has arrived at delivery location
-            else if (job.Status == JobStatus.InProgress &&
+            else if (job.Status == JobStatus.EnRoute &&
                      distanceToDelivery.HasValue &&
                      distanceToDelivery.Value <= proximityThresholdMiles)
             {
-                // Don't automatically mark as completed - wait for driver confirmation
+                // Don't automatically mark as received - wait for driver confirmation
                 job.Tracking.CurrentStatus = "Arrived at delivery location";
+                statusChanged = true;
             }
 
             // Send notifications if status changed
@@ -470,7 +470,7 @@ namespace HotshotLogistics.Application.Services
         /// </summary>
         /// <param name="locations">The location tracking records.</param>
         /// <returns>The total distance in miles.</returns>
-        private static decimal CalculateTotalDistance(List<ILocationTracking> locations)
+        private static decimal CalculateTotalDistance(List<LocationTracking> locations)
         {
             if (locations.Count < 2)
                 return 0;
@@ -497,7 +497,7 @@ namespace HotshotLogistics.Application.Services
         /// </summary>
         /// <param name="locations">The location tracking records.</param>
         /// <returns>The average speed in mph.</returns>
-        private static decimal? CalculateAverageSpeed(List<ILocationTracking> locations)
+        private static decimal? CalculateAverageSpeed(List<LocationTracking> locations)
         {
             var locationsWithSpeed = locations.Where(l => l.Speed.HasValue).ToList();
 

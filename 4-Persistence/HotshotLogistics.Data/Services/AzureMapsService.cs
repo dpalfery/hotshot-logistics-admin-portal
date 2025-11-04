@@ -10,9 +10,13 @@ namespace HotshotLogistics.Data.Services
     using System.Text.Json;
     using System.Threading;
     using System.Threading.Tasks;
-    using HotshotLogistics.Contracts.Models;
+
     using HotshotLogistics.Contracts.Services;
+    using HotshotLogistics.Domain.ValueObjects;
+    using HotshotLogistics.Domain.Entities;
     using Microsoft.Extensions.Logging;
+    using Microsoft.Extensions.Options;
+    using HotshotLogistics.Domain.DTOs;
 
     /// <summary>
     /// Azure Maps implementation of the mapping service.
@@ -28,12 +32,13 @@ namespace HotshotLogistics.Data.Services
         /// </summary>
         /// <param name="httpClient">The HTTP client for API calls.</param>
         /// <param name="logger">The logger.</param>
-        /// <param name="subscriptionKey">The Azure Maps subscription key.</param>
-        public AzureMapsService(HttpClient httpClient, ILogger<AzureMapsService> logger, string subscriptionKey)
+        /// <param name="settings">The Azure Maps settings.</param>
+        public AzureMapsService(HttpClient httpClient, ILogger<AzureMapsService> logger, IOptions<AzureMapsSettings> settings)
         {
             this.httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            this.subscriptionKey = subscriptionKey ?? throw new ArgumentNullException(nameof(subscriptionKey));
+            var settingsValue = settings?.Value ?? throw new ArgumentNullException(nameof(settings));
+            this.subscriptionKey = settingsValue.SubscriptionKey ?? throw new ArgumentNullException(nameof(settingsValue.SubscriptionKey));
         }
 
         /// <inheritdoc/>

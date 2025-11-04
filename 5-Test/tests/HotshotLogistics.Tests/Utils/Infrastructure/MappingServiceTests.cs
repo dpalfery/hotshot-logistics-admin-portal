@@ -11,7 +11,8 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using HotshotLogistics.Application.Services;
-using HotshotLogistics.Contracts.Models;
+using HotshotLogistics.Domain.Entities;
+using HotshotLogistics.Domain.Entities;
 using HotshotLogistics.Data.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -217,7 +218,7 @@ public class MappingServiceTests
     {
         // Arrange
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string>
+            .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 { "Mapping:Provider", "Mock" }
             })
@@ -244,22 +245,17 @@ public class MappingServiceTests
     {
         // Arrange
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string>
+            .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 { "Mapping:Provider", "AzureMaps" },
                 { "Mapping:AzureMaps:SubscriptionKey", "valid-key-123" }
             })
             .Build();
 
-        var loggerFactory = new Mock<ILoggerFactory>();
-        loggerFactory.Setup(x => x.CreateLogger(It.IsAny<string>()))
-            .Returns(new Mock<ILogger<AzureMapsService>>().Object);
+        var logger = new Mock<ILogger<MappingServiceFactory>>();
+        var services = new List<IMappingService> { new AzureMapsService(new HttpClient(), logger.Object, "test-key") };
 
-        var httpClientFactory = new Mock<IHttpClientFactory>();
-        httpClientFactory.Setup(x => x.CreateClient(It.IsAny<string>()))
-            .Returns(new HttpClient());
-
-        var factory = new MappingServiceFactory(configuration, loggerFactory.Object, httpClientFactory.Object);
+        var factory = new MappingServiceFactory(services, logger.Object);
 
         // Act
         var service = factory.CreateMappingService();
@@ -274,7 +270,7 @@ public class MappingServiceTests
     {
         // Arrange
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string>
+            .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 { "Mapping:Provider", "AzureMaps" }
             })
@@ -295,7 +291,7 @@ public class MappingServiceTests
     {
         // Arrange
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string>
+            .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 { "Mapping:Provider", "AzureMaps" },
                 { "Mapping:AzureMaps:SubscriptionKey", "YOUR_AZURE_MAPS_KEY_HERE" }
@@ -317,22 +313,17 @@ public class MappingServiceTests
     {
         // Arrange
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string>
+            .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 { "Mapping:Provider", "GoogleMaps" },
                 { "Mapping:GoogleMaps:ApiKey", "valid-key-123" }
             })
             .Build();
 
-        var loggerFactory = new Mock<ILoggerFactory>();
-        loggerFactory.Setup(x => x.CreateLogger(It.IsAny<string>()))
-            .Returns(new Mock<ILogger<GoogleMapsService>>().Object);
+        var logger = new Mock<ILogger<MappingServiceFactory>>();
+        var services = new List<IMappingService> { new GoogleMapsService(new HttpClient(), logger.Object, "test-key") };
 
-        var httpClientFactory = new Mock<IHttpClientFactory>();
-        httpClientFactory.Setup(x => x.CreateClient(It.IsAny<string>()))
-            .Returns(new HttpClient());
-
-        var factory = new MappingServiceFactory(configuration, loggerFactory.Object, httpClientFactory.Object);
+        var factory = new IMappingServiceFactory(services, logger.Object);
 
         // Act
         var service = factory.CreateMappingService();
@@ -347,7 +338,7 @@ public class MappingServiceTests
     {
         // Arrange
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string>
+            .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 { "Mapping:Provider", "GoogleMaps" }
             })
@@ -368,7 +359,7 @@ public class MappingServiceTests
     {
         // Arrange
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string>
+            .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 { "Mapping:Provider", "UnsupportedProvider" }
             })
@@ -389,16 +380,13 @@ public class MappingServiceTests
     {
         // Arrange
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string>())
+            .AddInMemoryCollection(new Dictionary<string, string?>())
             .Build();
 
-        var loggerFactory = new Mock<ILoggerFactory>();
-        loggerFactory.Setup(x => x.CreateLogger(It.IsAny<string>()))
-            .Returns(new Mock<ILogger<MockMappingService>>().Object);
+        var logger = new Mock<ILogger<MappingServiceFactory>>();
+        var services = new List<IMappingService> { new MockMappingService(logger.Object) };
 
-        var httpClientFactory = new Mock<IHttpClientFactory>();
-
-        var factory = new MappingServiceFactory(configuration, loggerFactory.Object, httpClientFactory.Object);
+        var factory = new IMappingServiceFactory(services, logger.Object);
 
         // Act
         var service = factory.CreateMappingService();

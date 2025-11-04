@@ -2,18 +2,18 @@ namespace HotshotLogistics.Data.Repositories;
 
 using System.Data;
 using System.Linq;
-
-using HotshotLogistics.Contracts.Models;
 using HotshotLogistics.Contracts.Repositories;
+using HotshotLogistics.Core.Enums;
 using HotshotLogistics.Core.Repositories;
-using HotshotLogistics.Domain.Models;
+using HotshotLogistics.Domain.Entities;
+using HotshotLogistics.Domain.ValueObjects;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 
 /// <summary>
 /// Repository for customer data access using native ADO.NET.
 /// </summary>
-internal class CustomerRepository : BaseRepository<ICustomer>, ICustomerRepository
+internal class CustomerRepository : BaseRepository<Customer>, ICustomerRepository
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="CustomerRepository"/> class.
@@ -25,18 +25,18 @@ internal class CustomerRepository : BaseRepository<ICustomer>, ICustomerReposito
     }
 
     /// <inheritdoc/>
-    public async Task<ICustomer?> GetByTaxIdAsync(string taxId)
+    public async Task<Customer?> GetByTaxIdAsync(string taxId)
     {
         const string sql = "SELECT * FROM Customers WHERE TaxId = @TaxId";
 
         var parameters = new[] { new SqlParameter("@TaxId", SqlDbType.NVarChar) { Value = taxId } };
         var customers = await ExecuteQueryAsync(sql, parameters);
 
-        return customers.Cast<ICustomer>().FirstOrDefault();
+        return customers.Cast<Customer>().FirstOrDefault();
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<ICustomer>> GetByCreditLimitRangeAsync(decimal minLimit, decimal maxLimit)
+    public async Task<IEnumerable<Customer>> GetByCreditLimitRangeAsync(decimal minLimit, decimal maxLimit)
     {
         const string sql = "SELECT * FROM Customers WHERE CreditLimit BETWEEN @MinLimit AND @MaxLimit AND IsActive = 1";
 
@@ -50,7 +50,7 @@ internal class CustomerRepository : BaseRepository<ICustomer>, ICustomerReposito
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<ICustomer>> GetActiveCustomersAsync()
+    public async Task<IEnumerable<Customer>> GetActiveCustomersAsync()
     {
         const string sql = "SELECT * FROM Customers WHERE IsActive = 1 ORDER BY CompanyName";
 
@@ -58,7 +58,7 @@ internal class CustomerRepository : BaseRepository<ICustomer>, ICustomerReposito
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<ICustomer>> GetOverdueCustomersAsync()
+    public async Task<IEnumerable<Customer>> GetOverdueCustomersAsync()
     {
         const string sql = @"
             SELECT DISTINCT c.*
@@ -161,23 +161,23 @@ internal class CustomerRepository : BaseRepository<ICustomer>, ICustomerReposito
     }
 
     // Explicit interface implementations to bridge concrete/interface types
-    async Task<ICustomer?> ICustomerRepository.GetByIdAsync(object id, CancellationToken cancellationToken)
+    async Task<Customer?> ICustomerRepository.GetByIdAsync(object id, CancellationToken cancellationToken)
     {
         return await GetByIdAsync(id, cancellationToken);
     }
 
-    async Task<IEnumerable<ICustomer>> ICustomerRepository.GetAllAsync()
+    async Task<IEnumerable<Customer>> ICustomerRepository.GetAllAsync()
     {
-        return (await GetAllAsync()).Cast<ICustomer>();
+        return (await GetAllAsync()).Cast<Customer>();
     }
 
-    async Task<ICustomer> ICustomerRepository.AddAsync(ICustomer entity)
+    async Task<Customer> ICustomerRepository.AddAsync(Customer entity)
     {
         var customer = entity as Customer ?? throw new ArgumentException("Entity must be Customer", nameof(entity));
         return await AddAsync(customer);
     }
 
-    async Task<ICustomer> ICustomerRepository.UpdateAsync(ICustomer entity)
+    async Task<Customer> ICustomerRepository.UpdateAsync(Customer entity)
     {
         var customer = entity as Customer ?? throw new ArgumentException("Entity must be Customer", nameof(entity));
         return await UpdateAsync(customer);
@@ -200,7 +200,7 @@ internal class CustomerRepository : BaseRepository<ICustomer>, ICustomerReposito
     protected override string GetPrimaryKeyColumnName() => "Id";
 
     /// <inheritdoc/>
-    protected override ICustomer MapReaderToEntity(SqlDataReader reader)
+    protected override Customer MapReaderToEntity(SqlDataReader reader)
     {
         return new Customer
         {
@@ -224,7 +224,7 @@ internal class CustomerRepository : BaseRepository<ICustomer>, ICustomerReposito
             {
                 PaymentTermsDays = reader.GetInt32(reader.GetOrdinal("PaymentTermsDays")),
                 Status = (CreditStatus)reader.GetInt32(reader.GetOrdinal("CreditStatus")),
-                ApprovedDate = reader.IsDBNull(reader.GetOrdinal("CreditApprovedDate")) 
+                ApprovedDate = reader.IsDBNull(reader.GetOrdinal("CreditApprovedDate"))
                     ? DateTime.UtcNow.AddDays(-30) // Default to 30 days ago instead of DateTime.MinValue
                     : reader.GetDateTime(reader.GetOrdinal("CreditApprovedDate")),
                 ExpiryDate = reader.IsDBNull(reader.GetOrdinal("CreditExpiryDate")) ? null : reader.GetDateTime(reader.GetOrdinal("CreditExpiryDate")),
@@ -237,7 +237,7 @@ internal class CustomerRepository : BaseRepository<ICustomer>, ICustomerReposito
     }
 
     /// <inheritdoc/>
-    protected override SqlParameter[] GetInsertParameters(ICustomer entity)
+    protected override SqlParameter[] GetInsertParameters(Customer entity)
     {
         return new[]
         {
@@ -263,7 +263,7 @@ internal class CustomerRepository : BaseRepository<ICustomer>, ICustomerReposito
     }
 
     /// <inheritdoc/>
-    protected override SqlParameter[] GetUpdateParameters(ICustomer entity)
+    protected override SqlParameter[] GetUpdateParameters(Customer entity)
     {
         return new[]
         {

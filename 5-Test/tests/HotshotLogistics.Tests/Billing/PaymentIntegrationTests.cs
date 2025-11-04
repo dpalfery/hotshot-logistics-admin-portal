@@ -10,21 +10,22 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using HotshotLogistics.Application.Services;
-using HotshotLogistics.Contracts.Models;
+using HotshotLogistics.Domain.Entities;
 using HotshotLogistics.Contracts.Repositories;
 using HotshotLogistics.Domain.Repositories;
 using HotshotLogistics.Contracts.Services;
-using HotshotLogistics.Domain.Models;
+using HotshotLogistics.Domain.Entities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
+    using HotshotLogistics.Core.Enums;
 
-/// <summary>
-/// Integration tests for payment processing functionality.
-/// </summary>
-public class PaymentIntegrationTests
+    /// <summary>
+    /// Integration tests for payment processing functionality.
+    /// </summary>
+    public class PaymentIntegrationTests
 {
     private readonly Mock<IPaymentProcessor> mockStripeProcessor;
     private readonly Mock<IPaymentProcessor> mockPayPalProcessor;
@@ -359,9 +360,9 @@ public class PaymentIntegrationTests
     /// <param name="totalAmount">The total amount.</param>
     /// <param name="paidAmount">The paid amount.</param>
     /// <returns>A test invoice.</returns>
-    private static IInvoice CreateTestInvoice(string id, string customerId, decimal totalAmount, decimal paidAmount)
+    private static Invoice CreateTestInvoice(string id, string customerId, decimal totalAmount, decimal paidAmount)
     {
-        var mockInvoice = new Mock<IInvoice>();
+        var mockInvoice = new Mock<Invoice>();
         mockInvoice.Setup(i => i.Id).Returns(id);
         mockInvoice.Setup(i => i.CustomerId).Returns(customerId);
         mockInvoice.Setup(i => i.TotalAmount).Returns(totalAmount);
@@ -376,9 +377,9 @@ public class PaymentIntegrationTests
     /// </summary>
     /// <param name="id">The customer ID.</param>
     /// <returns>A test customer.</returns>
-    private static ICustomer CreateTestCustomer(string id)
+    private static Customer CreateTestCustomer(string id)
     {
-        var mockCustomer = new Mock<ICustomer>();
+        var mockCustomer = new Mock<Customer>();
         mockCustomer.Setup(c => c.Id).Returns(id);
         mockCustomer.Setup(c => c.CompanyName).Returns($"Company {id}");
         return mockCustomer.Object;

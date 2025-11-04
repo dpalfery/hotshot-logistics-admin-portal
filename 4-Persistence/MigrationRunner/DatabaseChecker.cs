@@ -17,15 +17,15 @@ class DatabaseChecker
         {
             using var connection = new SqlConnection(connectionString);
             connection.Open();
-            
+
             // Check customers with cust- prefix
             using var cmd = connection.CreateCommand();
             cmd.CommandText = @"
-                SELECT TOP 10 Id, CompanyName 
-                FROM [dbo].[Customers] 
+                SELECT TOP 10 Id, CompanyName
+                FROM [dbo].[Customers]
                 WHERE Id LIKE 'cust-%'
                 ORDER BY Id";
-            
+
             Console.WriteLine("Customers with 'cust-' prefix:");
             using var reader = cmd.ExecuteReader();
             bool hasCustomers = false;
@@ -34,18 +34,18 @@ class DatabaseChecker
                 hasCustomers = true;
                 Console.WriteLine($"  {reader["Id"]} - {reader["CompanyName"]}");
             }
-            
+
             if (!hasCustomers)
             {
                 Console.WriteLine("  No customers found with 'cust-' prefix");
             }
             reader.Close();
-            
+
             // Check total customer count
             cmd.CommandText = "SELECT COUNT(*) FROM [dbo].[Customers]";
             var totalCount = (int)cmd.ExecuteScalar();
             Console.WriteLine($"Total customers in database: {totalCount}");
-            
+
             // Check for any customers at all
             if (totalCount > 0)
             {

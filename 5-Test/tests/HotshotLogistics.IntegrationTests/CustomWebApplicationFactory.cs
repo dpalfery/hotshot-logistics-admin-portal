@@ -9,6 +9,7 @@ namespace HotshotLogistics.IntegrationTests
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.AspNetCore.Mvc.Testing;
     using Microsoft.AspNetCore.TestHost;
+    using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Logging;
 
@@ -24,6 +25,24 @@ namespace HotshotLogistics.IntegrationTests
         {
             // Authentication scheme is configured in Program.cs for Development; avoid re-registering here to prevent "Scheme already exists: Test".
 
+            // Configure test database connection string
+            builder.ConfigureAppConfiguration((context, config) =>
+            {
+                var dbConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
+                if (string.IsNullOrEmpty(dbConnectionString))
+                {
+                    // Use default test connection string for local development using LocalDB
+                    dbConnectionString = "Server=(localdb)\\MSSQLLocalDB;Database=HotshotLogisticsTest;Trusted_Connection=true;MultipleActiveResultSets=true;TrustServerCertificate=true;";
+                }
+
+                // Add the connection string to the configuration so BaseRepository can find it
+                var memoryConfigSource = new Dictionary<string, string?>
+                {
+                    ["ConnectionStrings:DefaultConnection"] = dbConnectionString
+                };
+                config.AddInMemoryCollection(memoryConfigSource);
+            });
+
             // Enable detailed logging for debugging
             builder.ConfigureLogging(logging =>
             {
@@ -31,7 +50,7 @@ namespace HotshotLogistics.IntegrationTests
                 logging.AddConsole();
                 logging.AddDebug();
                 logging.SetMinimumLevel(LogLevel.Trace); // Show ALL logs including trace
-                
+
                 // Add specific loggers for troubleshooting
                 logging.AddFilter("HotshotLogistics", LogLevel.Debug);
                 logging.AddFilter("Microsoft.AspNetCore", LogLevel.Information);

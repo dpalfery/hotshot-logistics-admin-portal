@@ -6,8 +6,9 @@ namespace HotshotLogistics.Application.Services
 {
     using System.Collections.Generic;
     using System.Threading.Tasks;
-    using HotshotLogistics.Contracts.Models;
+    using HotshotLogistics.Domain.Entities;
     using HotshotLogistics.Contracts.Repositories;
+    using HotshotLogistics.Domain.ValueObjects;
     using HotshotLogistics.Contracts.Services;
 
     /// <summary>
@@ -36,25 +37,25 @@ namespace HotshotLogistics.Application.Services
         }
 
         /// <inheritdoc/>
-        public Task<IEnumerable<ICustomer>> GetCustomersAsync(CancellationToken cancellationToken = default)
+        public Task<IEnumerable<Customer>> GetCustomersAsync(CancellationToken cancellationToken = default)
         {
             return customerRepository.GetAllAsync();
         }
 
         /// <inheritdoc/>
-        public Task<ICustomer?> GetCustomerByIdAsync(string id, CancellationToken cancellationToken = default)
+        public Task<Customer?> GetCustomerByIdAsync(string id, CancellationToken cancellationToken = default)
         {
             return customerRepository.GetByIdAsync(id);
         }
 
         /// <inheritdoc/>
-        public Task<ICustomer> CreateCustomerAsync(ICustomer customer, CancellationToken cancellationToken = default)
+        public Task<Customer> CreateCustomerAsync(Customer customer, CancellationToken cancellationToken = default)
         {
             return customerRepository.AddAsync(customer);
         }
 
         /// <inheritdoc/>
-        public async Task<ICustomer?> UpdateCustomerAsync(string id, ICustomer customer, CancellationToken cancellationToken = default)
+        public async Task<Customer?> UpdateCustomerAsync(string id, Customer customer, CancellationToken cancellationToken = default)
         {
             var existingCustomer = await customerRepository.GetByIdAsync(id);
             if (existingCustomer == null)
@@ -73,25 +74,25 @@ namespace HotshotLogistics.Application.Services
         }
 
         /// <inheritdoc/>
-        public Task<IEnumerable<ICustomer>> GetActiveCustomersAsync(CancellationToken cancellationToken = default)
+        public Task<IEnumerable<Customer>> GetActiveCustomersAsync(CancellationToken cancellationToken = default)
         {
             return customerRepository.GetActiveCustomersAsync();
         }
 
         /// <inheritdoc/>
-        public Task<IEnumerable<ICustomer>> GetOverdueCustomersAsync(CancellationToken cancellationToken = default)
+        public Task<IEnumerable<Customer>> GetOverdueCustomersAsync(CancellationToken cancellationToken = default)
         {
             return customerRepository.GetOverdueCustomersAsync();
         }
 
         /// <inheritdoc/>
-        public Task<IEnumerable<IJob>> GetCustomerJobsAsync(string customerId, CancellationToken cancellationToken = default)
+        public Task<IEnumerable<Job>> GetCustomerJobsAsync(string customerId, CancellationToken cancellationToken = default)
         {
             return jobRepository.GetJobsByCustomerAsync(customerId, cancellationToken);
         }
 
         /// <inheritdoc/>
-        public Task<IEnumerable<IInvoice>> GetCustomerInvoicesAsync(string customerId, CancellationToken cancellationToken = default)
+        public Task<IEnumerable<Invoice>> GetCustomerInvoicesAsync(string customerId, CancellationToken cancellationToken = default)
         {
             return invoiceRepository.GetByCustomerIdAsync(customerId);
         }
@@ -109,7 +110,7 @@ namespace HotshotLogistics.Application.Services
         }
 
         /// <inheritdoc/>
-        public Task<bool> ValidateCustomerAsync(ICustomer customer, CancellationToken cancellationToken = default)
+        public Task<bool> ValidateCustomerAsync(Customer customer, CancellationToken cancellationToken = default)
         {
             // Basic validation - can be extended
             var isValid = !string.IsNullOrWhiteSpace(customer.CompanyName) &&

@@ -12,7 +12,8 @@ namespace HotshotLogistics.IntegrationTests
     using Microsoft.AspNetCore.Mvc.Testing;
     using Xunit;
     using FluentAssertions;
-    using HotshotLogistics.Contracts.Models;
+    using HotshotLogistics.Domain.Entities;
+using HotshotLogistics.Domain.Entities;
     using System.Text.Json;
 
     /// <summary>

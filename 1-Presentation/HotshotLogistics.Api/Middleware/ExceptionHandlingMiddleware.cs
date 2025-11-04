@@ -8,10 +8,11 @@ namespace HotshotLogistics.Api.Middleware
     using System.Net;
     using System.Text.Json;
     using System.Threading.Tasks;
-    using HotshotLogistics.Contracts.Models;
+    using HotshotLogistics.Domain.Entities;
     using HotshotLogistics.Core.Exceptions;
     using Microsoft.AspNetCore.Http;
     using Microsoft.Extensions.Logging;
+    using HotshotLogistics.Domain.DTOs;
 
     /// <summary>
     /// Middleware for handling exceptions globally and returning structured error responses.

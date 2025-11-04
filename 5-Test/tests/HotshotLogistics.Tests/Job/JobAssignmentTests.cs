@@ -6,8 +6,8 @@ namespace HotshotLogistics.Tests.Job
 {
 
     using System;
-    using HotshotLogistics.Contracts.Models;
-    using HotshotLogistics.Domain.Models;
+    using HotshotLogistics.Domain.Entities;
+using HotshotLogistics.Domain.Entities;
     using Xunit;
 
     /// <summary>
@@ -71,7 +71,7 @@ namespace HotshotLogistics.Tests.Job
         [Fact]
         public void Can_Set_Navigation_Properties()
         {
-            var job = new Job { Id = "job-1", Title = "Test Job" };
+            var job = new Domain.Entities.Job { Id = "job-1", Title = "Test Job" };
             var driver = new Driver
             {
                 Id = 1,

@@ -1,4 +1,4 @@
-using HotshotLogistics.Contracts.Models;
+using HotshotLogistics.Domain.Entities;
 
 namespace HotshotLogistics.Contracts.Services;
 
@@ -24,7 +24,7 @@ public interface ITrackingService
     /// <param name="locationUpdate">The location update.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The created location tracking record.</returns>
-    Task<ILocationTracking> UpdateLocationAsync(string jobId, int driverId, LocationUpdate locationUpdate, CancellationToken cancellationToken = default);
+    Task<LocationTracking> UpdateLocationAsync(string jobId, int driverId, LocationUpdate locationUpdate, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Stops tracking for a job.
@@ -40,7 +40,7 @@ public interface ITrackingService
     /// <param name="jobId">The job identifier.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The latest location tracking record.</returns>
-    Task<ILocationTracking?> GetCurrentLocationAsync(string jobId, CancellationToken cancellationToken = default);
+    Task<LocationTracking?> GetCurrentLocationAsync(string jobId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the location history for a job.
@@ -50,7 +50,7 @@ public interface ITrackingService
     /// <param name="endTime">The end time for the history.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The location tracking history.</returns>
-    Task<IEnumerable<ILocationTracking>> GetLocationHistoryAsync(string jobId, DateTime startTime, DateTime endTime, CancellationToken cancellationToken = default);
+    Task<IEnumerable<LocationTracking>> GetLocationHistoryAsync(string jobId, DateTime startTime, DateTime endTime, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Checks if a driver has deviated from the expected route.

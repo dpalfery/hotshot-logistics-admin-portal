@@ -9,8 +9,10 @@ namespace HotshotLogistics.Application.Services
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
-    using HotshotLogistics.Contracts.Models;
+    using HotshotLogistics.Domain.Entities;
+    using HotshotLogistics.Domain.ValueObjects;
     using HotshotLogistics.Contracts.Services;
+    using HotshotLogistics.Core.Enums;
     using Microsoft.Extensions.Logging;
     using Microsoft.Extensions.Caching.Distributed;
     using System.Text.Json;
@@ -67,7 +69,7 @@ namespace HotshotLogistics.Application.Services
                     Body = message
                 };
 
-                var service = communicationFactory.GetService(CommunicationType.Sms);
+                var service = communicationFactory.GetService("Sms");
                 return await service.SendAsync(commMessage, cancellationToken);
             }, $"SMS to {phoneNumber}");
         }
@@ -101,7 +103,7 @@ namespace HotshotLogistics.Application.Services
                     Body = message
                 };
 
-                var service = communicationFactory.GetService(CommunicationType.Email);
+                var service = communicationFactory.GetService("Email");
                 return await service.SendAsync(commMessage, cancellationToken);
             }, "Email notification");
         }
@@ -135,7 +137,7 @@ namespace HotshotLogistics.Application.Services
                     Body = message
                 };
 
-                var service = communicationFactory.GetService(CommunicationType.Push);
+                var service = communicationFactory.GetService("Push");
                 return await service.SendAsync(commMessage, cancellationToken);
             }, $"Push notification to {deviceToken}");
         }

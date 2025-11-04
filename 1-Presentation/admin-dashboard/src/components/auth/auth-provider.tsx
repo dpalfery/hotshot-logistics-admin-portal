@@ -32,8 +32,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Always allow access in development mode
   const isDevelopment = process.env.NODE_ENV === 'development';
-  const isTestMode = typeof window !== 'undefined' && 
-    (window as any).__BYPASS_AUTH__ === true;
+  const isTestMode = typeof window !== 'undefined' &&
+    (window as typeof window & { __BYPASS_AUTH__?: boolean }).__BYPASS_AUTH__ === true;
 
   useEffect(() => {
     // Only check authentication in production

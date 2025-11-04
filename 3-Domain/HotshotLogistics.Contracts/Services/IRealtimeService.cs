@@ -1,5 +1,6 @@
-using HotshotLogistics.Contracts.Hubs;
-using HotshotLogistics.Contracts.Models;
+using HotshotLogistics.Core.Enums;
+using HotshotLogistics.Domain.Entities;
+using HotshotLogistics.Domain.DTOs;
 
 namespace HotshotLogistics.Contracts.Services;
 
@@ -26,12 +27,12 @@ public interface IRealtimeService
     /// <summary>
     /// Broadcast new job availability to available drivers
     /// </summary>
-    Task BroadcastNewJobAvailable(JobDto job);
+    Task BroadcastNewJobAvailable(ContractsJobDto job);
 
     /// <summary>
     /// Send notification to specific user or broadcast to all
     /// </summary>
-    Task SendNotification(NotificationMessage message);
+    Task SendNotification(NotificationMessageDto message);
 
     /// <summary>
     /// Add user to a specific group for targeted messaging

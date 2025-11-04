@@ -24,6 +24,15 @@ public class SecureLogger
         }
     }
 
+    public void RegisterEnvironmentSecret(string envVarName)
+    {
+        var secret = Environment.GetEnvironmentVariable(envVarName);
+        if (!string.IsNullOrEmpty(secret))
+        {
+            _secrets.Add(secret);
+        }
+    }
+
     public void ClearSecrets()
     {
         _secrets.Clear();
@@ -104,15 +113,15 @@ public class SecureLogger
         // Mask any registered secrets in the message
         foreach (var secret in _secrets)
         {
-            sanitized = ReplaceString(sanitized, secret, "****", StringComparison.OrdinalIgnoreCase);
+            sanitized = ReplaceString(sanitized, secret, "REDACTED", StringComparison.OrdinalIgnoreCase);
         }
 
         // Mask common password patterns
-        sanitized = Regex.Replace(sanitized, @"password['""\s]*=[\s]*['""][^'""]*['""]", "password=\"****\"", RegexOptions.IgnoreCase);
-        sanitized = Regex.Replace(sanitized, @"pwd['""\s]*=[\s]*['""][^'""]*['""]", "pwd=\"****\"", RegexOptions.IgnoreCase);
+        sanitized = Regex.Replace(sanitized, @"password['""\s]*=[\s]*['""][^'""]*['""]", "password=\"REDACTED\"", RegexOptions.IgnoreCase);
+        sanitized = Regex.Replace(sanitized, @"pwd['""\s]*=[\s]*['""][^'""]*['""]", "pwd=\"REDACTED\"", RegexOptions.IgnoreCase);
 
         // Mask connection string password patterns
-        sanitized = Regex.Replace(sanitized, @"password[=:][\s]*[^\s;]+", "password=****", RegexOptions.IgnoreCase);
+        sanitized = Regex.Replace(sanitized, @"password[=:][\s]*[^\s;]+", "password=REDACTED", RegexOptions.IgnoreCase);
 
         return sanitized;
     }
@@ -152,7 +161,7 @@ public class SecureLogger
         {
             if (string.Equals(stringArg, secret, StringComparison.OrdinalIgnoreCase))
             {
-                return "****";
+                return "REDACTED";
             }
         }
 
@@ -178,15 +187,15 @@ public class SecureLogger
         var masked = connectionString;
 
         // Mask password in connection string
-        masked = Regex.Replace(masked, @"password=[^;]+", "password=****", RegexOptions.IgnoreCase);
+        masked = Regex.Replace(masked, @"password=[^;]+", "password=REDACTED", RegexOptions.IgnoreCase);
 
         // Mask pwd in connection string
-        masked = Regex.Replace(masked, @"pwd=[^;]+", "pwd=****", RegexOptions.IgnoreCase);
+        masked = Regex.Replace(masked, @"pwd=[^;]+", "pwd=REDACTED", RegexOptions.IgnoreCase);
 
         // Mask any registered secrets
         foreach (var secret in _secrets)
         {
-            masked = ReplaceString(masked, secret, "****", StringComparison.OrdinalIgnoreCase);
+            masked = ReplaceString(masked, secret, "REDACTED", StringComparison.OrdinalIgnoreCase);
         }
 
         return masked;

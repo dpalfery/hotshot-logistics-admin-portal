@@ -4,11 +4,12 @@ using System.Data;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-
-using HotshotLogistics.Contracts.Models;
 using HotshotLogistics.Contracts.Repositories;
+using HotshotLogistics.Core.Enums;
 using HotshotLogistics.Core.Repositories;
-using HotshotLogistics.Domain.Models;
+using HotshotLogistics.Domain.DTOs;
+using HotshotLogistics.Domain.Entities;
+using HotshotLogistics.Domain.ValueObjects;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 
@@ -159,6 +160,7 @@ internal class JobAssignmentRepository : BaseRepository<JobAssignmentDto>, IJobA
     /// <inheritdoc/>
     protected override JobAssignmentDto MapReaderToEntity(SqlDataReader reader)
     {
+        // Ensure all required columns are checked for DBNull before accessing
         return new JobAssignmentDto
         {
             Id = reader.GetString(reader.GetOrdinal("Id")),
@@ -166,7 +168,7 @@ internal class JobAssignmentRepository : BaseRepository<JobAssignmentDto>, IJobA
             DriverId = reader.GetInt32(reader.GetOrdinal("DriverId")),
             AssignedAt = reader.GetDateTime(reader.GetOrdinal("AssignedAt")),
             Status = (JobAssignmentStatus)reader.GetInt32(reader.GetOrdinal("Status")),
-            Driver = reader.IsDBNull(reader.GetOrdinal("DriverId")) ? null : new DriverDto
+            Driver = reader.IsDBNull(reader.GetOrdinal("DriverFirstName")) ? null : new DriverDto
             {
                 Id = reader.GetInt32(reader.GetOrdinal("DriverId")),
                 FirstName = reader.GetString(reader.GetOrdinal("DriverFirstName")),
@@ -176,16 +178,16 @@ internal class JobAssignmentRepository : BaseRepository<JobAssignmentDto>, IJobA
                 LicenseNumber = reader.GetString(reader.GetOrdinal("DriverLicenseNumber")),
                 LicenseExpiryDate = reader.GetDateTime(reader.GetOrdinal("DriverLicenseExpiryDate")),
             },
-            Job = new JobDto
+            Job = reader.IsDBNull(reader.GetOrdinal("JobTitle")) ? null : new Job
             {
                 Id = reader.GetString(reader.GetOrdinal("JobId")),
                 Title = reader.GetString(reader.GetOrdinal("JobTitle")),
-                PickupAddress = reader.GetString(reader.GetOrdinal("JobPickupAddress")),
-                DropoffAddress = reader.GetString(reader.GetOrdinal("JobDeliveryAddress")),
+                PickupLocation = new Location { Address = reader.GetString(reader.GetOrdinal("JobPickupAddress")) },
+                DeliveryLocation = new Location { Address = reader.GetString(reader.GetOrdinal("JobDeliveryAddress")) },
                 Status = (JobStatus)reader.GetInt32(reader.GetOrdinal("JobStatus")),
                 Priority = (JobPriority)reader.GetInt32(reader.GetOrdinal("JobPriority")),
                 Amount = reader.GetDecimal(reader.GetOrdinal("JobAmount")),
-                EstimatedDeliveryTimeString = reader.GetDateTime(reader.GetOrdinal("JobEstimatedDeliveryTime")).ToString("O"),
+                EstimatedDeliveryTime = reader.GetDateTime(reader.GetOrdinal("JobEstimatedDeliveryTime")),
                 CreatedAt = reader.GetDateTime(reader.GetOrdinal("JobCreatedAt")),
                 UpdatedAt = reader.IsDBNull(reader.GetOrdinal("JobUpdatedAt")) ? null : reader.GetDateTime(reader.GetOrdinal("JobUpdatedAt")),
             },

@@ -10,7 +10,8 @@ namespace HotshotLogistics.Tests.Tracking
     using System.Threading.Tasks;
     using FluentAssertions;
     using HotshotLogistics.Api.Controllers;
-    using HotshotLogistics.Contracts.Models;
+    using HotshotLogistics.Domain.Entities;
+using HotshotLogistics.Domain.Entities;
     using HotshotLogistics.Contracts.Services;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Logging;
@@ -198,7 +199,7 @@ namespace HotshotLogistics.Tests.Tracking
             // Assert
             result.Should().NotBeNull();
             var createdResult = result.Result.Should().BeOfType<CreatedAtActionResult>().Subject;
-            var locationTracking = createdResult.Value.Should().BeAssignableTo<ILocationTracking>().Subject;
+            var locationTracking = createdResult.Value.Should().BeAssignableTo<LocationTracking>().Subject;
             locationTracking.JobId.Should().Be(request.JobId);
         }
 
@@ -237,7 +238,7 @@ namespace HotshotLogistics.Tests.Tracking
             // Assert
             result.Should().NotBeNull();
             var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
-            var locationTracking = okResult.Value.Should().BeAssignableTo<ILocationTracking>().Subject;
+            var locationTracking = okResult.Value.Should().BeAssignableTo<LocationTracking>().Subject;
             locationTracking.JobId.Should().Be(jobId);
         }
 
@@ -252,7 +253,7 @@ namespace HotshotLogistics.Tests.Tracking
             var jobId = "job-123";
 
             mockTrackingService.Setup(s => s.GetCurrentLocationAsync(jobId, It.IsAny<CancellationToken>()))
-                .ReturnsAsync((ILocationTracking?)null);
+                .ReturnsAsync((LocationTracking?)null);
 
             // Act
             var result = await controller.GetCurrentLocation(jobId);
@@ -273,7 +274,7 @@ namespace HotshotLogistics.Tests.Tracking
             var jobId = "job-123";
             var startTime = DateTime.UtcNow.AddHours(-2);
             var endTime = DateTime.UtcNow;
-            var expectedHistory = new List<ILocationTracking>
+            var expectedHistory = new List<LocationTracking>
             {
                 CreateTestLocationTracking(jobId, 456),
                 CreateTestLocationTracking(jobId, 456)
@@ -288,7 +289,7 @@ namespace HotshotLogistics.Tests.Tracking
             // Assert
             result.Should().NotBeNull();
             var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
-            var history = okResult.Value.Should().BeAssignableTo<IEnumerable<ILocationTracking>>().Subject;
+            var history = okResult.Value.Should().BeAssignableTo<IEnumerable<LocationTracking>>().Subject;
             history.Should().HaveCount(2);
         }
 
@@ -400,7 +401,7 @@ namespace HotshotLogistics.Tests.Tracking
             var jobId = "job-123";
 
             mockTrackingService.Setup(s => s.GetCurrentLocationAsync(jobId, It.IsAny<CancellationToken>()))
-                .ReturnsAsync((ILocationTracking?)null);
+                .ReturnsAsync((LocationTracking?)null);
 
             // Act
             var result = await controller.GetPublicTrackingInfo(jobId);
@@ -416,9 +417,9 @@ namespace HotshotLogistics.Tests.Tracking
         /// <param name="jobId">The job ID.</param>
         /// <param name="driverId">The driver ID.</param>
         /// <returns>A test location tracking instance.</returns>
-        private static ILocationTracking CreateTestLocationTracking(string jobId, int driverId)
+        private static LocationTracking CreateTestLocationTracking(string jobId, int driverId)
         {
-            var mockLocationTracking = new Mock<ILocationTracking>();
+            var mockLocationTracking = new Mock<LocationTracking>();
             mockLocationTracking.Setup(l => l.Id).Returns(1L);
             mockLocationTracking.Setup(l => l.JobId).Returns(jobId);
             mockLocationTracking.Setup(l => l.DriverId).Returns(driverId);

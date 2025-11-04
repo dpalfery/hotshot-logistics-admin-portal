@@ -12,7 +12,7 @@ namespace HotshotLogistics.IntegrationTests
     using Microsoft.AspNetCore.Mvc.Testing;
     using Xunit;
     using FluentAssertions;
-    using HotshotLogistics.Contracts.Models;
+    using HotshotLogistics.Domain.Entities;
     using System.Text.Json;
 
     /// <summary>
@@ -50,7 +50,7 @@ namespace HotshotLogistics.IntegrationTests
             response.StatusCode.Should().Be(HttpStatusCode.OK);
 
             var content = await response.Content.ReadAsStringAsync();
-            var assignment = JsonSerializer.Deserialize<JobAssignmentDto>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            var assignment = JsonSerializer.Deserialize<JobAssignment>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
             assignment.Should().NotBeNull();
             assignment.Id.Should().Be(assignmentId);

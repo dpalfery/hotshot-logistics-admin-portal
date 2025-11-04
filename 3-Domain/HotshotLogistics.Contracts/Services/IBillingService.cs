@@ -1,4 +1,4 @@
-using HotshotLogistics.Contracts.Models;
+using HotshotLogistics.Domain.Entities;
 
 namespace HotshotLogistics.Contracts.Services;
 
@@ -13,7 +13,7 @@ public interface IBillingService
     /// <param name="jobId">The job identifier.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The generated invoice.</returns>
-    Task<IInvoice> GenerateInvoiceAsync(string jobId, CancellationToken cancellationToken = default);
+    Task<Invoice> GenerateInvoiceAsync(string jobId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets an invoice by its identifier.
@@ -21,7 +21,7 @@ public interface IBillingService
     /// <param name="invoiceId">The invoice identifier.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The invoice if found, null otherwise.</returns>
-    Task<IInvoice?> GetInvoiceByIdAsync(string invoiceId, CancellationToken cancellationToken = default);
+    Task<Invoice?> GetInvoiceByIdAsync(string invoiceId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Calculates tax amount based on location and amount.
@@ -48,12 +48,12 @@ public interface IBillingService
     /// <param name="customerId">The customer identifier.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The customer's invoices.</returns>
-    Task<IEnumerable<IInvoice>> GetCustomerInvoicesAsync(string customerId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<Invoice>> GetCustomerInvoicesAsync(string customerId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets overdue invoices.
     /// </summary>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The overdue invoices.</returns>
-    Task<IEnumerable<IInvoice>> GetOverdueInvoicesAsync(CancellationToken cancellationToken = default);
+    Task<IEnumerable<Invoice>> GetOverdueInvoicesAsync(CancellationToken cancellationToken = default);
 }
