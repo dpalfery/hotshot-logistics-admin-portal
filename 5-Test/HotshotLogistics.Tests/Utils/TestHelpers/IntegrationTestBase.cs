@@ -25,7 +25,9 @@ namespace HotshotLogistics.Tests
         /// <param name="factory">The web application factory.</param>
         protected IntegrationTestBase(WebApplicationFactory<Program> factory)
         {
-            Factory = factory;
+            // Use a custom factory to ensure test DI registrations (MockService) are applied.
+            var customFactory = new HotshotLogistics.Tests.Utils.TestHelpers.CustomWebApplicationFactory();
+            Factory = customFactory;
             Client = Factory.CreateClient();
         }
 
@@ -51,6 +53,7 @@ namespace HotshotLogistics.Tests
             if (disposing)
             {
                 Client.Dispose();
+                Factory.Dispose();
             }
         }
     }

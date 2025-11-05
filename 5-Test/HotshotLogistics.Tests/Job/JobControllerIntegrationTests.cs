@@ -10,11 +10,12 @@ namespace HotshotLogistics.Tests.Job
     using System.Text.Json;
     using System.Threading.Tasks;
     using HotshotLogistics.Api;
-using HotshotLogistics.Domain.Entities;
+    using HotshotLogistics.Domain.Entities;
     using Microsoft.AspNetCore.Mvc.Testing;
     using Xunit;
     using FluentAssertions;
     using HotshotLogistics.Domain.Entities;
+    using HotshotLogistics.Tests.Utils.TestHelpers;
 
     /// <summary>
     /// Integration tests for the JobController.
@@ -26,7 +27,7 @@ using HotshotLogistics.Domain.Entities;
         /// Initializes a new instance of the <see cref="JobControllerIntegrationTests"/> class.
         /// </summary>
         /// <param name="factory">The web application factory.</param>
-        public JobControllerIntegrationTests(WebApplicationFactory<Program> factory)
+        public JobControllerIntegrationTests(CustomWebApplicationFactory factory)
             : base(factory)
         {
             // Set up test authentication
