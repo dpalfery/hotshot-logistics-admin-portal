@@ -1,3 +1,6 @@
+---
+applyTo: "**"
+---
 # Testing General Rule
 
 ## Test Coverage Standards

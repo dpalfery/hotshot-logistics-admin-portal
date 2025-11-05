@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
+using HotshotLogistics.Domain.ValueObjects;
 
 namespace HotshotLogistics.Tests.Billing
 {

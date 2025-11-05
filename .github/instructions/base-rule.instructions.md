@@ -1,3 +1,6 @@
+---
+applyTo: "**"
+---
 # Core Base Rules (Non-Negotiable)
 
 ## Global Rules (Always Apply)

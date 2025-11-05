@@ -1,3 +1,6 @@
+---
+applyTo: "**"
+---
 # Memory Bank Architecture
 
 ## System Architecture Overview

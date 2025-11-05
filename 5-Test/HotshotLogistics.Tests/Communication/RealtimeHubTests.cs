@@ -3,7 +3,7 @@ using HotshotLogistics.Core.Enums;
 using HotshotLogistics.Application.Hubs;
 using HotshotLogistics.Contracts.Hubs;
 using HotshotLogistics.Domain.Entities;
-using HotshotLogistics.Domain.Entities;
+using HotshotLogistics.Domain.DTOs;
 using HotshotLogistics.Contracts.Services;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
@@ -104,15 +104,14 @@ public class RealtimeHubTests
     public async Task NewJobAvailable_ShouldBroadcastToAvailableDrivers()
     {
         // Arrange
-        var job = new Domain.Entities.JobDto
+        var job = new ContractsJobDto
         {
             Id = "job-123",
             CustomerId = "customer-456",
             PickupAddress = "123 Main St",
             DropoffAddress = "456 Oak Ave",
             Status = JobStatus.Pending,
-            Priority = JobPriority.Medium,
-            CreatedAt = DateTime.UtcNow
+            ScheduledPickupTime = DateTime.UtcNow
         };
 
         // Act
@@ -141,7 +140,7 @@ public class RealtimeHubTests
             Id = "notif-123",
             Title = "Test Notification",
             Message = "This is a test message",
-            Type = HotshotLogistics.Contracts.Models.NotificationType.Information,
+            Type = NotificationType.Information,
             Timestamp = DateTime.UtcNow,
             UserId = "user-456"
         };
@@ -172,7 +171,7 @@ public class RealtimeHubTests
             Id = "notif-123",
             Title = "System Alert",
             Message = "This is a system-wide message",
-            Type = HotshotLogistics.Contracts.Models.NotificationType.SystemAlert,
+            Type = NotificationType.SystemAlert,
             Timestamp = DateTime.UtcNow,
             UserId = null
         };

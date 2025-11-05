@@ -1,3 +1,6 @@
+---
+applyTo: "**"
+---
 # Clean Architecture + DDD Folder Structure (C#)
 
 ## Layer Structure (0-7)

@@ -2,13 +2,14 @@
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
-namespace HotshotLogistics.Tests.Job
-{
-
-    using System;
-    using HotshotLogistics.Domain.Entities;
+using System;
+using HotshotLogistics.Core.Enums;
 using HotshotLogistics.Domain.Entities;
-    using Xunit;
+using HotshotLogistics.Domain.ValueObjects;
+using Xunit;
+
+namespace HotshotLogistics.Tests.JobTests
+{
 
     /// <summary>
     /// Tests for the JobAssignment class.
@@ -71,8 +72,8 @@ using HotshotLogistics.Domain.Entities;
         [Fact]
         public void Can_Set_Navigation_Properties()
         {
-            var job = new Domain.Entities.Job { Id = "job-1", Title = "Test Job" };
-            var driver = new Driver
+            var job = new HotshotLogistics.Domain.Entities.Job { Id = "job-1", Title = "Test Job" };
+            var driver = new HotshotLogistics.Domain.Entities.Driver
             {
                 Id = 1,
                 PersonalInfo = new PersonalInfo { FirstName = "Alice", LastName = "Smith" }

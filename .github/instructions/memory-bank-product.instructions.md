@@ -1,3 +1,6 @@
+---
+applyTo: "**"
+---
 # Memory Bank Product
 
 ## Why This Product Exists

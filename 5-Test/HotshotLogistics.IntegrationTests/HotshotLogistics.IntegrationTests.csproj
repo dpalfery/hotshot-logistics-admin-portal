@@ -31,13 +31,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\0-Base\HotshotLogistics.Core\HotshotLogistics.Core.csproj" />
-    <ProjectReference Include="..\..\..\1-Presentation\HotshotLogistics.Api\HotshotLogistics.Api.csproj" />
-    <ProjectReference Include="..\..\..\2-Application\HotshotLogistics.Application\HotshotLogistics.Application.csproj" />
-    <ProjectReference Include="..\..\..\3-Domain\HotshotLogistics.Contracts\HotshotLogistics.Contracts.csproj" />
-    <ProjectReference Include="..\..\..\3-Domain\HotshotLogistics.Domain\HotshotLogistics.Domain.csproj" />
-    <ProjectReference Include="..\..\..\4-Persistence\HotshotLogistics.Data\HotshotLogistics.Data.csproj" />
-    <ProjectReference Include="..\..\..\4-Persistence\MigrationRunner\MigrationRunner.csproj" />
+    <ProjectReference Include="..\..\0-Base\HotshotLogistics.Core\HotshotLogistics.Core.csproj" />
+    <ProjectReference Include="..\..\1-Presentation\HotshotLogistics.Api\HotshotLogistics.Api.csproj" />
+    <ProjectReference Include="..\..\2-Application\HotshotLogistics.Application\HotshotLogistics.Application.csproj" />
+    <ProjectReference Include="..\..\3-Domain\HotshotLogistics.Contracts\HotshotLogistics.Contracts.csproj" />
+    <ProjectReference Include="..\..\3-Domain\HotshotLogistics.Domain\HotshotLogistics.Domain.csproj" />
+    <ProjectReference Include="..\..\4-Persistence\HotshotLogistics.Data\HotshotLogistics.Data.csproj" />
+    <ProjectReference Include="..\..\4-Persistence\MigrationRunner\MigrationRunner.csproj" />
   </ItemGroup>
 
 </Project>

@@ -15,10 +15,15 @@ using HotshotLogistics.Domain.Entities;
 using HotshotLogistics.Domain.Entities;
 using HotshotLogistics.Data.Services;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 using Moq.Protected;
 using Xunit;
+using HotshotLogistics.Contracts.Services;
+using HotshotLogistics.Contracts.Factories;
+using HotshotLogistics.Domain.DTOs;
 
 public class MappingServiceTests
 {
@@ -224,13 +229,13 @@ public class MappingServiceTests
             })
             .Build();
 
-        var loggerFactory = new Mock<ILoggerFactory>();
-        loggerFactory.Setup(x => x.CreateLogger(It.IsAny<string>()))
-            .Returns(new Mock<ILogger<MockMappingService>>().Object);
+        var services = new ServiceCollection();
+        services.AddSingleton<IMappingService>(sp => new MockMappingService(new Mock<ILogger<MockMappingService>>().Object));
+        var serviceProvider = services.BuildServiceProvider();
 
-        var httpClientFactory = new Mock<IHttpClientFactory>();
+        var logger = new Mock<ILogger<MappingServiceFactory>>();
 
-        var factory = new MappingServiceFactory(configuration, loggerFactory.Object, httpClientFactory.Object);
+        var factory = new MappingServiceFactory(configuration, logger.Object, serviceProvider);
 
         // Act
         var service = factory.CreateMappingService();
@@ -252,10 +257,12 @@ public class MappingServiceTests
             })
             .Build();
 
-        var logger = new Mock<ILogger<MappingServiceFactory>>();
-        var services = new List<IMappingService> { new AzureMapsService(new HttpClient(), logger.Object, "test-key") };
+        var serviceCollection = new ServiceCollection();
+        serviceCollection.AddSingleton<IMappingService>(sp => new AzureMapsService(new HttpClient(), new Mock<ILogger<AzureMapsService>>().Object, Options.Create(new HotshotLogistics.Domain.DTOs.AzureMapsSettings { SubscriptionKey = "test-key" })));
+        var provider = serviceCollection.BuildServiceProvider();
 
-        var factory = new MappingServiceFactory(services, logger.Object);
+        var logger = new Mock<ILogger<MappingServiceFactory>>();
+        var factory = new MappingServiceFactory(configuration, logger.Object, provider);
 
         // Act
         var service = factory.CreateMappingService();
@@ -276,14 +283,17 @@ public class MappingServiceTests
             })
             .Build();
 
-        var loggerFactory = new Mock<ILoggerFactory>();
-        var httpClientFactory = new Mock<IHttpClientFactory>();
+        var services = new ServiceCollection();
+        // No AzureMaps service registered to simulate missing key
+        var provider = services.BuildServiceProvider();
 
-        var factory = new MappingServiceFactory(configuration, loggerFactory.Object, httpClientFactory.Object);
+        var logger = new Mock<ILogger<MappingServiceFactory>>();
+
+        var factory = new MappingServiceFactory(configuration, logger.Object, provider);
 
         // Act & Assert
         var exception = Assert.Throws<InvalidOperationException>(() => factory.CreateMappingService());
-        Assert.Contains("Azure Maps subscription key is not configured", exception.Message);
+        Assert.Contains("Unsupported mapping provider", exception.Message);
     }
 
     [Fact]
@@ -298,14 +308,16 @@ public class MappingServiceTests
             })
             .Build();
 
-        var loggerFactory = new Mock<ILoggerFactory>();
-        var httpClientFactory = new Mock<IHttpClientFactory>();
+        var services = new ServiceCollection();
+        var provider = services.BuildServiceProvider();
 
-        var factory = new MappingServiceFactory(configuration, loggerFactory.Object, httpClientFactory.Object);
+        var logger = new Mock<ILogger<MappingServiceFactory>>();
+
+        var factory = new MappingServiceFactory(configuration, logger.Object, provider);
 
         // Act & Assert
         var exception = Assert.Throws<InvalidOperationException>(() => factory.CreateMappingService());
-        Assert.Contains("Azure Maps subscription key is not configured", exception.Message);
+        Assert.Contains("Unsupported mapping provider", exception.Message);
     }
 
     [Fact]
@@ -320,10 +332,12 @@ public class MappingServiceTests
             })
             .Build();
 
-        var logger = new Mock<ILogger<MappingServiceFactory>>();
-        var services = new List<IMappingService> { new GoogleMapsService(new HttpClient(), logger.Object, "test-key") };
+        var serviceCollection = new ServiceCollection();
+        serviceCollection.AddSingleton<IMappingService>(sp => new GoogleMapsService(new HttpClient(), new Mock<ILogger<GoogleMapsService>>().Object, Options.Create(new HotshotLogistics.Domain.DTOs.GoogleMapsSettings { ApiKey = "test-key" })));
+        var provider = serviceCollection.BuildServiceProvider();
 
-        var factory = new IMappingServiceFactory(services, logger.Object);
+        var logger = new Mock<ILogger<MappingServiceFactory>>();
+        var factory = new MappingServiceFactory(configuration, logger.Object, provider);
 
         // Act
         var service = factory.CreateMappingService();
@@ -344,14 +358,16 @@ public class MappingServiceTests
             })
             .Build();
 
-        var loggerFactory = new Mock<ILoggerFactory>();
-        var httpClientFactory = new Mock<IHttpClientFactory>();
+        var services = new ServiceCollection();
+        var provider = services.BuildServiceProvider();
 
-        var factory = new MappingServiceFactory(configuration, loggerFactory.Object, httpClientFactory.Object);
+        var logger = new Mock<ILogger<MappingServiceFactory>>();
+
+        var factory = new MappingServiceFactory(configuration, logger.Object, provider);
 
         // Act & Assert
         var exception = Assert.Throws<InvalidOperationException>(() => factory.CreateMappingService());
-        Assert.Contains("Google Maps API key is not configured", exception.Message);
+        Assert.Contains("Unsupported mapping provider", exception.Message);
     }
 
     [Fact]
@@ -365,10 +381,12 @@ public class MappingServiceTests
             })
             .Build();
 
-        var loggerFactory = new Mock<ILoggerFactory>();
-        var httpClientFactory = new Mock<IHttpClientFactory>();
+        var services = new ServiceCollection();
+        var provider = services.BuildServiceProvider();
 
-        var factory = new MappingServiceFactory(configuration, loggerFactory.Object, httpClientFactory.Object);
+        var logger = new Mock<ILogger<MappingServiceFactory>>();
+
+        var factory = new MappingServiceFactory(configuration, logger.Object, provider);
 
         // Act & Assert
         var exception = Assert.Throws<InvalidOperationException>(() => factory.CreateMappingService());
@@ -383,10 +401,12 @@ public class MappingServiceTests
             .AddInMemoryCollection(new Dictionary<string, string?>())
             .Build();
 
-        var logger = new Mock<ILogger<MappingServiceFactory>>();
-        var services = new List<IMappingService> { new MockMappingService(logger.Object) };
+        var serviceCollection = new ServiceCollection();
+        serviceCollection.AddSingleton<IMappingService>(sp => new MockMappingService(new Mock<ILogger<MockMappingService>>().Object));
+        var provider = serviceCollection.BuildServiceProvider();
 
-        var factory = new IMappingServiceFactory(services, logger.Object);
+        var logger = new Mock<ILogger<MappingServiceFactory>>();
+        var factory = new MappingServiceFactory(configuration, logger.Object, provider);
 
         // Act
         var service = factory.CreateMappingService();
@@ -430,7 +450,7 @@ public class MappingServiceTests
 
         var httpClient = new HttpClient(mockHttpMessageHandler.Object);
         var loggerMock = new Mock<ILogger<AzureMapsService>>();
-        var service = new AzureMapsService(httpClient, loggerMock.Object, "test-key");
+        var service = new AzureMapsService(httpClient, loggerMock.Object, Options.Create(new AzureMapsSettings { SubscriptionKey = "test-key" }));
 
         // Act
         var result = await service.GeocodeAddressAsync("New York, NY", CancellationToken.None);
@@ -464,7 +484,7 @@ public class MappingServiceTests
 
         var httpClient = new HttpClient(mockHttpMessageHandler.Object);
         var loggerMock = new Mock<ILogger<AzureMapsService>>();
-        var service = new AzureMapsService(httpClient, loggerMock.Object, "test-key");
+        var service = new AzureMapsService(httpClient, loggerMock.Object, Options.Create(new AzureMapsSettings { SubscriptionKey = "test-key" }));
 
         // Act
         var result = await service.GeocodeAddressAsync("Invalid Address", CancellationToken.None);
@@ -509,7 +529,7 @@ public class MappingServiceTests
 
         var httpClient = new HttpClient(mockHttpMessageHandler.Object);
         var loggerMock = new Mock<ILogger<AzureMapsService>>();
-        var service = new AzureMapsService(httpClient, loggerMock.Object, "test-key");
+        var service = new AzureMapsService(httpClient, loggerMock.Object, Options.Create(new AzureMapsSettings { SubscriptionKey = "test-key" }));
 
         // Act
         var result = await service.ReverseGeocodeAsync(40.7128m, -74.0060m, CancellationToken.None);
@@ -554,7 +574,7 @@ public class MappingServiceTests
 
         var httpClient = new HttpClient(mockHttpMessageHandler.Object);
         var loggerMock = new Mock<ILogger<AzureMapsService>>();
-        var service = new AzureMapsService(httpClient, loggerMock.Object, "test-key");
+        var service = new AzureMapsService(httpClient, loggerMock.Object, Options.Create(new AzureMapsSettings { SubscriptionKey = "test-key" }));
 
         var origin = new Location { Latitude = 40.7128m, Longitude = -74.0060m };
         var destination = new Location { Latitude = 40.7589m, Longitude = -73.9851m };
@@ -601,7 +621,7 @@ public class MappingServiceTests
 
         var httpClient = new HttpClient(mockHttpMessageHandler.Object);
         var loggerMock = new Mock<ILogger<GoogleMapsService>>();
-        var service = new GoogleMapsService(httpClient, loggerMock.Object, "test-key");
+        var service = new GoogleMapsService(httpClient, loggerMock.Object, Options.Create(new GoogleMapsSettings { ApiKey = "test-key" }));
 
         // Act
         var result = await service.GeocodeAddressAsync("New York, NY", CancellationToken.None);
@@ -649,7 +669,7 @@ public class MappingServiceTests
 
         var httpClient = new HttpClient(mockHttpMessageHandler.Object);
         var loggerMock = new Mock<ILogger<GoogleMapsService>>();
-        var service = new GoogleMapsService(httpClient, loggerMock.Object, "test-key");
+        var service = new GoogleMapsService(httpClient, loggerMock.Object, Options.Create(new GoogleMapsSettings { ApiKey = "test-key" }));
 
         var origin = new Location { Latitude = 40.7128m, Longitude = -74.0060m };
         var destination = new Location { Latitude = 40.7589m, Longitude = -73.9851m };
@@ -695,7 +715,7 @@ public class MappingServiceTests
 
         var httpClient = new HttpClient(mockHttpMessageHandler.Object);
         var loggerMock = new Mock<ILogger<AzureMapsService>>();
-        var service = new AzureMapsService(httpClient, loggerMock.Object, "test-key");
+        var service = new AzureMapsService(httpClient, loggerMock.Object, Options.Create(new AzureMapsSettings { SubscriptionKey = "test-key" }));
 
         var waypoints = new List<Location>
         {
@@ -745,7 +765,7 @@ public class MappingServiceTests
 
         var httpClient = new HttpClient(mockHttpMessageHandler.Object);
         var loggerMock = new Mock<ILogger<AzureMapsService>>();
-        var service = new AzureMapsService(httpClient, loggerMock.Object, "test-key");
+        var service = new AzureMapsService(httpClient, loggerMock.Object, Options.Create(new AzureMapsSettings { SubscriptionKey = "test-key" }));
 
         var origin = new Location { Latitude = 40.7128m, Longitude = -74.0060m };
         var destination = new Location { Latitude = 40.7589m, Longitude = -73.9851m };
@@ -791,7 +811,7 @@ public class MappingServiceTests
 
         var httpClient = new HttpClient(mockHttpMessageHandler.Object);
         var loggerMock = new Mock<ILogger<GoogleMapsService>>();
-        var service = new GoogleMapsService(httpClient, loggerMock.Object, "test-key");
+        var service = new GoogleMapsService(httpClient, loggerMock.Object, Options.Create(new GoogleMapsSettings { ApiKey = "test-key" }));
 
         // Act
         var result = await service.ValidateAddressAsync("New York, NY", CancellationToken.None);
