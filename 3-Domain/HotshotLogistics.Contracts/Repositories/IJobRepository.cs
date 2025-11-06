@@ -115,4 +115,11 @@ public interface IJobRepository
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A collection of jobs assigned to the driver.</returns>
     Task<IEnumerable<Job>> GetByDriverIdAsync(int driverId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets job counts grouped by status.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A summary of job counts by status.</returns>
+    Task<JobStatusSummaryDto> GetJobStatusSummaryAsync(CancellationToken cancellationToken = default);
 }

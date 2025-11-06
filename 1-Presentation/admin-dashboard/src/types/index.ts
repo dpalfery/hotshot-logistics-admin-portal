@@ -25,11 +25,10 @@ export interface Job {
 }
 
 export enum JobStatus {
-  Pending = 'Pending',
-  Assigned = 'Assigned',
-  InProgress = 'InProgress',
-  Completed = 'Completed',
-  Cancelled = 'Cancelled'
+  Pending = 0,
+  Assigned = 1,
+  EnRoute = 2,
+  Received = 3
 }
 
 export enum JobPriority {
@@ -219,4 +218,13 @@ export interface NotificationMessage {
   timestamp: string;
   read: boolean;
   data?: Record<string, unknown>;
+}
+
+// Job Status Summary types
+export interface JobStatusSummary {
+  pendingCount: number;
+  assignedCount: number;
+  enRouteCount: number;
+  receivedCount: number;
+  totalCount: number;
 }
