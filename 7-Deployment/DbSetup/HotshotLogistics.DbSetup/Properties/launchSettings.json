@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "HotshotLogistics.DbSetup": {
+      "commandName": "Project",
+      "commandLineArgs": "--project-slug \"hotshot\" --use-docker"
+    }
+  }
+}

@@ -143,10 +143,11 @@ public class DatabaseSetupIntegrationTests : IDisposable
         // Arrange
         var args = new[]
         {
+            "--project-slug", "test",
             "--server", "localhost\\SQLEXPRESS",
             "--db-name", "test_db",
             "--app-user", "test_user",
-            "--password", "test_password",
+            "--app-password", "test_password",
             "--non-interactive"
         };
 
@@ -154,10 +155,11 @@ public class DatabaseSetupIntegrationTests : IDisposable
         var parser = new ArgumentParser(args);
 
         // Assert
+        Assert.Equal("test", parser.ProjectSlug);
         Assert.Equal("localhost\\SQLEXPRESS", parser.Server);
         Assert.Equal("test_db", parser.DatabaseName);
         Assert.Equal("test_user", parser.AppUser);
-        Assert.Equal("test_password", parser.Password);
+        Assert.Equal("test_password", parser.AppPassword);
         Assert.True(parser.NonInteractive);
     }
 
@@ -165,23 +167,24 @@ public class DatabaseSetupIntegrationTests : IDisposable
     public void ArgumentParser_ShouldApplyEnvironmentOverrides()
     {
         // Arrange
-        Environment.SetEnvironmentVariable("HOTSHOT_DB_SERVER", "env_server");
-        Environment.SetEnvironmentVariable("HOTSHOT_DB_NAME", "env_db");
+        Environment.SetEnvironmentVariable("APP_DB_SERVER", "env_server");
+        Environment.SetEnvironmentVariable("APP_DB_NAME", "env_db");
 
-        var args = new[] { "--app-user", "arg_user" };
+        var args = new[] { "--project-slug", "app", "--app-user", "arg_user" };
 
         // Act
         var parser = new ArgumentParser(args);
         parser.ApplyEnvironmentOverrides();
 
         // Assert
+        Assert.Equal("app", parser.ProjectSlug); // Default project slug
         Assert.Equal("arg_user", parser.AppUser); // Should use CLI arg
         Assert.Equal("env_server", parser.Server); // Should use env var
         Assert.Equal("env_db", parser.DatabaseName); // Should use env var
 
         // Cleanup
-        Environment.SetEnvironmentVariable("HOTSHOT_DB_SERVER", null);
-        Environment.SetEnvironmentVariable("HOTSHOT_DB_NAME", null);
+        Environment.SetEnvironmentVariable("APP_DB_SERVER", null);
+        Environment.SetEnvironmentVariable("APP_DB_NAME", null);
     }
 
     [Fact]

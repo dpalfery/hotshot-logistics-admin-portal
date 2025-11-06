@@ -19,26 +19,30 @@ public class MigrationInvoker
     {
         _logger.LogInformation("Starting migration run for database: {DatabaseName}", databaseName);
 
+        // First, try in-process migration if the assembly is available
+        Assembly? migrationAssembly = null;
         try
         {
-            // First, try in-process migration if the assembly is available
-            var migrationAssembly = Assembly.Load("HotshotLogistics.Data");
-
-            if (migrationAssembly != null)
-            {
-                _logger.LogInformation("Found HotshotLogistics.Data assembly, running migrations in-process");
-                return RunMigrationsInProcess(connectionString, migrationAssembly);
-            }
-            else
-            {
-                _logger.LogWarning("HotshotLogistics.Data assembly not found, falling back to subprocess invocation");
-                return await RunMigrationsAsSubprocessAsync(connectionString, cancellationToken);
-            }
+            migrationAssembly = Assembly.Load("HotshotLogistics.Data");
+        }
+        catch (FileNotFoundException)
+        {
+            _logger.LogInformation("HotshotLogistics.Data assembly not found in current context");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to run migrations for database {DatabaseName}", databaseName);
-            throw;
+            _logger.LogWarning(ex, "Could not load HotshotLogistics.Data assembly");
+        }
+
+        if (migrationAssembly != null)
+        {
+            _logger.LogInformation("Found HotshotLogistics.Data assembly, running migrations in-process");
+            return RunMigrationsInProcess(connectionString, migrationAssembly);
+        }
+        else
+        {
+            _logger.LogInformation("Falling back to subprocess migration runner");
+            return await RunMigrationsAsSubprocessAsync(connectionString, cancellationToken);
         }
     }
 
@@ -88,6 +92,8 @@ public class MigrationInvoker
         try
         {
             _logger.LogInformation("Running migrations as subprocess");
+            Console.WriteLine();
+            Console.WriteLine("Running database migrations...");
 
             // Find the MigrationRunner project
             var currentDirectory = Directory.GetCurrentDirectory();
@@ -103,7 +109,6 @@ public class MigrationInvoker
                 "4-Persistence",
                 "MigrationRunner",
                 "bin",
-                "Debug",
                 "net8.0",
                 "MigrationRunner.dll"
             );
@@ -111,6 +116,7 @@ public class MigrationInvoker
             if (!File.Exists(migrationRunnerPath))
             {
                 // Try to build the MigrationRunner first
+                Console.WriteLine("  Building MigrationRunner...");
                 _logger.LogInformation("MigrationRunner.dll not found, attempting to build it");
                 await BuildMigrationRunnerAsync(solutionDirectory, cancellationToken);
 
@@ -126,12 +132,20 @@ public class MigrationInvoker
                 FileName = "dotnet",
                 Arguments = $"\"{migrationRunnerPath}\"",
                 UseShellExecute = false,
-                CreateNoWindow = true,
-                EnvironmentVariables =
-                {
-                    ["DB_CONNECTION_STRING"] = connectionString
-                }
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = false,  // Show the window
             };
+            
+            // Pass connection string
+            startInfo.EnvironmentVariables["DB_CONNECTION_STRING"] = connectionString;
+            
+            // Pass HOT_SHOT_USER_PASSWORD if it exists in the parent environment
+            var hotshotUserPassword = Environment.GetEnvironmentVariable("HOT_SHOT_USER_PASSWORD");
+            if (!string.IsNullOrEmpty(hotshotUserPassword))
+            {
+                startInfo.EnvironmentVariables["HOT_SHOT_USER_PASSWORD"] = hotshotUserPassword;
+            }
 
             using var process = Process.Start(startInfo);
             if (process == null)
@@ -139,22 +153,43 @@ public class MigrationInvoker
                 throw new InvalidOperationException("Failed to start MigrationRunner process");
             }
 
-            var output = await process.StandardOutput.ReadToEndAsync(cancellationToken);
-            var error = await process.StandardError.ReadToEndAsync(cancellationToken);
+            // Stream output in real-time
+            var outputTask = Task.Run(async () =>
+            {
+                while (!process.StandardOutput.EndOfStream)
+                {
+                    var line = await process.StandardOutput.ReadLineAsync(cancellationToken);
+                    if (!string.IsNullOrWhiteSpace(line))
+                    {
+                        Console.WriteLine($"  {line}");
+                    }
+                }
+            }, cancellationToken);
+
+            var errorTask = Task.Run(async () =>
+            {
+                while (!process.StandardError.EndOfStream)
+                {
+                    var line = await process.StandardError.ReadLineAsync(cancellationToken);
+                    if (!string.IsNullOrWhiteSpace(line))
+                    {
+                        Console.WriteLine($"  {line}");
+                    }
+                }
+            }, cancellationToken);
 
             await process.WaitForExitAsync(cancellationToken);
+            await Task.WhenAll(outputTask, errorTask);
+
+            Console.WriteLine();
 
             if (process.ExitCode != 0)
             {
-                _logger.LogError("MigrationRunner subprocess failed with exit code {ExitCode}. Error: {Error}", process.ExitCode, error);
+                _logger.LogError("MigrationRunner subprocess failed with exit code {ExitCode}", process.ExitCode);
                 throw new InvalidOperationException($"MigrationRunner failed with exit code {process.ExitCode}");
             }
 
-            if (!string.IsNullOrEmpty(output))
-            {
-                _logger.LogInformation("MigrationRunner output: {Output}", output);
-            }
-
+            Console.WriteLine("✓ Migrations completed successfully");
             _logger.LogInformation("Successfully completed migrations via subprocess");
             return true;
         }
@@ -172,10 +207,12 @@ public class MigrationInvoker
         var startInfo = new ProcessStartInfo
         {
             FileName = "dotnet",
-            Arguments = "build",
+            Arguments = "build --verbosity quiet",
             WorkingDirectory = migrationRunnerProjectPath,
             UseShellExecute = false,
-            CreateNoWindow = true
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = false
         };
 
         using var process = Process.Start(startInfo);
@@ -184,13 +221,28 @@ public class MigrationInvoker
             throw new InvalidOperationException("Failed to start build process for MigrationRunner");
         }
 
+        // Stream build output
+        var outputTask = Task.Run(async () =>
+        {
+            while (!process.StandardOutput.EndOfStream)
+            {
+                var line = await process.StandardOutput.ReadLineAsync(cancellationToken);
+                if (!string.IsNullOrWhiteSpace(line))
+                {
+                    Console.WriteLine($"    {line}");
+                }
+            }
+        }, cancellationToken);
+
         await process.WaitForExitAsync(cancellationToken);
+        await outputTask;
 
         if (process.ExitCode != 0)
         {
             throw new InvalidOperationException($"Failed to build MigrationRunner with exit code {process.ExitCode}");
         }
 
+        Console.WriteLine("  ✓ MigrationRunner built successfully");
         _logger.LogInformation("Successfully built MigrationRunner project");
     }
 
