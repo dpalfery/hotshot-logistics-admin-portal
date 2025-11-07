@@ -4,13 +4,6 @@ namespace HotshotLogistics.DbSetup;
 
 public class ArgumentParser
 {
-<<<<<<< HEAD
-    public string? Server { get; private set; }
-    public string? SaConnectionString { get; private set; }
-    public string? DatabaseName { get; private set; }
-    public string? AppUser { get; private set; }
-    public string? Password { get; set; }
-=======
     public string? ProjectSlug { get; private set; }
     public string? Server { get; set; }
     public int Port { get; set; } = 1433;
@@ -18,7 +11,6 @@ public class ArgumentParser
     public string? AppUser { get; set; }
     public string? AppPassword { get; set; }
     public string? SaPassword { get; set; }
->>>>>>> f14b4059c2249f211bc56adac3e170621a2b47fb
     public bool NonInteractive { get; private set; }
     public bool Force { get; private set; }
     public bool UseDocker { get; private set; }
@@ -33,16 +25,10 @@ public class ArgumentParser
             Environment.Exit(0);
         }
 
-<<<<<<< HEAD
-        var serverOption = new Option<string>(
-            name: "--server",
-            description: "SQL Server instance (e.g., localhost\\SQLEXPRESS)")
-=======
         var projectSlugOption = new Option<string>(
             name: "--project-slug",
             description: "Project identifier for environment variables (e.g., 'hotshot' creates HOTSHOT_DB_* vars)",
             getDefaultValue: () => "app")
->>>>>>> f14b4059c2249f211bc56adac3e170621a2b47fb
         {
             IsRequired = false
         };
@@ -153,24 +139,6 @@ public class ArgumentParser
     private static void ShowHelp()
     {
         Console.WriteLine("Description:");
-<<<<<<< HEAD
-        Console.WriteLine("  Hotshot Logistics Database Setup CLI");
-        Console.WriteLine();
-        Console.WriteLine("Usage:");
-        Console.WriteLine("  HotshotLogistics.DbSetup [options]");
-        Console.WriteLine();
-        Console.WriteLine("Options:");
-        Console.WriteLine("  --server <server>                              SQL Server instance (e.g., localhost\\SQLEXPRESS)");
-        Console.WriteLine("  --sa-connection-string <sa-connection-string>  SA or privileged connection string for non-interactive mode");
-        Console.WriteLine("  --db-name <db-name>                            Target database name [default: hotshot_logistics]");
-        Console.WriteLine("  --app-user <app-user>                          Application database user/login name [default: hotshot_app]");
-        Console.WriteLine("  --password <password>                          Application user password (not recommended for CI; prefer env var)");
-        Console.WriteLine("  --non-interactive                              Run without interactive prompts for CI");
-        Console.WriteLine("  --force                                        Allow destructive operations");
-        Console.WriteLine("  --persist-env                                  Persist password to system environment variable (requires explicit consent)");
-        Console.WriteLine("  --version                                      Show version information");
-        Console.WriteLine("  -?, -h, --help                                 Show help and usage information");
-=======
         Console.WriteLine("  Database Setup CLI - Automated database provisioning with Docker support");
         Console.WriteLine();
         Console.WriteLine("Usage:");
@@ -200,7 +168,6 @@ public class ArgumentParser
         Console.WriteLine("  MYPROJECT_DB_SA_PASSWORD                       SA password");
         Console.WriteLine("  MYPROJECT_DB_USE_DOCKER                        Use Docker (true/false)");
         Console.WriteLine("  MYPROJECT_DB_DOCKER_COMPOSE_FILE               Path to docker-compose.yml");
->>>>>>> f14b4059c2249f211bc56adac3e170621a2b47fb
     }
 
     public void ApplyEnvironmentOverrides()
@@ -267,8 +234,6 @@ public class ArgumentParser
         // Remaining validation will be done in interactive mode or Program.cs
         return true;
     }
-<<<<<<< HEAD
-=======
 
     private static string? FindSolutionDirectory(string startDirectory)
     {
@@ -287,5 +252,4 @@ public class ArgumentParser
 
         return null;
     }
->>>>>>> f14b4059c2249f211bc56adac3e170621a2b47fb
 }

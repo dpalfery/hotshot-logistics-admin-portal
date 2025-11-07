@@ -12,17 +12,9 @@ namespace HotshotLogistics.Tests.Utils.Integration
     using FluentAssertions;
     using HotshotLogistics.Application.Services;
     using HotshotLogistics.Domain.ValueObjects;
-<<<<<<< HEAD:5-Test/tests/HotshotLogistics.Tests/Utils/Integration/DataIntegrationTests.cs
-    using HotshotLogistics.Contracts.Repositories;
-    using HotshotLogistics.Contracts.Services;
-    using HotshotLogistics.Domain.Entities;
-    using HotshotLogistics.Domain.Entities;
-    using HotshotLogistics.Domain.Entities;
-=======
     using HotshotLogistics.Domain.DTOs;
     using HotshotLogistics.Contracts.Repositories;
     using HotshotLogistics.Contracts.Services;
->>>>>>> f14b4059c2249f211bc56adac3e170621a2b47fb:5-Test/HotshotLogistics.Tests/Utils/Integration/DataIntegrationTests.cs
     using Microsoft.Extensions.Logging;
     using Moq;
     using Xunit;
@@ -69,13 +61,8 @@ namespace HotshotLogistics.Tests.Utils.Integration
         [Fact]
         public async Task JobService_CreateJob_CallsRepository()
         {
-<<<<<<< HEAD:5-Test/tests/HotshotLogistics.Tests/Utils/Integration/DataIntegrationTests.cs
-            var mockRepo = new Mock<JobRepository>(MockBehavior.Strict);
-            var newJob = new Domain.Entities.JobDto
-=======
             var mockRepo = new Mock<IJobRepository>(MockBehavior.Strict);
             var newJob = new Job
->>>>>>> f14b4059c2249f211bc56adac3e170621a2b47fb:5-Test/HotshotLogistics.Tests/Utils/Integration/DataIntegrationTests.cs
             {
                 Id = Guid.NewGuid().ToString(),
                 CustomerId = "CUST001",
@@ -161,11 +148,7 @@ namespace HotshotLogistics.Tests.Utils.Integration
             var jobId = Guid.NewGuid().ToString();
             var driverId = 123;
 
-<<<<<<< HEAD:5-Test/tests/HotshotLogistics.Tests/Utils/Integration/DataIntegrationTests.cs
-            var existingJob = new Domain.Entities.JobDto { Id = jobId, Title = "Job A" };
-=======
             var existingJob = new Job { Id = jobId, Title = "Job A" };
->>>>>>> f14b4059c2249f211bc56adac3e170621a2b47fb:5-Test/HotshotLogistics.Tests/Utils/Integration/DataIntegrationTests.cs
             var existingDriver = new Driver { Id = driverId, PersonalInfo = new PersonalInfo { FirstName = "Alice", LastName = "Smith" } };
 
             mockJobRepo.Setup(r => r.GetJobByIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))

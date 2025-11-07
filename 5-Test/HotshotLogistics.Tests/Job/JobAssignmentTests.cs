@@ -8,15 +8,8 @@ using HotshotLogistics.Domain.Entities;
 using HotshotLogistics.Domain.ValueObjects;
 using Xunit;
 
-<<<<<<< HEAD:5-Test/tests/HotshotLogistics.Tests/Job/JobAssignmentTests.cs
-    using System;
-    using HotshotLogistics.Domain.Entities;
-using HotshotLogistics.Domain.Entities;
-    using Xunit;
-=======
 namespace HotshotLogistics.Tests.JobTests
 {
->>>>>>> f14b4059c2249f211bc56adac3e170621a2b47fb:5-Test/HotshotLogistics.Tests/Job/JobAssignmentTests.cs
 
     /// <summary>
     /// Tests for the JobAssignment class.
@@ -79,13 +72,8 @@ namespace HotshotLogistics.Tests.JobTests
         [Fact]
         public void Can_Set_Navigation_Properties()
         {
-<<<<<<< HEAD:5-Test/tests/HotshotLogistics.Tests/Job/JobAssignmentTests.cs
-            var job = new Domain.Entities.Job { Id = "job-1", Title = "Test Job" };
-            var driver = new Driver
-=======
             var job = new HotshotLogistics.Domain.Entities.Job { Id = "job-1", Title = "Test Job" };
             var driver = new HotshotLogistics.Domain.Entities.Driver
->>>>>>> f14b4059c2249f211bc56adac3e170621a2b47fb:5-Test/HotshotLogistics.Tests/Job/JobAssignmentTests.cs
             {
                 Id = 1,
                 PersonalInfo = new PersonalInfo { FirstName = "Alice", LastName = "Smith" }

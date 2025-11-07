@@ -257,19 +257,12 @@ public class MappingServiceTests
             })
             .Build();
 
-<<<<<<< HEAD:5-Test/tests/HotshotLogistics.Tests/Utils/Infrastructure/MappingServiceTests.cs
-        var logger = new Mock<ILogger<MappingServiceFactory>>();
-        var services = new List<IMappingService> { new AzureMapsService(new HttpClient(), logger.Object, "test-key") };
-
-        var factory = new MappingServiceFactory(services, logger.Object);
-=======
         var serviceCollection = new ServiceCollection();
         serviceCollection.AddSingleton<IMappingService>(sp => new AzureMapsService(new HttpClient(), new Mock<ILogger<AzureMapsService>>().Object, Options.Create(new HotshotLogistics.Domain.DTOs.AzureMapsSettings { SubscriptionKey = "test-key" })));
         var provider = serviceCollection.BuildServiceProvider();
 
         var logger = new Mock<ILogger<MappingServiceFactory>>();
         var factory = new MappingServiceFactory(configuration, logger.Object, provider);
->>>>>>> f14b4059c2249f211bc56adac3e170621a2b47fb:5-Test/HotshotLogistics.Tests/Utils/Infrastructure/MappingServiceTests.cs
 
         // Act
         var service = factory.CreateMappingService();
@@ -339,19 +332,12 @@ public class MappingServiceTests
             })
             .Build();
 
-<<<<<<< HEAD:5-Test/tests/HotshotLogistics.Tests/Utils/Infrastructure/MappingServiceTests.cs
-        var logger = new Mock<ILogger<MappingServiceFactory>>();
-        var services = new List<IMappingService> { new GoogleMapsService(new HttpClient(), logger.Object, "test-key") };
-
-        var factory = new IMappingServiceFactory(services, logger.Object);
-=======
         var serviceCollection = new ServiceCollection();
         serviceCollection.AddSingleton<IMappingService>(sp => new GoogleMapsService(new HttpClient(), new Mock<ILogger<GoogleMapsService>>().Object, Options.Create(new HotshotLogistics.Domain.DTOs.GoogleMapsSettings { ApiKey = "test-key" })));
         var provider = serviceCollection.BuildServiceProvider();
 
         var logger = new Mock<ILogger<MappingServiceFactory>>();
         var factory = new MappingServiceFactory(configuration, logger.Object, provider);
->>>>>>> f14b4059c2249f211bc56adac3e170621a2b47fb:5-Test/HotshotLogistics.Tests/Utils/Infrastructure/MappingServiceTests.cs
 
         // Act
         var service = factory.CreateMappingService();
@@ -415,19 +401,12 @@ public class MappingServiceTests
             .AddInMemoryCollection(new Dictionary<string, string?>())
             .Build();
 
-<<<<<<< HEAD:5-Test/tests/HotshotLogistics.Tests/Utils/Infrastructure/MappingServiceTests.cs
-        var logger = new Mock<ILogger<MappingServiceFactory>>();
-        var services = new List<IMappingService> { new MockMappingService(logger.Object) };
-
-        var factory = new IMappingServiceFactory(services, logger.Object);
-=======
         var serviceCollection = new ServiceCollection();
         serviceCollection.AddSingleton<IMappingService>(sp => new MockMappingService(new Mock<ILogger<MockMappingService>>().Object));
         var provider = serviceCollection.BuildServiceProvider();
 
         var logger = new Mock<ILogger<MappingServiceFactory>>();
         var factory = new MappingServiceFactory(configuration, logger.Object, provider);
->>>>>>> f14b4059c2249f211bc56adac3e170621a2b47fb:5-Test/HotshotLogistics.Tests/Utils/Infrastructure/MappingServiceTests.cs
 
         // Act
         var service = factory.CreateMappingService();

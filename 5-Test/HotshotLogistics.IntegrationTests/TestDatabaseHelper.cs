@@ -39,11 +39,7 @@ namespace HotshotLogistics.IntegrationTests
                 {
                     // if the env var is not set raise an error and stop. never put connection strings in code
                     //throw error here
-<<<<<<< HEAD:5-Test/tests/HotshotLogistics.IntegrationTests/TestDatabaseHelper.cs
-                    throw new InvalidOperationException("CONNECTIONSTRINGS__DEFAULTCONNECTION environment variable is required for tests");
-=======
                     throw new InvalidOperationException("DB_CONNECTION_STRING environment variable is required for tests");
->>>>>>> f14b4059c2249f211bc56adac3e170621a2b47fb:5-Test/HotshotLogistics.IntegrationTests/TestDatabaseHelper.cs
                 }
 
                 cachedConnectionString = conn;

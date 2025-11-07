@@ -17,10 +17,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
-<<<<<<< HEAD:5-Test/tests/HotshotLogistics.Tests/Billing/BillingControllerTests.cs
-=======
 using HotshotLogistics.Domain.ValueObjects;
->>>>>>> f14b4059c2249f211bc56adac3e170621a2b47fb:5-Test/HotshotLogistics.Tests/Billing/BillingControllerTests.cs
 
 namespace HotshotLogistics.Tests.Billing
 {

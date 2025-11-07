@@ -11,11 +11,8 @@ using HotshotLogistics.Domain.Entities;
 using HotshotLogistics.Contracts.Repositories;
 using HotshotLogistics.Data.Repositories;
 using HotshotLogistics.Domain.Entities;
-<<<<<<< HEAD:5-Test/tests/HotshotLogistics.Tests/Billing/InvoiceRepositoryTests.cs
-=======
 using HotshotLogistics.Core.Enums;
 using HotshotLogistics.Domain.ValueObjects;
->>>>>>> f14b4059c2249f211bc56adac3e170621a2b47fb:5-Test/HotshotLogistics.Tests/Billing/InvoiceRepositoryTests.cs
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Xunit;

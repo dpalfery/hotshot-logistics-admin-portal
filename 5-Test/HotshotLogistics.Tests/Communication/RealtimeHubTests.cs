@@ -3,11 +3,7 @@ using HotshotLogistics.Core.Enums;
 using HotshotLogistics.Application.Hubs;
 using HotshotLogistics.Contracts.Hubs;
 using HotshotLogistics.Domain.Entities;
-<<<<<<< HEAD:5-Test/tests/HotshotLogistics.Tests/Communication/RealtimeHubTests.cs
-using HotshotLogistics.Domain.Entities;
-=======
 using HotshotLogistics.Domain.DTOs;
->>>>>>> f14b4059c2249f211bc56adac3e170621a2b47fb:5-Test/HotshotLogistics.Tests/Communication/RealtimeHubTests.cs
 using HotshotLogistics.Contracts.Services;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
@@ -108,11 +104,7 @@ public class RealtimeHubTests
     public async Task NewJobAvailable_ShouldBroadcastToAvailableDrivers()
     {
         // Arrange
-<<<<<<< HEAD:5-Test/tests/HotshotLogistics.Tests/Communication/RealtimeHubTests.cs
-        var job = new Domain.Entities.JobDto
-=======
         var job = new ContractsJobDto
->>>>>>> f14b4059c2249f211bc56adac3e170621a2b47fb:5-Test/HotshotLogistics.Tests/Communication/RealtimeHubTests.cs
         {
             Id = "job-123",
             CustomerId = "customer-456",

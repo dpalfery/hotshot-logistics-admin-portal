@@ -10,19 +10,12 @@ namespace HotshotLogistics.Tests.Job
     using System.Text.Json;
     using System.Threading.Tasks;
     using HotshotLogistics.Api;
-<<<<<<< HEAD:5-Test/tests/HotshotLogistics.Tests/Job/JobControllerIntegrationTests.cs
-using HotshotLogistics.Domain.Entities;
-=======
     using HotshotLogistics.Domain.Entities;
->>>>>>> f14b4059c2249f211bc56adac3e170621a2b47fb:5-Test/HotshotLogistics.Tests/Job/JobControllerIntegrationTests.cs
     using Microsoft.AspNetCore.Mvc.Testing;
     using Xunit;
     using FluentAssertions;
     using HotshotLogistics.Domain.Entities;
-<<<<<<< HEAD:5-Test/tests/HotshotLogistics.Tests/Job/JobControllerIntegrationTests.cs
-=======
     using HotshotLogistics.Tests.Utils.TestHelpers;
->>>>>>> f14b4059c2249f211bc56adac3e170621a2b47fb:5-Test/HotshotLogistics.Tests/Job/JobControllerIntegrationTests.cs
 
     /// <summary>
     /// Integration tests for the JobController.
