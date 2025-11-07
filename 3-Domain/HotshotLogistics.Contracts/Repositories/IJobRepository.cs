@@ -3,6 +3,7 @@ using HotshotLogistics.Domain.DTOs;
 using HotshotLogistics.Domain.ValueObjects;
 using HotshotLogistics.Core.Enums;
 
+
 namespace HotshotLogistics.Contracts.Repositories;
 
 public interface IJobRepository
@@ -13,7 +14,7 @@ public interface IJobRepository
     /// <param name="id">The job identifier.</param>
     /// <returns>The job if found, null otherwise.</returns>
     Task<Job?> GetByIdAsync(object id);
-
+  
     /// <summary>
     /// Gets all jobs.
     /// </summary>
@@ -76,7 +77,7 @@ public interface IJobRepository
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A collection of jobs with the specified status.</returns>
     Task<IEnumerable<Job>> GetJobsByStatusAsync(JobStatus status, CancellationToken cancellationToken = default);
-
+    
     /// <summary>
     /// Gets jobs assigned to a specific driver.
     /// </summary>
@@ -115,4 +116,11 @@ public interface IJobRepository
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A collection of jobs assigned to the driver.</returns>
     Task<IEnumerable<Job>> GetByDriverIdAsync(int driverId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets job counts grouped by status.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A summary of job counts by status.</returns>
+    Task<JobStatusSummaryDto> GetJobStatusSummaryAsync(CancellationToken cancellationToken = default);
 }

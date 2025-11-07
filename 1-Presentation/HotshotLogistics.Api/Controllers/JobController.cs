@@ -135,6 +135,32 @@ namespace HotshotLogistics.Api.Controllers
         }
 
         /// <summary>
+        /// Gets job counts grouped by status.
+        /// </summary>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>A summary of job counts by status.</returns>
+        [HttpGet("status-summary")]
+        [Authorize(Policy = AuthorizationPolicies.ManagerOrAdmin)]
+        [ProducesResponseType(typeof(JobStatusSummaryDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<JobStatusSummaryDto>> GetJobStatusSummary(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                logger.LogInformation("JobController.GetJobStatusSummary called");
+                var summary = await jobService.GetJobStatusSummaryAsync(cancellationToken);
+                logger.LogInformation("JobController.GetJobStatusSummary returned: Pending={Pending}, Assigned={Assigned}, EnRoute={EnRoute}, Received={Received}",
+                    summary.PendingCount, summary.AssignedCount, summary.EnRouteCount, summary.ReceivedCount);
+                return Ok(summary);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "An error occurred while retrieving job status summary");
+                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while processing your request.");
+            }
+        }
+
+        /// <summary>
         /// Gets a job by ID.
         /// </summary>
         /// <param name="id">The job ID.</param>

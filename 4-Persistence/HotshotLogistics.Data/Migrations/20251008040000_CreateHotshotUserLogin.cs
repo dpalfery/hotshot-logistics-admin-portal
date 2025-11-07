@@ -7,19 +7,19 @@ namespace HotshotLogistics.Data.Migrations;
 
 /// <summary>
 /// Creates the hotshot_user SQL Server login and database user with read/write permissions.
-/// Requires the HOT_SHOT_USER_PASSWORD environment variable to be set.
+/// Requires the HOTSHOT_DB_APP_PASSWORD environment variable to be set.
 /// </summary>
 [Migration(20251008040000)]
 public class CreateHotshotUserLogin : Migration
 {
     public override void Up()
     {
-        var password = Environment.GetEnvironmentVariable("HOT_SHOT_USER_PASSWORD");
+        var password = Environment.GetEnvironmentVariable("HOTSHOT_DB_APP_PASSWORD");
 
         if (string.IsNullOrWhiteSpace(password))
         {
             throw new InvalidOperationException(
-                "HOT_SHOT_USER_PASSWORD environment variable is required to create the hotshot_user login. " +
+                "HOTSHOT_DB_APP_PASSWORD environment variable is required to create the hotshot_user login. " +
                 "Please set this environment variable before running migrations.");
         }
 
@@ -49,7 +49,7 @@ public class CreateHotshotUserLogin : Migration
 
                         // DO NOT log the actual command text as it contains the password
                         createLoginCmd.ExecuteNonQuery();
-                        Console.WriteLine("Created server-level login: hotshot_user (password sourced from HOT_SHOT_USER_PASSWORD environment variable)");
+                        Console.WriteLine("Created server-level login: hotshot_user (password sourced from HOTSHOT_DB_APP_PASSWORD environment variable)");
                     }
                 }
                 else

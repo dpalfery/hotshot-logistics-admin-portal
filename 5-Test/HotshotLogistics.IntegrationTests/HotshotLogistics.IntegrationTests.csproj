@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <NoWarn>xUnit1051</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentAssertions" Version="8.7.1" />
+    <PackageReference Include="FluentMigrator" Version="7.1.0" />
+    <PackageReference Include="FluentMigrator.Runner.SqlServer" Version="7.1.0" />
+    <PackageReference Include="FluentMigrator.Runner" Version="7.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.8" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit.v3" Version="3.0.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\0-Base\HotshotLogistics.Core\HotshotLogistics.Core.csproj" />
+    <ProjectReference Include="..\..\1-Presentation\HotshotLogistics.Api\HotshotLogistics.Api.csproj" />
+    <ProjectReference Include="..\..\2-Application\HotshotLogistics.Application\HotshotLogistics.Application.csproj" />
+    <ProjectReference Include="..\..\3-Domain\HotshotLogistics.Contracts\HotshotLogistics.Contracts.csproj" />
+    <ProjectReference Include="..\..\3-Domain\HotshotLogistics.Domain\HotshotLogistics.Domain.csproj" />
+    <ProjectReference Include="..\..\4-Persistence\HotshotLogistics.Data\HotshotLogistics.Data.csproj" />
+    <ProjectReference Include="..\..\4-Persistence\MigrationRunner\MigrationRunner.csproj" />
+  </ItemGroup>
+
+</Project>

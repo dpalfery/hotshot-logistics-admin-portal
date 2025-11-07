@@ -17,18 +17,16 @@ public class PreflightChecker
     {
         _logger.LogInformation("Starting preflight checks for database: {DatabaseName}", databaseName);
 
-        var checks = new List<(string Name, Func<Task<bool>> Check)>
+        var checks = new List<(string Name, Func<Task<bool>> Check, bool Optional)>
         {
-            ("SQL Server Connectivity", () => CheckSqlServerConnectivityAsync(connectionString, cancellationToken)),
-            ("Privileged Credentials", () => CheckPrivilegedCredentialsAsync(connectionString, cancellationToken)),
-            ("Create Database Permission", () => CheckCreateDatabasePermissionAsync(connectionString, cancellationToken)),
-            ("Create Login Permission", () => CheckCreateLoginPermissionAsync(connectionString, cancellationToken)),
-            ("Database Access", () => CheckDatabaseAccessAsync(connectionString, databaseName, cancellationToken))
+            ("SQL Server Connectivity", () => CheckSqlServerConnectivityAsync(connectionString, cancellationToken), false),
+            ("Privileged Credentials", () => CheckPrivilegedCredentialsAsync(connectionString, cancellationToken), false)
+            // Skip destructive permission tests - we'll find out when we actually try to create things
         };
 
         var allPassed = true;
 
-        foreach (var (name, check) in checks)
+        foreach (var (name, check, optional) in checks)
         {
             try
             {
@@ -41,14 +39,28 @@ public class PreflightChecker
                 }
                 else
                 {
-                    _logger.LogError("✗ {CheckName} failed", name);
-                    allPassed = false;
+                    if (optional)
+                    {
+                        _logger.LogWarning("⚠ {CheckName} failed (optional - will be created)", name);
+                    }
+                    else
+                    {
+                        _logger.LogError("✗ {CheckName} failed", name);
+                        allPassed = false;
+                    }
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "✗ {CheckName} failed with exception", name);
-                allPassed = false;
+                if (optional)
+                {
+                    _logger.LogWarning(ex, "⚠ {CheckName} failed (optional - will be created)", name);
+                }
+                else
+                {
+                    _logger.LogError(ex, "✗ {CheckName} failed with exception", name);
+                    allPassed = false;
+                }
             }
         }
 
@@ -111,10 +123,11 @@ public class PreflightChecker
 
             if (await reader.ReadAsync(cancellationToken))
             {
-                var isSysAdmin = reader.GetBoolean(0);
-                var isServerAdmin = reader.GetBoolean(1);
-                var canCreateDatabase = reader.GetBoolean(2);
-                var canAlterLogin = reader.GetBoolean(3);
+                // SQL Server returns 1 or 0 (int), not boolean
+                var isSysAdmin = reader.GetInt32(0) == 1;
+                var isServerAdmin = reader.GetInt32(1) == 1;
+                var canCreateDatabase = reader.GetInt32(2) == 1;
+                var canAlterLogin = reader.GetInt32(3) == 1;
 
                 _logger.LogDebug("Privilege check results: SysAdmin={IsSysAdmin}, ServerAdmin={IsServerAdmin}, CanCreateDatabase={CanCreateDatabase}, CanAlterLogin={CanAlterLogin}",
                     isSysAdmin, isServerAdmin, canCreateDatabase, canAlterLogin);
@@ -137,133 +150,11 @@ public class PreflightChecker
         }
     }
 
-    private async Task<bool> CheckCreateDatabasePermissionAsync(string connectionString, CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            await using var connection = new SqlConnection(connectionString);
-            await connection.OpenAsync(cancellationToken);
+    // Removed - too intrusive for preflight check
 
-            // Try to create a test database (we'll drop it immediately)
-            var testDbName = $"TestDb_{Guid.NewGuid():N}";
+    // Removed - too intrusive for preflight check
 
-            var createQuery = $"CREATE DATABASE {GetQuotedIdentifier(testDbName)}";
-            await using (var command = new SqlCommand(createQuery, connection))
-            {
-                await command.ExecuteNonQueryAsync(cancellationToken);
-            }
-
-            // Clean up the test database
-            var dropQuery = $"DROP DATABASE {GetQuotedIdentifier(testDbName)}";
-            await using (var command = new SqlCommand(dropQuery, connection))
-            {
-                await command.ExecuteNonQueryAsync(cancellationToken);
-            }
-
-            _logger.LogDebug("Create database permission test successful");
-            return true;
-        }
-        catch (SqlException ex) when (ex.Number == 262) // Database already exists
-        {
-            // This shouldn't happen with GUID, but handle it gracefully
-            _logger.LogWarning("Test database already exists, skipping cleanup");
-            return true;
-        }
-        catch (SqlException ex)
-        {
-            _logger.LogError("Create database permission check failed: {ErrorMessage}", ex.Message);
-            return false;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error during create database permission check");
-            return false;
-        }
-    }
-
-    private async Task<bool> CheckCreateLoginPermissionAsync(string connectionString, CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            await using var connection = new SqlConnection(connectionString);
-            await connection.OpenAsync(cancellationToken);
-
-            // Try to create a test login (we'll drop it immediately)
-            var testLoginName = $"TestLogin_{Guid.NewGuid():N}";
-            var testPassword = "TempPassword123!";
-
-            var createQuery = $"CREATE LOGIN {GetQuotedIdentifier(testLoginName)} WITH PASSWORD = @password";
-            await using (var command = new SqlCommand(createQuery, connection))
-            {
-                command.Parameters.AddWithValue("@password", testPassword);
-                await command.ExecuteNonQueryAsync(cancellationToken);
-            }
-
-            // Clean up the test login
-            var dropQuery = $"DROP LOGIN {GetQuotedIdentifier(testLoginName)}";
-            await using (var command = new SqlCommand(dropQuery, connection))
-            {
-                await command.ExecuteNonQueryAsync(cancellationToken);
-            }
-
-            _logger.LogDebug("Create login permission test successful");
-            return true;
-        }
-        catch (SqlException ex) when (ex.Number == 15025) // Login already exists
-        {
-            // This shouldn't happen with GUID, but handle it gracefully
-            _logger.LogWarning("Test login already exists, skipping cleanup");
-            return true;
-        }
-        catch (SqlException ex)
-        {
-            _logger.LogError("Create login permission check failed: {ErrorMessage}", ex.Message);
-            return false;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error during create login permission check");
-            return false;
-        }
-    }
-
-    private async Task<bool> CheckDatabaseAccessAsync(string connectionString, string databaseName, CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            var builder = new SqlConnectionStringBuilder(connectionString)
-            {
-                InitialCatalog = databaseName
-            };
-
-            await using var connection = new SqlConnection(builder.ConnectionString);
-            await connection.OpenAsync(cancellationToken);
-
-            // Test basic connectivity to the target database
-            const string query = "SELECT DB_NAME()";
-            await using var command = new SqlCommand(query, connection);
-            var result = await command.ExecuteScalarAsync(cancellationToken);
-
-            var actualDbName = result?.ToString();
-            if (actualDbName != databaseName)
-            {
-                _logger.LogWarning("Connected to database '{ActualDbName}' but expected '{ExpectedDbName}'", actualDbName, databaseName);
-            }
-
-            _logger.LogDebug("Database access test successful for database: {DatabaseName}", databaseName);
-            return true;
-        }
-        catch (SqlException ex)
-        {
-            _logger.LogError("Database access check failed for {DatabaseName}: {ErrorMessage}", databaseName, ex.Message);
-            return false;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error during database access check for {DatabaseName}", databaseName);
-            return false;
-        }
-    }
+    // Removed - not needed for initial setup
 
     public string GetRemediationInstructions()
     {

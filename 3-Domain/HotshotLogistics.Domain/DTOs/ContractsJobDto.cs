@@ -35,6 +35,11 @@ namespace HotshotLogistics.Domain.DTOs
         public JobStatus Status { get; set; }
 
         /// <summary>
+        /// Gets or sets the priority of the job.
+        /// </summary>
+        public JobPriority Priority { get; set; }
+
+        /// <summary>
         /// Gets or sets the monetary amount for the job.
         /// </summary>
         public decimal Amount { get; set; }

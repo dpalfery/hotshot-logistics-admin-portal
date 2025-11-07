@@ -1,3 +1,6 @@
+---
+applyTo: "**"
+---
 # Memory Bank Tech
 
 ## Technologies and Dependencies

@@ -672,6 +672,13 @@ namespace HotshotLogistics.Application.Services
             return true;
         }
 
+        /// <inheritdoc/>
+        public async Task<JobStatusSummaryDto> GetJobStatusSummaryAsync(CancellationToken cancellationToken = default)
+        {
+            logger.LogInformation("Retrieving job status summary");
+            return await jobRepository.GetJobStatusSummaryAsync(cancellationToken);
+        }
+
         /// <summary>
         /// Sends notifications for job status changes.
         /// </summary>

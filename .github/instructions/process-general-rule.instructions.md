@@ -1,3 +1,6 @@
+---
+applyTo: "**"
+---
 # Process General Rule
 
 ## Task Tracking

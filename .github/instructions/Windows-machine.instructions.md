@@ -1,3 +1,6 @@
+---
+applyTo: "**"
+---
 # Windows Machine Guidelines
 
 ## CLI Commands
