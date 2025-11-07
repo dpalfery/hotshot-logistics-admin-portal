@@ -17,21 +17,17 @@
         "NEO4J_PASSWORD": "${env:NEO4J_PASSWORD}",
         "NEO4J_DATABASE": "neo4j",
         "WORKSPACE": "hotshot-logistics",
-        
-        // Query Directive Defaults (Optional)
+
         "QUERY_MAX_ITEMS": "30",
         "QUERY_TOKEN_BUDGET": "10000",
         "QUERY_INCLUDE_METADATA": "false",
-        
-        // Mode Configuration (Optional)
+
         "ALLOWED_MODES": "architect,code,debug,.net,react",
-        
-        // LLM Configuration (Optional)
+  
         "LLM_PROVIDER": "local",
         "LLM_ENDPOINT": "http://localhost:11434",
         "LLM_MODEL": "deepseek-coder-v2",
-        
-        // Rule Processing (Optional)
+
         "ENABLE_SPLITTING": "true",
         "MIN_WORD_COUNT_SPLIT": "250",
         "ENABLE_DIRECTIVE_GENERATION": "true",

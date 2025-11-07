@@ -264,6 +264,51 @@ internal class JobRepository : BaseRepository<Job>, IJobRepository
         }
 
         /// <inheritdoc/>
+        public async Task<JobStatusSummaryDto> GetJobStatusSummaryAsync(CancellationToken cancellationToken = default)
+        {
+            var query = $@"
+                SELECT
+                    Status,
+                    COUNT(*) AS Count
+                FROM {GetTableName()}
+                GROUP BY Status";
+
+            var summary = new JobStatusSummaryDto();
+
+            await using var connection = new SqlConnection(ConnectionString);
+            await connection.OpenAsync(cancellationToken);
+
+            using var command = new SqlCommand(query, connection);
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                var status = (JobStatus)reader.GetInt32(reader.GetOrdinal("Status"));
+                var count = reader.GetInt32(reader.GetOrdinal("Count"));
+
+                switch (status)
+                {
+                    case JobStatus.Pending:
+                        summary.PendingCount = count;
+                        break;
+                    case JobStatus.Assigned:
+                        summary.AssignedCount = count;
+                        break;
+                    case JobStatus.EnRoute:
+                        summary.EnRouteCount = count;
+                        break;
+                    case JobStatus.Received:
+                        summary.ReceivedCount = count;
+                        break;
+                }
+
+                summary.TotalCount += count;
+            }
+
+            return summary;
+        }
+
+        /// <inheritdoc/>
         protected override string GetTableName() => "Jobs";
 
         /// <inheritdoc/>

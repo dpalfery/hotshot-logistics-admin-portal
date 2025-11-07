@@ -28,11 +28,10 @@ namespace HotshotLogistics.IntegrationTests
             // Configure test database connection string
             builder.ConfigureAppConfiguration((context, config) =>
             {
-                var dbConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
+                var dbConnectionString = Environment.GetEnvironmentVariable("CONNECTIONSTRINGS__DEFAULTCONNECTION");
                 if (string.IsNullOrEmpty(dbConnectionString))
                 {
-                    // Use default test connection string for local development using LocalDB
-                    dbConnectionString = "Server=(localdb)\\MSSQLLocalDB;Database=HotshotLogisticsTest;Trusted_Connection=true;MultipleActiveResultSets=true;TrustServerCertificate=true;";
+                    throw new InvalidOperationException("Environment variable 'CONNECTIONSTRINGS__DEFAULTCONNECTION' is not set.");
                 }
 
                 // Add the connection string to the configuration so BaseRepository can find it

@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { apiService } from '@/services/api';
 import { JobStatus } from '@/types';
+import JobStatusCards from './JobStatusCards';
 
 export function DashboardOverview() {
   const { data: jobs, isLoading: jobsLoading, error: jobsError } = useQuery({
@@ -24,57 +25,16 @@ export function DashboardOverview() {
     retry: false,
   });
 
-  // Test mode fallback data (only for Playwright tests)
-  const isTestMode = typeof window !== 'undefined' && (window as typeof window & { __BYPASS_AUTH__?: boolean }).__BYPASS_AUTH__ === true;
-  const testJobs = {
-    items: [
-      { id: 'job-1', status: JobStatus.InProgress, assignedDriverId: 1 },
-      { id: 'job-2', status: JobStatus.Pending, assignedDriverId: null },
-      { id: 'job-3', status: JobStatus.InProgress, assignedDriverId: 2 }
-    ],
-    totalCount: 3
-  };
-  const testDrivers = [
-    { id: 1, name: 'John Driver', isActive: true },
-    { id: 2, name: 'Jane Driver', isActive: true },
-    { id: 3, name: 'Bob Driver', isActive: false }
-  ];
-  const testInvoices = {
-    items: [
-      { id: 'inv-1', dueDate: '2024-11-15T00:00:00Z', balanceDue: 1500.00, status: 'Overdue' },
-      { id: 'inv-3', dueDate: '2024-11-01T00:00:00Z', balanceDue: 800.00, status: 'Overdue' }
-    ],
-    totalCount: 2  // Only overdue invoices in test data
-  };
-
-  // Use test data only in test mode (Playwright tests), otherwise use real API data
-  const finalJobs = isTestMode && !jobs ? testJobs : jobs;
-  const finalDrivers = isTestMode && !drivers ? testDrivers : drivers;
-  const finalInvoices = isTestMode && !invoices ? testInvoices : invoices;
-
-  // Debug logging with detailed error information
-  console.log('=== DASHBOARD DEBUG INFO ===');
-  console.log('Environment:', process.env.NODE_ENV);
-  console.log('API Base URL:', process.env.NEXT_PUBLIC_API_BASE_URL);
-  console.log('Is Test Mode:', isTestMode);
-  console.log('Dashboard data:', { finalJobs, finalDrivers, finalInvoices });
-  console.log('Dashboard loading states:', { jobsLoading, driversLoading, invoicesLoading });
-  console.log('Dashboard errors:');
-  if (jobsError) console.error('Jobs error:', jobsError);
-  if (driversError) console.error('Drivers error:', driversError);
-  if (invoicesError) console.error('Invoices error:', invoicesError);
-  console.log('=== END DEBUG INFO ===');
-
   const stats = {
-    totalJobs: finalJobs?.totalCount || 0,
+    totalJobs: jobs?.totalCount || 0,
     // Active jobs are: Pending (0), Assigned (1), EnRoute (2) - but NOT Received (3)
-    activeJobs: finalJobs?.items.filter(job => job.status !== 3).length || 0,
-    pendingJobs: finalJobs?.items.filter(job => job.status === 0).length || 0,
-    totalDrivers: finalDrivers?.length || 0,
-    activeDrivers: finalDrivers?.filter(driver => driver.isActive).length || 0,
-    totalInvoices: finalInvoices?.totalCount || 0,
+    activeJobs: jobs?.items.filter(job => job.status !== 3).length || 0,
+    pendingJobs: jobs?.items.filter(job => job.status === 0).length || 0,
+    totalDrivers: drivers?.length || 0,
+    activeDrivers: drivers?.filter(driver => driver.isActive).length || 0,
+    totalInvoices: invoices?.totalCount || 0,
     // Since we're getting overdue invoices directly from the API, just count them
-    overdueInvoices: finalInvoices?.items?.length || 0,
+    overdueInvoices: invoices?.items?.length || 0,
   };
 
   if (jobsLoading || driversLoading || invoicesLoading) {
@@ -141,64 +101,67 @@ export function DashboardOverview() {
               <p className="text-gray-600">Welcome to Hotshot Logistics Admin Dashboard</p>
             </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" data-testid="stats-container">
-        <div className="bg-white p-6 rounded-lg shadow" data-testid="stats-card">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
-                <span className="text-white text-sm font-bold">J</span>
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" data-testid="stats-container">
+              <div className="bg-white p-6 rounded-lg shadow" data-testid="stats-card">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
+                      <span className="text-white text-sm font-bold">J</span>
+                    </div>
+                  </div>
+                  <div className="ml-4">
+                    <dt className="text-sm font-medium text-gray-500 truncate">Total Jobs</dt>
+                    <dd className="text-2xl font-semibold text-gray-900" data-testid="metric-total-jobs">{stats.totalJobs}</dd>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="ml-4">
-              <dt className="text-sm font-medium text-gray-500 truncate">Total Jobs</dt>
-              <dd className="text-2xl font-semibold text-gray-900" data-testid="metric-total-jobs">{stats.totalJobs}</dd>
-            </div>
-          </div>
-        </div>
 
-        <div className="bg-white p-6 rounded-lg shadow" data-testid="stats-card">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
-                <span className="text-white text-sm font-bold">A</span>
+              <div className="bg-white p-6 rounded-lg shadow" data-testid="stats-card">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <div className="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
+                      <span className="text-white text-sm font-bold">A</span>
+                    </div>
+                  </div>
+                  <div className="ml-4">
+                    <dt className="text-sm font-medium text-gray-500 truncate">Active Jobs</dt>
+                    <dd className="text-2xl font-semibold text-gray-900" data-testid="metric-active-jobs">{stats.activeJobs}</dd>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="ml-4">
-              <dt className="text-sm font-medium text-gray-500 truncate">Active Jobs</dt>
-              <dd className="text-2xl font-semibold text-gray-900" data-testid="metric-active-jobs">{stats.activeJobs}</dd>
-            </div>
-          </div>
-        </div>
 
-        <div className="bg-white p-6 rounded-lg shadow" data-testid="stats-card">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
-                <span className="text-white text-sm font-bold">D</span>
+              <div className="bg-white p-6 rounded-lg shadow" data-testid="stats-card">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <div className="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
+                      <span className="text-white text-sm font-bold">D</span>
+                    </div>
+                  </div>
+                  <div className="ml-4">
+                    <dt className="text-sm font-medium text-gray-500 truncate">Active Drivers</dt>
+                    <dd className="text-2xl font-semibold text-gray-900" data-testid="metric-active-drivers">{stats.activeDrivers}</dd>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="ml-4">
-              <dt className="text-sm font-medium text-gray-500 truncate">Active Drivers</dt>
-              <dd className="text-2xl font-semibold text-gray-900" data-testid="metric-active-drivers">{stats.activeDrivers}</dd>
-            </div>
-          </div>
-        </div>
 
-        <div className="bg-white p-6 rounded-lg shadow" data-testid="stats-card">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-red-500 rounded-md flex items-center justify-center">
-                <span className="text-white text-sm font-bold">O</span>
+              <div className="bg-white p-6 rounded-lg shadow" data-testid="stats-card">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <div className="w-8 h-8 bg-red-500 rounded-md flex items-center justify-center">
+                      <span className="text-white text-sm font-bold">O</span>
+                    </div>
+                  </div>
+                  <div className="ml-4">
+                    <dt className="text-sm font-medium text-gray-500 truncate">Overdue Invoices</dt>
+                    <dd className="text-2xl font-semibold text-gray-900" data-testid="metric-overdue-invoices">{stats.overdueInvoices}</dd>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="ml-4">
-              <dt className="text-sm font-medium text-gray-500 truncate">Overdue Invoices</dt>
-              <dd className="text-2xl font-semibold text-gray-900" data-testid="metric-overdue-invoices">{stats.overdueInvoices}</dd>
-            </div>
-          </div>
-        </div>
-      </div>
+
+            {/* Job Status Cards */}
+            <JobStatusCards />
 
             {/* Recent Activity */}
             <div className="bg-white shadow rounded-lg">

@@ -33,4 +33,11 @@ public interface IJobService
     Task<Job> UpdateJobStatusAsync(string jobId, JobStatus status, CancellationToken cancellationToken = default);
     Task<bool> ValidateJobAsync(Job job, CancellationToken cancellationToken = default);
     Task<bool> IsDriverAvailableAsync(int driverId, DateTime startTime, DateTime? endTime = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets job counts grouped by status.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A summary of job counts by status.</returns>
+    Task<JobStatusSummaryDto> GetJobStatusSummaryAsync(CancellationToken cancellationToken = default);
 }
