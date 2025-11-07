@@ -1,3 +1,6 @@
+---
+applyTo: "**"
+---
 # Security General Rule
 
 ## Secrets Management

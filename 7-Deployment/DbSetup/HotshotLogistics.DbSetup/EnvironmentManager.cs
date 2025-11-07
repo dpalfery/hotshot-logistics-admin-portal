@@ -27,6 +27,20 @@ public class EnvironmentManager
         }
     }
 
+    public void SetEnvironmentVariable(string variableName, string value, EnvironmentVariableTarget target)
+    {
+        try
+        {
+            Environment.SetEnvironmentVariable(variableName, value, target);
+            _logger.LogInformation("Set environment variable {VariableName} at {Target} level", variableName, target);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to set environment variable {VariableName}", variableName);
+            throw;
+        }
+    }
+
     public bool TrySetSystemEnvironmentVariable(string variableName, string value, bool requireAdmin = false)
     {
         if (string.IsNullOrEmpty(variableName))

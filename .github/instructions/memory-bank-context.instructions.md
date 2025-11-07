@@ -1,3 +1,6 @@
+---
+applyTo: "**"
+---
 # Memory Bank Context
 
 ## Current Work Focus

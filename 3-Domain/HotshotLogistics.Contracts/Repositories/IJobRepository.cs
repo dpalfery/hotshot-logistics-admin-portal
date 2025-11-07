@@ -2,6 +2,10 @@ using HotshotLogistics.Domain.Entities;
 using HotshotLogistics.Domain.DTOs;
 using HotshotLogistics.Domain.ValueObjects;
 using HotshotLogistics.Core.Enums;
+using HotshotLogistics.Domain.Entities;
+using HotshotLogistics.Domain.DTOs;
+using HotshotLogistics.Domain.ValueObjects;
+using HotshotLogistics.Core.Enums;
 
 namespace HotshotLogistics.Contracts.Repositories;
 
@@ -13,11 +17,13 @@ public interface IJobRepository
     /// <param name="id">The job identifier.</param>
     /// <returns>The job if found, null otherwise.</returns>
     Task<Job?> GetByIdAsync(object id);
+    Task<Job?> GetByIdAsync(object id);
 
     /// <summary>
     /// Gets all jobs.
     /// </summary>
     /// <returns>A list of all jobs.</returns>
+    Task<IEnumerable<Job>> GetAllAsync();
     Task<IEnumerable<Job>> GetAllAsync();
 
     /// <summary>
@@ -26,12 +32,14 @@ public interface IJobRepository
     /// <param name="entity">The job to add.</param>
     /// <returns>The added job.</returns>
     Task<Job> AddAsync(Job entity);
+    Task<Job> AddAsync(Job entity);
 
     /// <summary>
     /// Updates an existing job.
     /// </summary>
     /// <param name="entity">The job to update.</param>
     /// <returns>The updated job.</returns>
+    Task<Job> UpdateAsync(Job entity);
     Task<Job> UpdateAsync(Job entity);
 
     /// <summary>
@@ -49,7 +57,11 @@ public interface IJobRepository
     Task<bool> ExistsAsync(object id);
 
     Task<IEnumerable<Job>> GetJobsAsync(CancellationToken cancellationToken = default);
+    Task<IEnumerable<Job>> GetJobsAsync(CancellationToken cancellationToken = default);
 
+    Task<Job?> GetJobByIdAsync(string id, CancellationToken cancellationToken = default);
+    Task<Job> CreateJobAsync(Job job, CancellationToken cancellationToken = default);
+    Task<Job?> UpdateJobAsync(string id, Job jobDetails, CancellationToken cancellationToken = default);
     Task<Job?> GetJobByIdAsync(string id, CancellationToken cancellationToken = default);
     Task<Job> CreateJobAsync(Job job, CancellationToken cancellationToken = default);
     Task<Job?> UpdateJobAsync(string id, Job jobDetails, CancellationToken cancellationToken = default);
@@ -65,6 +77,8 @@ public interface IJobRepository
     /// <returns>A paged result of jobs.</returns>
     Task<PagedResult<Job>> GetJobsAsync(
         JobFilterDto? filter = null,
+    Task<PagedResult<Job>> GetJobsAsync(
+        JobFilterDto? filter = null,
         PaginationParameters? pagination = null,
         SortParameters? sort = null,
         CancellationToken cancellationToken = default);
@@ -76,6 +90,7 @@ public interface IJobRepository
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A collection of jobs with the specified status.</returns>
     Task<IEnumerable<Job>> GetJobsByStatusAsync(JobStatus status, CancellationToken cancellationToken = default);
+    Task<IEnumerable<Job>> GetJobsByStatusAsync(JobStatus status, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets jobs assigned to a specific driver.
@@ -83,6 +98,7 @@ public interface IJobRepository
     /// <param name="driverId">The driver ID.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A collection of jobs assigned to the driver.</returns>
+    Task<IEnumerable<Job>> GetJobsByDriverAsync(int driverId, CancellationToken cancellationToken = default);
     Task<IEnumerable<Job>> GetJobsByDriverAsync(int driverId, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -92,12 +108,14 @@ public interface IJobRepository
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A collection of jobs for the customer.</returns>
     Task<IEnumerable<Job>> GetJobsByCustomerAsync(string customerId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<Job>> GetJobsByCustomerAsync(string customerId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets overdue jobs (past estimated delivery time).
     /// </summary>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A collection of overdue jobs.</returns>
+    Task<IEnumerable<Job>> GetOverdueJobsAsync(CancellationToken cancellationToken = default);
     Task<IEnumerable<Job>> GetOverdueJobsAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -106,6 +124,7 @@ public interface IJobRepository
     /// <param name="filter">The filter criteria.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The total count of matching jobs.</returns>
+    Task<int> GetJobCountAsync(JobFilterDto? filter = null, CancellationToken cancellationToken = default);
     Task<int> GetJobCountAsync(JobFilterDto? filter = null, CancellationToken cancellationToken = default);
 
     /// <summary>

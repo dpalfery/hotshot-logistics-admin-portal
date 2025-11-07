@@ -1,3 +1,6 @@
+---
+applyTo: "**"
+---
 # Code Quality General Rule
 
 ## Build Quality (Zero Tolerance)

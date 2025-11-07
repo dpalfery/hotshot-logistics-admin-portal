@@ -46,20 +46,36 @@ namespace HotshotLogistics.Application.Services
         {
             var providerName = configuration["Mapping:Provider"] ?? "Mock";
             var mappingServices = serviceProvider.GetServices<IMappingService>();
-            var mappingServiceDict = mappingServices.ToDictionary(s => s.GetType().Name.Replace("Service", string.Empty), StringComparer.OrdinalIgnoreCase);
+            var mappingServiceDict = mappingServices
+                .ToDictionary(s => s.GetType().Name.Replace("Service", string.Empty), StringComparer.OrdinalIgnoreCase);
 
-            if (mappingServiceDict.TryGetValue(providerName, out var service))
+            // Try exact match first
+            if (mappingServiceDict.TryGetValue(providerName, out var exact))
             {
-                logger.LogInformation("Using mapping service: {ProviderName}", providerName);
-                return service;
+                logger.LogInformation("Using mapping service (exact): {ProviderName}", providerName);
+                return exact;
             }
 
-            logger.LogError("Unsupported mapping provider: {ProviderName}. Falling back to Mock.", providerName);
-            if (mappingServiceDict.TryGetValue("Mock", out var mockService))
+            // Try more flexible matching: key contains providerName or providerName contains key
+            var flexibleKey = mappingServiceDict.Keys
+                .FirstOrDefault(k => k.IndexOf(providerName, StringComparison.OrdinalIgnoreCase) >= 0
+                                     || providerName.IndexOf(k, StringComparison.OrdinalIgnoreCase) >= 0);
+
+            if (flexibleKey != null && mappingServiceDict.TryGetValue(flexibleKey, out var flexibleService))
             {
+                logger.LogInformation("Using mapping service (flexible match): configured={Configured}, matched={Matched}", providerName, flexibleKey);
+                return flexibleService;
+            }
+
+            // Fallback: if any registered mapping service looks like a mock, use it
+            var mockKey = mappingServiceDict.Keys.FirstOrDefault(k => k.IndexOf("mock", StringComparison.OrdinalIgnoreCase) >= 0);
+            if (mockKey != null && mappingServiceDict.TryGetValue(mockKey, out var mockService))
+            {
+                logger.LogWarning("Unsupported mapping provider: {ProviderName}. Falling back to mock provider: {MockKey}.", providerName, mockKey);
                 return mockService;
             }
 
+            logger.LogError("Unsupported mapping provider: {ProviderName} and no mock service found.", providerName);
             throw new InvalidOperationException($"Unsupported mapping provider: {providerName} and no Mock service found.");
         }
     }

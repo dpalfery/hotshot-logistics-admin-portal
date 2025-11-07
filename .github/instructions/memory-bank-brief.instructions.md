@@ -1,3 +1,6 @@
+---
+applyTo: "**"
+---
 # Memory Bank Brief
 
 ## Project Foundation
