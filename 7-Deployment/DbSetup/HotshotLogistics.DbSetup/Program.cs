@@ -234,6 +234,9 @@ namespace HotshotLogistics.DbSetup
                     environmentManager.SetEnvironmentVariable($"{envPrefix}_DB_APP_PASSWORD", appPassword, EnvironmentVariableTarget.User);
                     Console.WriteLine($"  ✓ {envPrefix}_DB_APP_PASSWORD");
 
+                    environmentManager.SetEnvironmentVariable("ConnectionStrings__DefaultConnection", appConnectionString, EnvironmentVariableTarget.User);
+                    Console.WriteLine($"  ✓ ConnectionStrings__DefaultConnection");
+
                     if (parser.UseDocker)
                     {
                         environmentManager.SetEnvironmentVariable($"{envPrefix}_DB_SA_PASSWORD", parser.SaPassword!, EnvironmentVariableTarget.User);
@@ -261,7 +264,9 @@ namespace HotshotLogistics.DbSetup
                     Console.WriteLine("✓ Setup complete!");
                     Console.WriteLine();
                     Console.WriteLine("Connection string:");
-                    Console.WriteLine($"  {appConnectionString}");
+                    // Mask password when showing the connection string in console output
+                    var maskedConnectionString = $"Server={parser.Server},{parser.Port};Database={parser.DatabaseName};User Id={parser.AppUser};Password=<hidden>;TrustServerCertificate=true;";
+                    Console.WriteLine($"  {maskedConnectionString}");
                     Console.WriteLine();
                     Console.WriteLine($"Environment variables set (using project slug '{envPrefix}'):");
                     Console.WriteLine($"  {envPrefix}_DB_SERVER={parser.Server}");
@@ -269,6 +274,7 @@ namespace HotshotLogistics.DbSetup
                     Console.WriteLine($"  {envPrefix}_DB_NAME={parser.DatabaseName}");
                     Console.WriteLine($"  {envPrefix}_DB_APP_USER={parser.AppUser}");
                     Console.WriteLine($"  {envPrefix}_DB_APP_PASSWORD=<set>");
+                    Console.WriteLine($"  ConnectionStrings__DefaultConnection=<set>");
                     if (parser.UseDocker)
                     {
                         Console.WriteLine($"  {envPrefix}_DB_SA_PASSWORD=<set>");

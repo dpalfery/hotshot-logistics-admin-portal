@@ -137,14 +137,94 @@ public class MigrationInvoker
                 CreateNoWindow = false,  // Show the window
             };
             
-            // Pass connection string
-            startInfo.EnvironmentVariables["DB_CONNECTION_STRING"] = connectionString;
-            
-            // Pass HOT_SHOT_USER_PASSWORD if it exists in the parent environment
-            var hotshotUserPassword = Environment.GetEnvironmentVariable("HOT_SHOT_USER_PASSWORD");
-            if (!string.IsNullOrEmpty(hotshotUserPassword))
+            // Pass connection string. If the caller didn't supply one, try several fallbacks:
+            // 1) Environment variable "ConnectionStrings__DefaultConnection" (and common casing variants)
+            // 2) Construct from individual environment variables (DB_SERVER, DB_PORT, DB_NAME, DB_APP_USER, HOTSHOT_DB_APP_PASSWORD, etc.)
+            var finalConn = connectionString;
+            // Track whether a ConnectionStrings__DefaultConnection value was present in the environment
+            string? envConn = null;
+            if (string.IsNullOrWhiteSpace(finalConn))
             {
-                startInfo.EnvironmentVariables["HOT_SHOT_USER_PASSWORD"] = hotshotUserPassword;
+                // Try canonical environment variable used by .NET configuration
+                envConn = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+                          ?? Environment.GetEnvironmentVariable("CONNECTIONSTRINGS__DEFAULTCONNECTION")
+                          ?? Environment.GetEnvironmentVariable("connectionstrings__defaultconnection");
+
+                finalConn = envConn;
+            }
+
+            if (string.IsNullOrWhiteSpace(finalConn))
+            {
+                // Attempt to construct from component environment variables
+                var server = Environment.GetEnvironmentVariable("DB_SERVER")
+                             ?? Environment.GetEnvironmentVariable("SERVER")
+                             ?? Environment.GetEnvironmentVariable("HOTSHOT_DB_SERVER")
+                             ?? Environment.GetEnvironmentVariable("HSL_DB_SERVER");
+
+                var portStr = Environment.GetEnvironmentVariable("DB_PORT") ?? Environment.GetEnvironmentVariable("HOTSHOT_DB_PORT");
+                int port = 1433;
+                if (!string.IsNullOrWhiteSpace(portStr) && int.TryParse(portStr, out var parsedPort))
+                {
+                    port = parsedPort;
+                }
+
+                var database = Environment.GetEnvironmentVariable("DB_NAME")
+                               ?? Environment.GetEnvironmentVariable("DATABASE")
+                               ?? Environment.GetEnvironmentVariable("HOTSHOT_DB_NAME")
+                               ?? Environment.GetEnvironmentVariable("HSL_DB_NAME");
+
+                var user = Environment.GetEnvironmentVariable("DB_APP_USER")
+                           ?? Environment.GetEnvironmentVariable("DB_USER")
+                           ?? Environment.GetEnvironmentVariable("HOTSHOT_DB_APP_USER")
+                           ?? Environment.GetEnvironmentVariable("HSL_DB_APP_USER");
+
+                var password = Environment.GetEnvironmentVariable("HOTSHOT_DB_APP_PASSWORD")
+                               ?? Environment.GetEnvironmentVariable("DB_APP_PASSWORD")
+                               ?? Environment.GetEnvironmentVariable("DB_PASSWORD")
+                               ?? Environment.GetEnvironmentVariable("HSL.DB_Password");
+
+                if (!string.IsNullOrWhiteSpace(server) && !string.IsNullOrWhiteSpace(database) && !string.IsNullOrWhiteSpace(user) && !string.IsNullOrWhiteSpace(password))
+                {
+                    // Include port only when non-default
+                    var serverPortSegment = port != 1433 ? $",{port}" : ",1433";
+                    finalConn = $"Server={server}{serverPortSegment};Database={database};User Id={user};Password={password};TrustServerCertificate=true;";
+                    _logger.LogInformation("Constructed DB connection string from environment components (password hidden)");
+
+                    // If there was no existing ConnectionStrings__DefaultConnection env var, set the lowercase variant so downstream processes
+                    // that check `connectionstrings__defaultconnection` will find it.
+                    if (string.IsNullOrWhiteSpace(envConn))
+                    {
+                        try
+                        {
+                            // Persist the constructed connection string for the current user so downstream processes
+                            // (and test infrastructure) can pick it up. Do NOT log or print the secret value.
+                            Environment.SetEnvironmentVariable("ConnectionStrings__DefaultConnection", finalConn, EnvironmentVariableTarget.User);
+                            _logger.LogInformation("Persisted 'ConnectionStrings__DefaultConnection' in user environment (password hidden)");
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to persist 'ConnectionStrings__DefaultConnection' to user environment");
+                        }
+                    }
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(finalConn))
+            {
+                _logger.LogWarning("DB connection string not provided and could not be resolved from environment variables. MigrationRunner requires DB_CONNECTION_STRING or ConnectionStrings__DefaultConnection.");
+                // Still set value to empty so the subprocess will clearly error; we avoid throwing here to preserve existing behavior of subprocess invocation.
+                startInfo.EnvironmentVariables["DB_CONNECTION_STRING"] = string.Empty;
+            }
+            else
+            {
+                startInfo.EnvironmentVariables["DB_CONNECTION_STRING"] = finalConn;
+            }
+            
+            // Pass HOTSHOT_DB_APP_PASSWORD if it exists in the parent environment
+            var hotshotDbAppPassword = Environment.GetEnvironmentVariable("HOTSHOT_DB_APP_PASSWORD");
+            if (!string.IsNullOrEmpty(hotshotDbAppPassword))
+            {
+                startInfo.EnvironmentVariables["HOTSHOT_DB_APP_PASSWORD"] = hotshotDbAppPassword;
             }
 
             using var process = Process.Start(startInfo);
