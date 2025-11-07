@@ -14,15 +14,9 @@ class ApiService {
     const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
     const url = `${baseUrl}${normalizedEndpoint}${query ? `?${query}` : ''}`;
 
-    // Use localhost:5001 for tests, otherwise use configured base URL
-    const isTestMode = typeof window !== 'undefined' && (window as typeof window & { __BYPASS_AUTH__?: boolean }).__BYPASS_AUTH__ === true;
-    const testBaseUrl = isTestMode ? 'https://localhost:5001' : baseUrl;
-    const finalUrl = isTestMode ? `${testBaseUrl}${normalizedEndpoint}${query ? `?${query}` : ''}` : url;
-
     console.log('=== API REQUEST DEBUG ===');
-    console.log('Making request to:', finalUrl);
+    console.log('Making request to:', url);
     console.log('Base URL from env:', API_BASE_URL);
-    console.log('Is test mode:', isTestMode);
 
     const config: RequestInit = {
       headers: {
@@ -46,7 +40,7 @@ class ApiService {
     }
 
     try {
-      const response = await fetch(finalUrl, config);
+      const response = await fetch(url, config);
       console.log('Response status:', response.status);
       console.log('Response ok:', response.ok);
 
@@ -71,11 +65,6 @@ class ApiService {
     // Always use test authentication in development
     if (process.env.NODE_ENV === 'development') {
       console.log('Development mode: using test authentication');
-      return 'test-token';
-    }
-
-    // Check for test mode bypass
-    if (typeof window !== 'undefined' && (window as typeof window & { __BYPASS_AUTH__?: boolean }).__BYPASS_AUTH__ === true) {
       return 'test-token';
     }
 
