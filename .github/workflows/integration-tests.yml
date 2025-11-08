@@ -1,0 +1,129 @@
+name: Integration Tests with SQL Server
+
+on:
+  pull_request:
+    paths:
+      - '**/*.cs'
+      - '**/*.csproj'
+      - '4-Persistence/**'
+      - '5-Test/**'
+      - '.github/workflows/integration-tests.yml'
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - '**/*.cs'
+      - '**/*.csproj'
+      - '4-Persistence/**'
+      - '5-Test/**'
+      - '.github/workflows/integration-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  integration-tests:
+    runs-on: ubuntu-latest
+
+    # SQL Server service container
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: Y
+          SA_PASSWORD: ${{ secrets.SQL_SA_PASSWORD }}
+          MSSQL_PID: Developer
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd="/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $SA_PASSWORD -C -Q 'SELECT 1' || exit 1"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+          --health-start-period=30s
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Wait for SQL Server to be ready
+        run: |
+          echo "Waiting for SQL Server to be fully ready..."
+          for i in {1..30}; do
+            if /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "${{ secrets.SQL_SA_PASSWORD }}" -C -Q "SELECT 1" > /dev/null 2>&1; then
+              echo "SQL Server is ready!"
+              break
+            fi
+            echo "Attempt $i: SQL Server not ready yet, waiting..."
+            sleep 2
+          done
+
+          # Final verification
+          /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "${{ secrets.SQL_SA_PASSWORD }}" -C -Q "SELECT @@VERSION"
+
+      - name: Restore .NET dependencies
+        run: dotnet restore
+
+      - name: Build solution
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Run DbSetup CLI to provision and seed database
+        working-directory: 7-Deployment/DbSetup/HotshotLogistics.DbSetup
+        env:
+          HOTSHOT_DB_SERVER: localhost
+          HOTSHOT_DB_PORT: 1433
+          HOTSHOT_DB_NAME: hotshot_logistics
+          HOTSHOT_DB_APP_USER: hotshot_app
+          HOTSHOT_DB_APP_PASSWORD: ${{ secrets.SQL_SA_PASSWORD }}
+          HOTSHOT_DB_SA_PASSWORD: ${{ secrets.SQL_SA_PASSWORD }}
+          HOTSHOT_DB_USE_DOCKER: false
+        run: |
+          dotnet run --project-slug "hotshot" \
+            --non-interactive \
+            --server "localhost" \
+            --db-name "hotshot_logistics" \
+            --app-user "hotshot_app" \
+            --password "${{ secrets.SQL_SA_PASSWORD }}" \
+            --sa-password "${{ secrets.SQL_SA_PASSWORD }}"
+
+      - name: Run Integration Tests
+        env:
+          # Connection string for integration tests (using SA credentials for simplicity in CI/CD)
+          DB_CONNECTION_STRING: "Server=localhost,1433;Database=hotshot_logistics;User Id=sa;Password=${{ secrets.SQL_SA_PASSWORD }};TrustServerCertificate=true;"
+        run: |
+          dotnet test ./5-Test/HotshotLogistics.IntegrationTests/HotshotLogistics.IntegrationTests.csproj \
+            --configuration Release \
+            --no-build \
+            --logger "trx;LogFileName=integration-test-results.trx" \
+            --logger "console;verbosity=detailed"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results
+          path: '**/integration-test-results.trx'
+          retention-days: 30
+
+      - name: Test Report Summary
+        if: always()
+        run: |
+          echo "## Integration Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f "**/integration-test-results.trx" ]; then
+            echo "✅ Test results uploaded successfully" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ No test results found" >> $GITHUB_STEP_SUMMARY
+          fi
