@@ -28,7 +28,7 @@ namespace HotshotLogistics.Tests.Utils.Integration
         [Fact]
         public async Task DriverService_CreateDriver_CallsRepository()
         {
-            var mockRepo = new Mock<DriverRepository>(MockBehavior.Strict);
+            var mockRepo = new Mock<IDriverRepository>(MockBehavior.Strict);
             var driver = new Driver
             {
                 PersonalInfo = new PersonalInfo
@@ -114,8 +114,8 @@ namespace HotshotLogistics.Tests.Utils.Integration
                     .ReturnsAsync((Job j, CancellationToken _) => j)
                     .Verifiable();
 
-            var customerRepoMock = new Mock<CustomerRepository>();
-            var driverRepoMock = new Mock<DriverRepository>();
+            var customerRepoMock = new Mock<ICustomerRepository>();
+            var driverRepoMock = new Mock<IDriverRepository>();
             var notificationServiceMock = new Mock<INotificationService>();
             var mappingServiceMock = new Mock<IMappingService>();
             var loggerMock = new Mock<ILogger<JobService>>();
@@ -141,9 +141,9 @@ namespace HotshotLogistics.Tests.Utils.Integration
         [Fact]
         public async Task JobAssignmentService_AssignJobAsync_CreatesAssignment()
         {
-            var mockAssignmentRepo = new Mock<JobAssignmentRepository>(MockBehavior.Strict);
-            var mockJobRepo = new Mock<JobRepository>(MockBehavior.Strict);
-            var mockDriverRepo = new Mock<DriverRepository>(MockBehavior.Strict);
+            var mockAssignmentRepo = new Mock<IJobAssignmentRepository>(MockBehavior.Strict);
+            var mockJobRepo = new Mock<IJobRepository>(MockBehavior.Strict);
+            var mockDriverRepo = new Mock<IDriverRepository>(MockBehavior.Strict);
 
             var jobId = Guid.NewGuid().ToString();
             var driverId = 123;
