@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 using HotshotLogistics.Domain.Entities;
-using HotshotLogistics.Domain.Entities;
 using HotshotLogistics.Domain.ValueObjects;
 using Microsoft.AspNetCore.Mvc.Testing;
 using System.Collections.Generic;

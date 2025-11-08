@@ -125,7 +125,7 @@ public class ConnectionManagerServiceTests
         var expectedKey = $"user_connections:{userId}";
 
         _cacheMock.Setup(c => c.GetAsync(expectedKey, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((byte[])null);
+            .ReturnsAsync((byte[]?)null);
 
         // Act
         var result = await _service.GetUserConnectionsAsync(userId);

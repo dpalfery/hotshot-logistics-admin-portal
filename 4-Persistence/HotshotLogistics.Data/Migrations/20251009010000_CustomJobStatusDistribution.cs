@@ -68,7 +68,7 @@ public class CustomJobStatusDistribution : Migration
                 statusAssignments.Add((jobIds[i], 6)); // Legacy Completed
             }
 
-            //Apply the status assignments
+            // Apply the status assignments
             using var updateCmd = connection.CreateCommand();
             updateCmd.Transaction = transaction;
             updateCmd.CommandText = "UPDATE Jobs SET Status = @Status WHERE Id = @JobId";

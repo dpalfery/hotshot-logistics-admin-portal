@@ -31,7 +31,7 @@ internal class LocationTrackingRepository : BaseRepository<LocationTracking>, IL
         }
 
         /// <inheritdoc/>
-        public async Task<LocationTracking> AddAsync(LocationTracking locationTracking)
+        public new async Task<LocationTracking> AddAsync(LocationTracking locationTracking)
         {
             if (locationTracking is not LocationTracking locationTrackingEntity)
             {

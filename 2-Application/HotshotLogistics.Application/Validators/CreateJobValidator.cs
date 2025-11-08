@@ -38,11 +38,10 @@ public class CreateJobValidator : AbstractValidator<ContractsJobDto>
 
         RuleFor(x => (DateTime?)x.EstimatedDeliveryTime)
             .NotNull().WithMessage("Estimated delivery time is required.")
-            .Must((dto, etd) => etd > (DateTime?)dto.ScheduledPickupTime)
+            .Must((dto, etd) => etd > dto.ScheduledPickupTime)
                 .WithMessage("Estimated delivery time must be after scheduled pickup time.")
-            .Must((dto, etd) => etd < ((DateTime?)dto.ScheduledPickupTime)?.AddDays(30))
-                .WithMessage("Estimated delivery time cannot be more than 30 days after pickup.")
-            .When(x => x.EstimatedDeliveryTime != null);
+            .Must((dto, etd) => etd < dto.ScheduledPickupTime.AddDays(30))
+                .WithMessage("Estimated delivery time cannot be more than 30 days after pickup.");
 
         RuleFor(x => x.CustomerId)
             .NotEmpty().WithMessage("Customer ID is required.");

@@ -137,13 +137,13 @@ public class SecureLogger
 
         for (int i = 0; i < args.Length; i++)
         {
-            sanitizedArgs[i] = SanitizeArg(args[i]);
+            sanitizedArgs[i] = SanitizeArg(args[i]) ?? new object();
         }
 
         return sanitizedArgs;
     }
 
-    private object SanitizeArg(object arg)
+    private object? SanitizeArg(object? arg)
     {
         if (arg == null)
         {

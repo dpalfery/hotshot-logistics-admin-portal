@@ -10,7 +10,6 @@ using FluentAssertions;
 using HotshotLogistics.Domain.Entities;
 using HotshotLogistics.Contracts.Repositories;
 using HotshotLogistics.Data.Repositories;
-using HotshotLogistics.Domain.Entities;
 using HotshotLogistics.Core.Enums;
 using HotshotLogistics.Domain.ValueObjects;
 using Microsoft.Data.SqlClient;

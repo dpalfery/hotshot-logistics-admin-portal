@@ -51,7 +51,7 @@ internal class InvoiceRepository : BaseRepository<Invoice>, IInvoiceRepository
     }
 
     /// <inheritdoc/>
-    public async Task<Invoice> AddAsync(Invoice invoice)
+    public new async Task<Invoice> AddAsync(Invoice invoice)
     {
         if (invoice is not Invoice invoiceEntity)
         {
@@ -74,7 +74,7 @@ internal class InvoiceRepository : BaseRepository<Invoice>, IInvoiceRepository
     }
 
     /// <inheritdoc/>
-    public async Task<Invoice> UpdateAsync(Invoice invoice)
+    public new async Task<Invoice> UpdateAsync(Invoice invoice)
     {
         if (invoice is not Invoice invoiceEntity)
         {
