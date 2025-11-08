@@ -66,7 +66,7 @@ jobs:
         uses: azure/webapps-deploy@v4
         with:
           app-name: ${{ github.event.inputs.environment || 'dev' }}-hotshot-logistics-function
-          package: ./publish
+          package: 1-Presentation/HotshotLogistics.Api/publish
           startup-command: 'dotnet HotshotLogistics.Api.dll'
 
       - name: Get Key Vault connection string
@@ -78,16 +78,16 @@ jobs:
       - name: Run database migrations
         run: |
           # Install FluentMigrator CLI
-          dotnet tool install --global FluentMigrator.DotNet.Cli --version 3.4.0
-          
+          dotnet tool install --global FluentMigrator.DotNet.Cli --version 7.1.0
+
           # Set connection string for migrations
           export CONNECTION_STRING="${{ steps.get-connection-string.outputs.connection_string }}"
-          
+
           # Build the data project so the assembly is available
-          dotnet build 4-Persistence/HotshotLogistics.Data/HotshotLogistics.Data.csproj --configuration Release
-          
+          dotnet build ../../4-Persistence/HotshotLogistics.Data/HotshotLogistics.Data.csproj --configuration Release
+
           # Run FluentMigrator migrations against SQL Server
-          dotnet fm migrate -a 4-Persistence/HotshotLogistics.Data/bin/Release/net8.0/HotshotLogistics.Data.dll -c "${CONNECTION_STRING}" -p sqlserver
+          dotnet fm migrate -a ../../4-Persistence/HotshotLogistics.Data/bin/Release/net8.0/HotshotLogistics.Data.dll -c "${CONNECTION_STRING}" -p sqlserver
         env:
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.DAVIDS_AZURE_SUB }}
