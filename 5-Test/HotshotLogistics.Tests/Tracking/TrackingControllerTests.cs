@@ -11,7 +11,6 @@ namespace HotshotLogistics.Tests.Tracking
     using FluentAssertions;
     using HotshotLogistics.Api.Controllers;
     using HotshotLogistics.Domain.Entities;
-using HotshotLogistics.Domain.Entities;
     using HotshotLogistics.Contracts.Services;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Logging;

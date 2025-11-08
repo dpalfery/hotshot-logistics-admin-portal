@@ -10,13 +10,12 @@ namespace HotshotLogistics.Data.Services
     using System.Text.Json;
     using System.Threading;
     using System.Threading.Tasks;
-
     using HotshotLogistics.Contracts.Services;
-    using HotshotLogistics.Domain.ValueObjects;
+    using HotshotLogistics.Domain.DTOs;
     using HotshotLogistics.Domain.Entities;
+    using HotshotLogistics.Domain.ValueObjects;
     using Microsoft.Extensions.Logging;
     using Microsoft.Extensions.Options;
-    using HotshotLogistics.Domain.DTOs;
 
     /// <summary>
     /// Azure Maps implementation of the mapping service.

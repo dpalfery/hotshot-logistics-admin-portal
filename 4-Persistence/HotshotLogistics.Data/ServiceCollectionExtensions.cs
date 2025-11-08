@@ -2,11 +2,11 @@
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
+using HotshotLogistics.Application.Services;
 using HotshotLogistics.Contracts.Repositories;
 using HotshotLogistics.Contracts.Services;
 using HotshotLogistics.Data.Repositories;
 using HotshotLogistics.Data.Services;
-using HotshotLogistics.Application.Services;
 using HotshotLogistics.Domain.DTOs;
 using HotshotLogistics.Domain.Repositories;
 using Microsoft.Extensions.DependencyInjection;
@@ -41,7 +41,7 @@ namespace HotshotLogistics.Data
         {
             services.AddHttpClient("MappingService");
             services.AddTransient<IMappingService, MockMappingService>();
-            
+
             // Register AzureMapsService with proper HttpClient factory and settings
             services.AddTransient<IMappingService>(provider =>
             {
@@ -51,7 +51,7 @@ namespace HotshotLogistics.Data
                 var settings = provider.GetRequiredService<IOptions<AzureMapsSettings>>();
                 return new AzureMapsService(httpClient, logger, settings);
             });
-            
+
             // Register GoogleMapsService with proper HttpClient factory
             services.AddTransient<IMappingService>(provider =>
             {
@@ -61,7 +61,7 @@ namespace HotshotLogistics.Data
                 var settings = provider.GetRequiredService<IOptions<GoogleMapsSettings>>();
                 return new GoogleMapsService(httpClient, logger, settings);
             });
-            
+
             return services;
         }
 

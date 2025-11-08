@@ -132,17 +132,17 @@ namespace HotshotLogistics.Api.Controllers
                 {
                     PersonalInfo = new PersonalInfo
                     {
-                        FirstName = driverDto.FirstName,
-                        LastName = driverDto.LastName,
-                        Email = driverDto.Email,
-                        PhoneNumber = driverDto.PhoneNumber
+                        FirstName = driverDto.FirstName ?? string.Empty,
+                        LastName = driverDto.LastName ?? string.Empty,
+                        Email = driverDto.Email ?? string.Empty,
+                        PhoneNumber = driverDto.PhoneNumber ?? string.Empty,
                     },
                     License = new LicenseInfo
                     {
-                        LicenseNumber = driverDto.LicenseNumber,
-                        LicenseExpiryDate = driverDto.LicenseExpiryDate
+                        LicenseNumber = driverDto.LicenseNumber ?? string.Empty,
+                        LicenseExpiryDate = driverDto.LicenseExpiryDate,
                     },
-                    IsActive = driverDto.IsActive
+                    IsActive = driverDto.IsActive,
                 };
 
 
@@ -206,17 +206,17 @@ namespace HotshotLogistics.Api.Controllers
                     Id = driverDto.Id,
                     PersonalInfo = new PersonalInfo
                     {
-                        FirstName = driverDto.FirstName,
-                        LastName = driverDto.LastName,
-                        Email = driverDto.Email,
-                        PhoneNumber = driverDto.PhoneNumber
+                        FirstName = driverDto.FirstName ?? string.Empty,
+                        LastName = driverDto.LastName ?? string.Empty,
+                        Email = driverDto.Email ?? string.Empty,
+                        PhoneNumber = driverDto.PhoneNumber ?? string.Empty,
                     },
                     License = new LicenseInfo
                     {
-                        LicenseNumber = driverDto.LicenseNumber,
-                        LicenseExpiryDate = driverDto.LicenseExpiryDate
+                        LicenseNumber = driverDto.LicenseNumber ?? string.Empty,
+                        LicenseExpiryDate = driverDto.LicenseExpiryDate,
                     },
-                    IsActive = driverDto.IsActive
+                    IsActive = driverDto.IsActive,
                 };
 
                 var updatedDriver = await driverService.UpdateDriverAsync(driver);

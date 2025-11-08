@@ -3,8 +3,6 @@ namespace HotshotLogistics.Tests.TestHelpers
     using System;
     using System.Collections.Generic;
     using HotshotLogistics.Domain.Entities;
-    using HotshotLogistics.Domain.Entities;
-    using HotshotLogistics.Domain.Entities;
     using HotshotLogistics.Domain.ValueObjects;
 
     /// <summary>

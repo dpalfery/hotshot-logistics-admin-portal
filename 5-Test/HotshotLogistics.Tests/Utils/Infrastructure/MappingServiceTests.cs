@@ -12,7 +12,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using HotshotLogistics.Application.Services;
 using HotshotLogistics.Domain.Entities;
-using HotshotLogistics.Domain.Entities;
 using HotshotLogistics.Data.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

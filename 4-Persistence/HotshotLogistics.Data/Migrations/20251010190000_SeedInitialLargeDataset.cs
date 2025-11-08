@@ -71,7 +71,7 @@ public class SeedInitialLargeDataset : Migration
                 new StateInfo("WA", "Washington", 47.6062m, -122.3321m),
                 new StateInfo("WV", "West Virginia", 38.5976m, -80.4549m),
                 new StateInfo("WI", "Wisconsin", 43.7844m, -88.7879m),
-                new StateInfo("WY", "Wyoming", 43.0759m, -107.2903m)
+                new StateInfo("WY", "Wyoming", 43.0759m, -107.2903m),
             };
 
             // Generate 250 realistic drivers
@@ -94,7 +94,7 @@ public class SeedInitialLargeDataset : Migration
                     LicensePlate = f.Random.Replace("###-####"),
                     VIN = f.Random.Replace("#################"),
                     Type = f.PickRandom("Pickup Truck", "Box Truck", "Semi Truck", "Van", "Flatbed Truck"),
-                    Capacity = f.PickRandom("5 tons", "10 tons", "15 tons", "20 tons", "25 tons")
+                    Capacity = f.PickRandom("5 tons", "10 tons", "15 tons", "20 tons", "25 tons"),
                 });
 
             var drivers = driverFaker.Generate(250);
@@ -108,7 +108,10 @@ public class SeedInitialLargeDataset : Migration
                 checkDriver.CommandText = "SELECT COUNT(1) FROM Drivers WHERE Email = @Email";
                 checkDriver.Parameters.Add(CreateParam(checkDriver, "@Email", driver.Email));
                 var existsDriver = Convert.ToInt32(checkDriver.ExecuteScalar() ?? 0) > 0;
-                if (existsDriver) continue;
+                if (existsDriver)
+                {
+                    continue;
+                }
 
                 using var insertDriver = connection.CreateCommand();
                 insertDriver.Transaction = transaction;
@@ -158,7 +161,7 @@ public class SeedInitialLargeDataset : Migration
                     Weight = f.Random.Decimal(500, 25000), // lbs
                     Dimensions = $"{f.Random.Number(2, 20)}ft x {f.Random.Number(2, 10)}ft x {f.Random.Number(2, 8)}ft",
                     Value = f.Random.Decimal(1000, 50000),
-                    IsHazardous = f.Random.Bool(0.1f) // 10% hazardous
+                    IsHazardous = f.Random.Bool(0.1f), // 10% hazardous
                 });
 
             var jobs = jobFaker.Generate(300);
@@ -185,15 +188,18 @@ public class SeedInitialLargeDataset : Migration
             foreach (var customer in customers)
             {
                 var stateInfo = usStates.FirstOrDefault(s => s.Code == customer.State);
-                var latitude = stateInfo != default ? stateInfo.Latitude + (decimal)(random.NextDouble() - 0.5) * 2m : 40.0m;
-                var longitude = stateInfo != default ? stateInfo.Longitude + (decimal)(random.NextDouble() - 0.5) * 2m : -100.0m;
+                var latitude = stateInfo != default ? stateInfo.Latitude + ((decimal)(random.NextDouble() - 0.5) * 2m) : 40.0m;
+                var longitude = stateInfo != default ? stateInfo.Longitude + ((decimal)(random.NextDouble() - 0.5) * 2m) : -100.0m;
 
                 using var checkCustomer = connection.CreateCommand();
                 checkCustomer.Transaction = transaction;
                 checkCustomer.CommandText = "SELECT COUNT(1) FROM Customers WHERE Email = @Email";
                 checkCustomer.Parameters.Add(CreateParam(checkCustomer, "@Email", customer.Email));
                 var existsCustomer = Convert.ToInt32(checkCustomer.ExecuteScalar() ?? 0) > 0;
-                if (existsCustomer) continue;
+                if (existsCustomer)
+                {
+                    continue;
+                }
 
                 using var insertCustomer = connection.CreateCommand();
                 insertCustomer.Transaction = transaction;
@@ -201,7 +207,7 @@ public class SeedInitialLargeDataset : Migration
                 INSERT INTO Customers (Id, CompanyName, TaxId, Email, Phone, BillingAddress, City, State, ZipCode, Country, Latitude, Longitude, CreditLimit, PaymentTermsDays, CreditStatus, IsActive, CreatedAt)
                 VALUES (@Id, @CompanyName, @TaxId, @Email, @Phone, @BillingAddress, @City, @State, @ZipCode, @Country, @Latitude, @Longitude, @CreditLimit, @PaymentTermsDays, @CreditStatus, @IsActive, @CreatedAt)";
 
-                var companyNameClean = customer.CompanyName.Replace(" ", "").Replace("-", "").Replace(".", "");
+                var companyNameClean = customer.CompanyName.Replace(" ", string.Empty).Replace("-", string.Empty).Replace(".", string.Empty);
                 var nameLength = Math.Min(10, companyNameClean.Length);
                 var customerId = $"CUST-{companyNameClean.Substring(0, Math.Max(3, nameLength))}-{random.Next(1000, 9999)}";
 
@@ -249,10 +255,10 @@ public class SeedInitialLargeDataset : Migration
                 var pickupState = usStates[random.Next(usStates.Length)];
                 var deliveryState = usStates[random.Next(usStates.Length)];
 
-                var pickupLatitude = pickupState.Latitude + (decimal)(random.NextDouble() - 0.5) * 1m;
-                var pickupLongitude = pickupState.Longitude + (decimal)(random.NextDouble() - 0.5) * 1m;
-                var deliveryLatitude = deliveryState.Latitude + (decimal)(random.NextDouble() - 0.5) * 1m;
-                var deliveryLongitude = deliveryState.Longitude + (decimal)(random.NextDouble() - 0.5) * 1m;
+                var pickupLatitude = pickupState.Latitude + ((decimal)(random.NextDouble() - 0.5) * 1m);
+                var pickupLongitude = pickupState.Longitude + ((decimal)(random.NextDouble() - 0.5) * 1m);
+                var deliveryLatitude = deliveryState.Latitude + ((decimal)(random.NextDouble() - 0.5) * 1m);
+                var deliveryLongitude = deliveryState.Longitude + ((decimal)(random.NextDouble() - 0.5) * 1m);
 
                 var jobId = $"JOB-{random.Next(10000, 99999)}";
 
@@ -262,7 +268,10 @@ public class SeedInitialLargeDataset : Migration
                 checkJob.CommandText = "SELECT COUNT(1) FROM Jobs WHERE Id = @Id";
                 checkJob.Parameters.Add(CreateParam(checkJob, "@Id", jobId));
                 var jobExists = Convert.ToInt32(checkJob.ExecuteScalar() ?? 0) > 0;
-                if (jobExists) continue;
+                if (jobExists)
+                {
+                    continue;
+                }
 
                 var totalAmount = Math.Round(job.BaseRate * 1.1m, 2); // Add 10% markup
 
@@ -502,7 +511,7 @@ public enum DriverStatus
     Available = 0,
     Busy = 1,
     OffDuty = 2,
-    Maintenance = 3
+    Maintenance = 3,
 }
 
 public enum JobStatus
@@ -511,7 +520,7 @@ public enum JobStatus
     Assigned = 1,
     InProgress = 2,
     Completed = 3,
-    Cancelled = 4
+    Cancelled = 4,
 }
 
 public enum JobPriority
@@ -519,12 +528,12 @@ public enum JobPriority
     Low = 1,
     Normal = 2,
     High = 3,
-    Urgent = 4
+    Urgent = 4,
 }
 
 public enum CreditStatus
 {
     Pending = 0,
     Approved = 1,
-    Denied = 2
+    Denied = 2,
 }

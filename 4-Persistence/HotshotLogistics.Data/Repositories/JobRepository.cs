@@ -324,11 +324,11 @@ internal class JobRepository : BaseRepository<Job>, IJobRepository
                 Title = reader.GetString(reader.GetOrdinal("Title")),
                 PickupLocation = new Location
                 {
-                    Address = reader.GetString(reader.GetOrdinal("PickupAddress"))
+                    Address = reader.GetString(reader.GetOrdinal("PickupAddress")),
                 },
                 DeliveryLocation = new Location
                 {
-                    Address = reader.GetString(reader.GetOrdinal("DeliveryAddress"))
+                    Address = reader.GetString(reader.GetOrdinal("DeliveryAddress")),
                 },
                 Status = (JobStatus)reader.GetInt32(reader.GetOrdinal("Status")),
                 Priority = (JobPriority)reader.GetInt32(reader.GetOrdinal("Priority")),

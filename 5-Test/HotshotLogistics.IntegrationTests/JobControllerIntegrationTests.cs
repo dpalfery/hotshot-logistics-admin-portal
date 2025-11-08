@@ -58,6 +58,7 @@ namespace HotshotLogistics.IntegrationTests
             // Arrange
             var jobsResponse = await Client.GetAsync("/api/Job");
             var pagedResult = await jobsResponse.Content.ReadFromJsonAsync<PagedResult<Domain.Entities.Job>>();
+            Assert.NotNull(pagedResult);
             var validJobId = pagedResult.Items.First().Id;
 
             // Act
@@ -152,6 +153,7 @@ namespace HotshotLogistics.IntegrationTests
             // Arrange
             var jobsResponse = await Client.GetAsync("/api/Job");
             var pagedResult = await jobsResponse.Content.ReadFromJsonAsync<PagedResult<Job>>();
+            Assert.NotNull(pagedResult);
             var jobToUpdate = pagedResult.Items.Skip(1).First(); // Get second job
 
             // Create a simple Job with minimal valid data for update
@@ -193,6 +195,7 @@ namespace HotshotLogistics.IntegrationTests
             var getResponse = await Client.GetAsync($"/api/Job/{jobToUpdate.Id}");
             getResponse.EnsureSuccessStatusCode();
             var updatedJob = await getResponse.Content.ReadFromJsonAsync<Job>();
+            Assert.NotNull(updatedJob);
             Assert.Equal("Updated Super Urgent Delivery", updatedJob.Title);
             Assert.Equal(JobStatus.Assigned, updatedJob.Status);
         }

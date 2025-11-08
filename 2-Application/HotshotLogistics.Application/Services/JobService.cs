@@ -333,7 +333,7 @@ namespace HotshotLogistics.Application.Services
             }
 
             // Validate pickup location with geocoding
-            if (!await ValidateLocationWithGeocodingAsync(job.PickupLocation, "pickup", cancellationToken))
+            if (job.PickupLocation != null && !await ValidateLocationWithGeocodingAsync(job.PickupLocation, "pickup", cancellationToken))
             {
                 logger.LogWarning("Job validation failed: pickup location geocoding validation failed");
                 errors["PickupLocation"].Add("Pickup location geocoding validation failed");
@@ -347,7 +347,7 @@ namespace HotshotLogistics.Application.Services
             }
 
             // Validate delivery location with geocoding
-            if (!await ValidateLocationWithGeocodingAsync(job.DeliveryLocation, "delivery", cancellationToken))
+            if (job.DeliveryLocation != null && !await ValidateLocationWithGeocodingAsync(job.DeliveryLocation, "delivery", cancellationToken))
             {
                 logger.LogWarning("Job validation failed: delivery location geocoding validation failed");
                 errors["DeliveryLocation"].Add("Delivery location geocoding validation failed");

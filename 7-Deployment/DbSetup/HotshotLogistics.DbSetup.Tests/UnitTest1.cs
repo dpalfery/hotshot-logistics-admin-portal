@@ -323,7 +323,7 @@ public class DatabaseSetupIntegrationTests : IDisposable
         catch
         {
             // Fall back to environment variable or default
-            return Environment.GetEnvironmentVariable("TEST_SA_CONNECTION_STRING");
+            return Environment.GetEnvironmentVariable("TEST_SA_CONNECTION_STRING") ?? string.Empty;
 
         }
     }
