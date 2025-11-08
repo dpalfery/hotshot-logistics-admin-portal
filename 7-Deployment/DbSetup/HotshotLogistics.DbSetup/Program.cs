@@ -221,16 +221,16 @@ namespace HotshotLogistics.DbSetup
                 {
                     environmentManager.SetEnvironmentVariable($"{envPrefix}_DB_SERVER", parser.Server!, EnvironmentVariableTarget.User);
                     Console.WriteLine($"  ✓ {envPrefix}_DB_SERVER");
-                    
+
                     environmentManager.SetEnvironmentVariable($"{envPrefix}_DB_PORT", parser.Port.ToString(), EnvironmentVariableTarget.User);
                     Console.WriteLine($"  ✓ {envPrefix}_DB_PORT");
-                    
+
                     environmentManager.SetEnvironmentVariable($"{envPrefix}_DB_NAME", parser.DatabaseName!, EnvironmentVariableTarget.User);
                     Console.WriteLine($"  ✓ {envPrefix}_DB_NAME");
-                    
+
                     environmentManager.SetEnvironmentVariable($"{envPrefix}_DB_APP_USER", parser.AppUser!, EnvironmentVariableTarget.User);
                     Console.WriteLine($"  ✓ {envPrefix}_DB_APP_USER");
-                    
+
                     environmentManager.SetEnvironmentVariable($"{envPrefix}_DB_APP_PASSWORD", appPassword, EnvironmentVariableTarget.User);
                     Console.WriteLine($"  ✓ {envPrefix}_DB_APP_PASSWORD");
 
@@ -241,11 +241,11 @@ namespace HotshotLogistics.DbSetup
                     {
                         environmentManager.SetEnvironmentVariable($"{envPrefix}_DB_SA_PASSWORD", parser.SaPassword!, EnvironmentVariableTarget.User);
                         Console.WriteLine($"  ✓ {envPrefix}_DB_SA_PASSWORD");
-                        
+
                         environmentManager.SetEnvironmentVariable($"{envPrefix}_DB_USE_DOCKER", "true", EnvironmentVariableTarget.User);
                         Console.WriteLine($"  ✓ {envPrefix}_DB_USE_DOCKER");
                     }
-                    
+
                     Console.WriteLine();
                     Console.WriteLine("✓ All environment variables set successfully");
                 }

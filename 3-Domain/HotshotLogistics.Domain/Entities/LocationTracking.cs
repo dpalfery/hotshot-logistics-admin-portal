@@ -9,7 +9,7 @@ namespace HotshotLogistics.Domain.Entities
     /// <summary>
     /// Represents a location tracking record in the system.
     /// </summary>
-    public class LocationTracking 
+    public class LocationTracking
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="LocationTracking"/> class.

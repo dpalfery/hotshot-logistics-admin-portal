@@ -47,7 +47,7 @@ namespace HotshotLogistics.IntegrationTests
             }
         }
 
-        
+
         private static IEnumerable<string> BuildCandidateDatabases(string? baseDatabaseName)
         {
             var candidates = new List<string>();

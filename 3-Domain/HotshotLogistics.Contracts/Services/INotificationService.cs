@@ -1,4 +1,4 @@
-using HotshotLogistics.Core.Enums;  
+using HotshotLogistics.Core.Enums;
 
 namespace HotshotLogistics.Contracts.Services;
 

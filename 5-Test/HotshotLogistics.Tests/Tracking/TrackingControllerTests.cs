@@ -418,16 +418,17 @@ namespace HotshotLogistics.Tests.Tracking
         /// <returns>A test location tracking instance.</returns>
         private static LocationTracking CreateTestLocationTracking(string jobId, int driverId)
         {
-            var mockLocationTracking = new Mock<LocationTracking>();
-            mockLocationTracking.Setup(l => l.Id).Returns(1L);
-            mockLocationTracking.Setup(l => l.JobId).Returns(jobId);
-            mockLocationTracking.Setup(l => l.DriverId).Returns(driverId);
-            mockLocationTracking.Setup(l => l.Latitude).Returns(40.7128m);
-            mockLocationTracking.Setup(l => l.Longitude).Returns(-74.0060m);
-            mockLocationTracking.Setup(l => l.Timestamp).Returns(DateTime.UtcNow);
-            mockLocationTracking.Setup(l => l.Speed).Returns(55.0m);
-            mockLocationTracking.Setup(l => l.Heading).Returns(90);
-            return mockLocationTracking.Object;
+            return new LocationTracking
+            {
+                Id = 1L,
+                JobId = jobId,
+                DriverId = driverId,
+                Latitude = 40.7128m,
+                Longitude = -74.0060m,
+                Timestamp = DateTime.UtcNow,
+                Speed = 55.0m,
+                Heading = 90
+            };
         }
     }
 }

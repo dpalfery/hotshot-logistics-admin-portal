@@ -25,8 +25,8 @@ namespace HotshotLogistics.Api.Controllers
     /// API controller for managing job assignments.
 	/// </summary>
  	[Authorize]
- 	[ApiController]
- 	[Route("api/[controller]")]
+    [ApiController]
+    [Route("api/[controller]")]
     public class JobAssignmentsController : ControllerBase
     {
         private readonly IJobAssignmentService assignmentService;

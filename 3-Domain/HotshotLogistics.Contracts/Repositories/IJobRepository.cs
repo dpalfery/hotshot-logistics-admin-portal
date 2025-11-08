@@ -14,7 +14,7 @@ public interface IJobRepository
     /// <param name="id">The job identifier.</param>
     /// <returns>The job if found, null otherwise.</returns>
     Task<Job?> GetByIdAsync(object id);
-  
+
     /// <summary>
     /// Gets all jobs.
     /// </summary>
@@ -77,7 +77,7 @@ public interface IJobRepository
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A collection of jobs with the specified status.</returns>
     Task<IEnumerable<Job>> GetJobsByStatusAsync(JobStatus status, CancellationToken cancellationToken = default);
-    
+
     /// <summary>
     /// Gets jobs assigned to a specific driver.
     /// </summary>

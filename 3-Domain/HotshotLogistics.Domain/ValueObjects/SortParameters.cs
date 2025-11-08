@@ -5,7 +5,7 @@ namespace HotshotLogistics.Domain.ValueObjects;
 /// <summary>
 /// Parameters for sorting.
 /// </summary>
-public class SortParameters 
+public class SortParameters
 {
     /// <summary>
     /// Gets or sets the field to sort by.
@@ -31,7 +31,7 @@ public class SortParameters
 /// <summary>
 /// Represents a sort field with direction.
 /// </summary>
-public class SortField 
+public class SortField
 {
     /// <summary>
     /// Gets or sets the field name.

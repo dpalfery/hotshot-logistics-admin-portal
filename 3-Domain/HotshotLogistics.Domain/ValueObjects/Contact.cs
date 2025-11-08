@@ -5,7 +5,7 @@ namespace HotshotLogistics.Domain.ValueObjects;
 /// <summary>
 /// Represents a contact person for a customer.
 /// </summary>
-public class Contact 
+public class Contact
 {
     /// <summary>
     /// Gets or sets the contact's name.

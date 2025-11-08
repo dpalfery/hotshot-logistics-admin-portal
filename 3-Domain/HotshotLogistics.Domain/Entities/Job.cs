@@ -12,7 +12,7 @@ namespace HotshotLogistics.Domain.Entities
     /// <summary>
     /// Represents a job in the logistics system.
     /// </summary>
-    public class Job 
+    public class Job
     {
         /// <summary>
         /// Gets or sets the unique identifier for the job.

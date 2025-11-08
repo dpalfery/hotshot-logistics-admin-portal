@@ -16,13 +16,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 namespace HotshotLogistics.Api.Controllers
 {
- 	/// <summary>
- 	/// API controller for managing jobs with CRUD operations.
- 	/// </summary>
- 	[Authorize]
- 	[ApiController]
- 	[Route("api/[controller]")]
- 	public class JobController : ControllerBase
+    /// <summary>
+    /// API controller for managing jobs with CRUD operations.
+    /// </summary>
+    [Authorize]
+    [ApiController]
+    [Route("api/[controller]")]
+    public class JobController : ControllerBase
     {
         private readonly IJobService jobService;
         private readonly IJobRepository jobRepository;
@@ -276,7 +276,7 @@ namespace HotshotLogistics.Api.Controllers
             string id,
             [FromBody] Job jobDto,
             CancellationToken cancellationToken = default)
-        {   
+        {
             try
             {
                 if (jobDto == null)

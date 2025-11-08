@@ -5,7 +5,7 @@ namespace HotshotLogistics.Data.Migrations;
 
 /// <summary>
 /// Updates existing job statuses to align with the new simplified JobStatus enum:
-/// Pending, Assigned, EnRoute, Received
+/// Pending, Assigned, EnRoute, Received.
 /// </summary>
 [Migration(20251009060000)]
 public class UpdateJobStatusesToNewEnum : Migration
@@ -20,7 +20,7 @@ public class UpdateJobStatusesToNewEnum : Migration
     /// - InTransit (4) -> EnRoute (2)
     /// - Completed (5) -> Received (3)
     /// - Delivered (6) -> Received (3)
-    /// - Cancelled (7) -> Pending (0) [reset cancelled jobs to pending]
+    /// - Cancelled (7) -> Pending (0) [reset cancelled jobs to pending].
     /// </summary>
     public override void Up()
     {

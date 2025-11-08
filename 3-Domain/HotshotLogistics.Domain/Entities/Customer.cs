@@ -6,7 +6,7 @@ namespace HotshotLogistics.Domain.Entities;
 /// <summary>
 /// Represents a customer in the system.
 /// </summary>
-public class Customer 
+public class Customer
 {
     /// <inheritdoc/>
     public string Id { get; set; } = string.Empty;

@@ -33,7 +33,7 @@ namespace HotshotLogistics.Tests.Job
                 CustomerId = "CUST-1",
                 PickupLocation = new Location { Address = "123 Main St", City = "City", State = "ST", PostalCode = "12345", Latitude = 1m, Longitude = 1m },
                 DeliveryLocation = new Location { Address = "456 Oak Ave", City = "City", State = "ST", PostalCode = "67890", Latitude = 2m, Longitude = 2m },
-                Cargo = new CargoDetails { Description = "Boxes" },
+                Cargo = new CargoDetails { Description = "Boxes", Weight = 100m },
                 Pricing = new PricingDetails { BaseRate = 50m, MileageRate = 1m }
             };
 

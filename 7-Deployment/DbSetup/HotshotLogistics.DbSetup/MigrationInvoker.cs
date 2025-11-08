@@ -136,7 +136,7 @@ public class MigrationInvoker
                 RedirectStandardError = true,
                 CreateNoWindow = false,  // Show the window
             };
-            
+
             // Pass connection string. If the caller didn't supply one, try several fallbacks:
             // 1) Environment variable "ConnectionStrings__DefaultConnection" (and common casing variants)
             // 2) Construct from individual environment variables (DB_SERVER, DB_PORT, DB_NAME, DB_APP_USER, HOTSHOT_DB_APP_PASSWORD, etc.)
@@ -219,7 +219,7 @@ public class MigrationInvoker
             {
                 startInfo.EnvironmentVariables["DB_CONNECTION_STRING"] = finalConn;
             }
-            
+
             // Pass HOTSHOT_DB_APP_PASSWORD if it exists in the parent environment
             var hotshotDbAppPassword = Environment.GetEnvironmentVariable("HOTSHOT_DB_APP_PASSWORD");
             if (!string.IsNullOrEmpty(hotshotDbAppPassword))

@@ -4,7 +4,7 @@ namespace HotshotLogistics.Domain.ValueObjects;
 /// <summary>
 /// Represents a communication message to be sent via various channels.
 /// </summary>
-public class CommunicationMessage 
+public class CommunicationMessage
 {
     /// <summary>
     /// Gets or sets the recipient address (phone number for SMS, email for email, device token for push).
