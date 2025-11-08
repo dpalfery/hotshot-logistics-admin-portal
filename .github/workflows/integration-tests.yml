@@ -104,12 +104,13 @@ jobs:
           HOTSHOT_DB_USE_DOCKER: false
         run: |
           dotnet run --project-slug "hotshot" \
-            --non-interactive \
             --server "localhost" \
+            --port 1433 \
             --db-name "hotshot_logistics" \
             --app-user "hotshot_app" \
-            --password "${{ secrets.SQL_SA_PASSWORD }}" \
-            --sa-password "${{ secrets.SQL_SA_PASSWORD }}"
+            --app-password "${{ secrets.SQL_SA_PASSWORD }}" \
+            --sa-password "${{ secrets.SQL_SA_PASSWORD }}" \
+            --non-interactive
 
       - name: Run Integration Tests
         env:
