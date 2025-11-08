@@ -120,12 +120,12 @@ namespace HotshotLogistics.IntegrationTests
                 var errorContent = await response.Content.ReadAsStringAsync();
                 var statusCode = response.StatusCode;
                 var reasonPhrase = response.ReasonPhrase;
-                
+
                 // Log detailed error information
                 Console.WriteLine($"Status Code: {statusCode}");
                 Console.WriteLine($"Reason Phrase: {reasonPhrase}");
                 Console.WriteLine($"Error Content: {errorContent}");
-                
+
                 // Try to get more details from headers
                 foreach (var header in response.Headers)
                 {
@@ -135,7 +135,7 @@ namespace HotshotLogistics.IntegrationTests
                 {
                     Console.WriteLine($"Content Header {contentHeader.Key}: {string.Join(", ", contentHeader.Value)}");
                 }
-                
+
                 throw new Exception($"Job create failed with status {response.StatusCode}: {errorContent}");
             }
 

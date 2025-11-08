@@ -177,7 +177,7 @@ public class ArgumentParser
 
         // Apply environment variable fallbacks if CLI args not provided
         Server ??= Environment.GetEnvironmentVariable($"{envPrefix}_SERVER");
-        
+
         var portStr = Environment.GetEnvironmentVariable($"{envPrefix}_PORT");
         if (!string.IsNullOrEmpty(portStr) && int.TryParse(portStr, out var envPort))
         {

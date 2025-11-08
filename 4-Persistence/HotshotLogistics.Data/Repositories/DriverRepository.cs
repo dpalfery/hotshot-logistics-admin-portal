@@ -22,7 +22,7 @@ namespace HotshotLogistics.Data.Repositories
     /// <summary>
     /// Repository for managing Driver entities using native ADO.NET.
     /// </summary>
-internal class DriverRepository : BaseRepository<Driver>, IDriverRepository
+    internal class DriverRepository : BaseRepository<Driver>, IDriverRepository
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="DriverRepository"/> class.

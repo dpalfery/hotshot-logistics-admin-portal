@@ -298,7 +298,7 @@ EXEC sp_executesql @sql, N'@loginName NVARCHAR(128)', @loginName;
         await using var command = new SqlCommand(query, connection);
         command.Parameters.AddWithValue("@loginName", loginName);
 
-        await command.ExecuteNonQueryAsync(cancellationToken);  
+        await command.ExecuteNonQueryAsync(cancellationToken);
         _logger.LogInformation("Dropped login {LoginName}", loginName);
     }
 

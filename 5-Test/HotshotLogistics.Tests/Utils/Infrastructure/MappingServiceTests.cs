@@ -5,429 +5,429 @@
 namespace HotshotLogistics.Tests.Utils.Infrastructure
 {
     /// <summary>
-using System.Collections.Generic;
-using System.Net;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
-using HotshotLogistics.Application.Services;
-using HotshotLogistics.Domain.Entities;
-using HotshotLogistics.Data.Services;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Moq;
-using Moq.Protected;
-using Xunit;
-using HotshotLogistics.Contracts.Services;
-using HotshotLogistics.Contracts.Factories;
-using HotshotLogistics.Domain.DTOs;
+    using System.Collections.Generic;
+    using System.Net;
+    using System.Net.Http;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using HotshotLogistics.Application.Services;
+    using HotshotLogistics.Domain.Entities;
+    using HotshotLogistics.Data.Services;
+    using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Extensions.Logging;
+    using Microsoft.Extensions.Options;
+    using Moq;
+    using Moq.Protected;
+    using Xunit;
+    using HotshotLogistics.Contracts.Services;
+    using HotshotLogistics.Contracts.Factories;
+    using HotshotLogistics.Domain.DTOs;
 
-public class MappingServiceTests
-{
-    #region MockMappingService Tests
-
-    [Fact]
-    public async Task MockMappingService_GeocodeAddressAsync_ValidAddress_ReturnsGeocodingResult()
+    public class MappingServiceTests
     {
-        // Arrange
-        var loggerMock = new Mock<ILogger<MockMappingService>>();
-        var service = new MockMappingService(loggerMock.Object);
+        #region MockMappingService Tests
 
-        // Act
-        var result = await service.GeocodeAddressAsync("123 Main St, City, State", CancellationToken.None);
+        [Fact]
+        public async Task MockMappingService_GeocodeAddressAsync_ValidAddress_ReturnsGeocodingResult()
+        {
+            // Arrange
+            var loggerMock = new Mock<ILogger<MockMappingService>>();
+            var service = new MockMappingService(loggerMock.Object);
 
-        // Assert
-        Assert.True(result.IsValid);
-        Assert.NotEqual(0m, result.Latitude);
-        Assert.NotEqual(0m, result.Longitude);
-        Assert.Equal("123 Main St, City, State", result.FormattedAddress);
-        Assert.Equal(0.95, result.Confidence);
-    }
+            // Act
+            var result = await service.GeocodeAddressAsync("123 Main St, City, State", CancellationToken.None);
 
-    [Fact]
-    public async Task MockMappingService_GeocodeAddressAsync_SameAddress_ReturnsSameCoordinates()
-    {
-        // Arrange
-        var loggerMock = new Mock<ILogger<MockMappingService>>();
-        var service = new MockMappingService(loggerMock.Object);
-        var address = "456 Oak Ave, Town, State";
+            // Assert
+            Assert.True(result.IsValid);
+            Assert.NotEqual(0m, result.Latitude);
+            Assert.NotEqual(0m, result.Longitude);
+            Assert.Equal("123 Main St, City, State", result.FormattedAddress);
+            Assert.Equal(0.95, result.Confidence);
+        }
 
-        // Act
-        var result1 = await service.GeocodeAddressAsync(address, CancellationToken.None);
-        var result2 = await service.GeocodeAddressAsync(address, CancellationToken.None);
+        [Fact]
+        public async Task MockMappingService_GeocodeAddressAsync_SameAddress_ReturnsSameCoordinates()
+        {
+            // Arrange
+            var loggerMock = new Mock<ILogger<MockMappingService>>();
+            var service = new MockMappingService(loggerMock.Object);
+            var address = "456 Oak Ave, Town, State";
 
-        // Assert - Mock service should return consistent results for same address
-        Assert.Equal(result1.Latitude, result2.Latitude);
-        Assert.Equal(result1.Longitude, result2.Longitude);
-    }
+            // Act
+            var result1 = await service.GeocodeAddressAsync(address, CancellationToken.None);
+            var result2 = await service.GeocodeAddressAsync(address, CancellationToken.None);
 
-    [Fact]
-    public async Task MockMappingService_ReverseGeocodeAsync_ValidCoordinates_ReturnsReverseGeocodingResult()
-    {
-        // Arrange
-        var loggerMock = new Mock<ILogger<MockMappingService>>();
-        var service = new MockMappingService(loggerMock.Object);
+            // Assert - Mock service should return consistent results for same address
+            Assert.Equal(result1.Latitude, result2.Latitude);
+            Assert.Equal(result1.Longitude, result2.Longitude);
+        }
 
-        // Act
-        var result = await service.ReverseGeocodeAsync(40.7128m, -74.0060m, CancellationToken.None);
+        [Fact]
+        public async Task MockMappingService_ReverseGeocodeAsync_ValidCoordinates_ReturnsReverseGeocodingResult()
+        {
+            // Arrange
+            var loggerMock = new Mock<ILogger<MockMappingService>>();
+            var service = new MockMappingService(loggerMock.Object);
 
-        // Assert
-        Assert.True(result.IsValid);
-        Assert.Equal("123 Mock Street", result.Address);
-        Assert.Equal("Mock City", result.City);
-        Assert.Equal("TX", result.State);
-        Assert.Equal("12345", result.PostalCode);
-        Assert.Equal("US", result.Country);
-    }
+            // Act
+            var result = await service.ReverseGeocodeAsync(40.7128m, -74.0060m, CancellationToken.None);
 
-    [Fact]
-    public async Task MockMappingService_ValidateAddressAsync_ValidAddress_ReturnsTrue()
-    {
-        // Arrange
-        var loggerMock = new Mock<ILogger<MockMappingService>>();
-        var service = new MockMappingService(loggerMock.Object);
+            // Assert
+            Assert.True(result.IsValid);
+            Assert.Equal("123 Mock Street", result.Address);
+            Assert.Equal("Mock City", result.City);
+            Assert.Equal("TX", result.State);
+            Assert.Equal("12345", result.PostalCode);
+            Assert.Equal("US", result.Country);
+        }
 
-        // Act
-        var result = await service.ValidateAddressAsync("123 Main St", CancellationToken.None);
+        [Fact]
+        public async Task MockMappingService_ValidateAddressAsync_ValidAddress_ReturnsTrue()
+        {
+            // Arrange
+            var loggerMock = new Mock<ILogger<MockMappingService>>();
+            var service = new MockMappingService(loggerMock.Object);
 
-        // Assert
-        Assert.True(result);
-    }
+            // Act
+            var result = await service.ValidateAddressAsync("123 Main St", CancellationToken.None);
 
-    [Fact]
-    public async Task MockMappingService_ValidateAddressAsync_EmptyAddress_ReturnsFalse()
-    {
-        // Arrange
-        var loggerMock = new Mock<ILogger<MockMappingService>>();
-        var service = new MockMappingService(loggerMock.Object);
+            // Assert
+            Assert.True(result);
+        }
 
-        // Act
-        var result = await service.ValidateAddressAsync("", CancellationToken.None);
+        [Fact]
+        public async Task MockMappingService_ValidateAddressAsync_EmptyAddress_ReturnsFalse()
+        {
+            // Arrange
+            var loggerMock = new Mock<ILogger<MockMappingService>>();
+            var service = new MockMappingService(loggerMock.Object);
 
-        // Assert
-        Assert.False(result);
-    }
+            // Act
+            var result = await service.ValidateAddressAsync("", CancellationToken.None);
 
-    [Fact]
-    public async Task MockMappingService_CalculateRouteAsync_ValidLocations_ReturnsRouteResult()
-    {
-        // Arrange
-        var loggerMock = new Mock<ILogger<MockMappingService>>();
-        var service = new MockMappingService(loggerMock.Object);
+            // Assert
+            Assert.False(result);
+        }
 
-        var origin = new Location { Latitude = 40.7128m, Longitude = -74.0060m };
-        var destination = new Location { Latitude = 40.7589m, Longitude = -73.9851m };
+        [Fact]
+        public async Task MockMappingService_CalculateRouteAsync_ValidLocations_ReturnsRouteResult()
+        {
+            // Arrange
+            var loggerMock = new Mock<ILogger<MockMappingService>>();
+            var service = new MockMappingService(loggerMock.Object);
 
-        // Act
-        var result = await service.CalculateRouteAsync(origin, destination, CancellationToken.None);
+            var origin = new Location { Latitude = 40.7128m, Longitude = -74.0060m };
+            var destination = new Location { Latitude = 40.7589m, Longitude = -73.9851m };
 
-        // Assert
-        Assert.True(result.IsValid);
-        Assert.True(result.Distance > 0);
-        Assert.True(result.Duration > TimeSpan.Zero);
-        Assert.Equal(2, result.Waypoints.Count);
-        Assert.Equal("mock_polyline_encoded_string", result.Polyline);
-    }
+            // Act
+            var result = await service.CalculateRouteAsync(origin, destination, CancellationToken.None);
 
-    [Fact]
-    public async Task MockMappingService_CalculateRouteAsync_MissingCoordinates_ReturnsInvalidResult()
-    {
-        // Arrange
-        var loggerMock = new Mock<ILogger<MockMappingService>>();
-        var service = new MockMappingService(loggerMock.Object);
+            // Assert
+            Assert.True(result.IsValid);
+            Assert.True(result.Distance > 0);
+            Assert.True(result.Duration > TimeSpan.Zero);
+            Assert.Equal(2, result.Waypoints.Count);
+            Assert.Equal("mock_polyline_encoded_string", result.Polyline);
+        }
 
-        var origin = new Location { Latitude = 40.7128m, Longitude = null };
-        var destination = new Location { Latitude = 40.7589m, Longitude = -73.9851m };
+        [Fact]
+        public async Task MockMappingService_CalculateRouteAsync_MissingCoordinates_ReturnsInvalidResult()
+        {
+            // Arrange
+            var loggerMock = new Mock<ILogger<MockMappingService>>();
+            var service = new MockMappingService(loggerMock.Object);
 
-        // Act
-        var result = await service.CalculateRouteAsync(origin, destination, CancellationToken.None);
+            var origin = new Location { Latitude = 40.7128m, Longitude = null };
+            var destination = new Location { Latitude = 40.7589m, Longitude = -73.9851m };
 
-        // Assert
-        Assert.False(result.IsValid);
-        Assert.Equal("Both origin and destination must have coordinates", result.ErrorMessage);
-    }
+            // Act
+            var result = await service.CalculateRouteAsync(origin, destination, CancellationToken.None);
 
-    [Fact]
-    public async Task MockMappingService_OptimizeRouteAsync_ValidWaypoints_ReturnsOptimizedResult()
-    {
-        // Arrange
-        var loggerMock = new Mock<ILogger<MockMappingService>>();
-        var service = new MockMappingService(loggerMock.Object);
+            // Assert
+            Assert.False(result.IsValid);
+            Assert.Equal("Both origin and destination must have coordinates", result.ErrorMessage);
+        }
 
-        var waypoints = new List<Location>
+        [Fact]
+        public async Task MockMappingService_OptimizeRouteAsync_ValidWaypoints_ReturnsOptimizedResult()
+        {
+            // Arrange
+            var loggerMock = new Mock<ILogger<MockMappingService>>();
+            var service = new MockMappingService(loggerMock.Object);
+
+            var waypoints = new List<Location>
         {
             new Location { Latitude = 40.7128m, Longitude = -74.0060m },
             new Location { Latitude = 40.7589m, Longitude = -73.9851m },
             new Location { Latitude = 40.7489m, Longitude = -73.9680m }
         };
 
-        // Act
-        var result = await service.OptimizeRouteAsync(waypoints, CancellationToken.None);
+            // Act
+            var result = await service.OptimizeRouteAsync(waypoints, CancellationToken.None);
 
-        // Assert
-        Assert.True(result.IsValid);
-        Assert.Equal(3, result.OptimizedWaypoints.Count);
-        Assert.True(result.TotalDistance > 0);
-        Assert.True(result.TotalDuration > TimeSpan.Zero);
-        Assert.Equal(2, result.RouteSegments.Count); // n-1 segments for n waypoints
-    }
+            // Assert
+            Assert.True(result.IsValid);
+            Assert.Equal(3, result.OptimizedWaypoints.Count);
+            Assert.True(result.TotalDistance > 0);
+            Assert.True(result.TotalDuration > TimeSpan.Zero);
+            Assert.Equal(2, result.RouteSegments.Count); // n-1 segments for n waypoints
+        }
 
-    [Fact]
-    public async Task MockMappingService_OptimizeRouteAsync_LessThanTwoWaypoints_ReturnsInvalidResult()
-    {
-        // Arrange
-        var loggerMock = new Mock<ILogger<MockMappingService>>();
-        var service = new MockMappingService(loggerMock.Object);
+        [Fact]
+        public async Task MockMappingService_OptimizeRouteAsync_LessThanTwoWaypoints_ReturnsInvalidResult()
+        {
+            // Arrange
+            var loggerMock = new Mock<ILogger<MockMappingService>>();
+            var service = new MockMappingService(loggerMock.Object);
 
-        var waypoints = new List<Location>
+            var waypoints = new List<Location>
         {
             new Location { Latitude = 40.7128m, Longitude = -74.0060m }
         };
 
-        // Act
-        var result = await service.OptimizeRouteAsync(waypoints, CancellationToken.None);
+            // Act
+            var result = await service.OptimizeRouteAsync(waypoints, CancellationToken.None);
 
-        // Assert
-        Assert.False(result.IsValid);
-        Assert.Equal("At least 2 waypoints required", result.ErrorMessage);
-    }
+            // Assert
+            Assert.False(result.IsValid);
+            Assert.Equal("At least 2 waypoints required", result.ErrorMessage);
+        }
 
-    [Fact]
-    public async Task MockMappingService_CalculateDistanceAsync_ValidLocations_ReturnsDistanceResult()
-    {
-        // Arrange
-        var loggerMock = new Mock<ILogger<MockMappingService>>();
-        var service = new MockMappingService(loggerMock.Object);
+        [Fact]
+        public async Task MockMappingService_CalculateDistanceAsync_ValidLocations_ReturnsDistanceResult()
+        {
+            // Arrange
+            var loggerMock = new Mock<ILogger<MockMappingService>>();
+            var service = new MockMappingService(loggerMock.Object);
 
-        var origin = new Location { Latitude = 40.7128m, Longitude = -74.0060m };
-        var destination = new Location { Latitude = 40.7589m, Longitude = -73.9851m };
+            var origin = new Location { Latitude = 40.7128m, Longitude = -74.0060m };
+            var destination = new Location { Latitude = 40.7589m, Longitude = -73.9851m };
 
-        // Act
-        var result = await service.CalculateDistanceAsync(origin, destination, CancellationToken.None);
+            // Act
+            var result = await service.CalculateDistanceAsync(origin, destination, CancellationToken.None);
 
-        // Assert
-        Assert.True(result.IsValid);
-        Assert.True(result.Distance > 0);
-        Assert.True(result.Duration > TimeSpan.Zero);
-    }
+            // Assert
+            Assert.True(result.IsValid);
+            Assert.True(result.Distance > 0);
+            Assert.True(result.Duration > TimeSpan.Zero);
+        }
 
-    #endregion
+        #endregion
 
-    #region MappingServiceFactory Tests
+        #region MappingServiceFactory Tests
 
-    [Fact]
-    public void MappingServiceFactory_MockProvider_CreatesMockMappingService()
-    {
-        // Arrange
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
+        [Fact]
+        public void MappingServiceFactory_MockProvider_CreatesMockMappingService()
+        {
+            // Arrange
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
                 { "Mapping:Provider", "Mock" }
-            })
-            .Build();
+                })
+                .Build();
 
-        var services = new ServiceCollection();
-        services.AddSingleton<IMappingService>(sp => new MockMappingService(new Mock<ILogger<MockMappingService>>().Object));
-        var serviceProvider = services.BuildServiceProvider();
+            var services = new ServiceCollection();
+            services.AddSingleton<IMappingService>(sp => new MockMappingService(new Mock<ILogger<MockMappingService>>().Object));
+            var serviceProvider = services.BuildServiceProvider();
 
-        var logger = new Mock<ILogger<MappingServiceFactory>>();
+            var logger = new Mock<ILogger<MappingServiceFactory>>();
 
-        var factory = new MappingServiceFactory(configuration, logger.Object, serviceProvider);
+            var factory = new MappingServiceFactory(configuration, logger.Object, serviceProvider);
 
-        // Act
-        var service = factory.CreateMappingService();
+            // Act
+            var service = factory.CreateMappingService();
 
-        // Assert
-        Assert.NotNull(service);
-        Assert.IsType<MockMappingService>(service);
-    }
+            // Assert
+            Assert.NotNull(service);
+            Assert.IsType<MockMappingService>(service);
+        }
 
-    [Fact]
-    public void MappingServiceFactory_AzureMapsProvider_WithValidKey_CreatesAzureMapsService()
-    {
-        // Arrange
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
+        [Fact]
+        public void MappingServiceFactory_AzureMapsProvider_WithValidKey_CreatesAzureMapsService()
+        {
+            // Arrange
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
                 { "Mapping:Provider", "AzureMaps" },
                 { "Mapping:AzureMaps:SubscriptionKey", "valid-key-123" }
-            })
-            .Build();
+                })
+                .Build();
 
-        var serviceCollection = new ServiceCollection();
-        serviceCollection.AddSingleton<IMappingService>(sp => new AzureMapsService(new HttpClient(), new Mock<ILogger<AzureMapsService>>().Object, Options.Create(new HotshotLogistics.Domain.DTOs.AzureMapsSettings { SubscriptionKey = "test-key" })));
-        var provider = serviceCollection.BuildServiceProvider();
+            var serviceCollection = new ServiceCollection();
+            serviceCollection.AddSingleton<IMappingService>(sp => new AzureMapsService(new HttpClient(), new Mock<ILogger<AzureMapsService>>().Object, Options.Create(new HotshotLogistics.Domain.DTOs.AzureMapsSettings { SubscriptionKey = "test-key" })));
+            var provider = serviceCollection.BuildServiceProvider();
 
-        var logger = new Mock<ILogger<MappingServiceFactory>>();
-        var factory = new MappingServiceFactory(configuration, logger.Object, provider);
+            var logger = new Mock<ILogger<MappingServiceFactory>>();
+            var factory = new MappingServiceFactory(configuration, logger.Object, provider);
 
-        // Act
-        var service = factory.CreateMappingService();
+            // Act
+            var service = factory.CreateMappingService();
 
-        // Assert
-        Assert.NotNull(service);
-        Assert.IsType<AzureMapsService>(service);
-    }
+            // Assert
+            Assert.NotNull(service);
+            Assert.IsType<AzureMapsService>(service);
+        }
 
-    [Fact]
-    public void MappingServiceFactory_AzureMapsProvider_WithoutKey_ThrowsException()
-    {
-        // Arrange
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
+        [Fact]
+        public void MappingServiceFactory_AzureMapsProvider_WithoutKey_ThrowsException()
+        {
+            // Arrange
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
                 { "Mapping:Provider", "AzureMaps" }
-            })
-            .Build();
+                })
+                .Build();
 
-        var services = new ServiceCollection();
-        // No AzureMaps service registered to simulate missing key
-        var provider = services.BuildServiceProvider();
+            var services = new ServiceCollection();
+            // No AzureMaps service registered to simulate missing key
+            var provider = services.BuildServiceProvider();
 
-        var logger = new Mock<ILogger<MappingServiceFactory>>();
+            var logger = new Mock<ILogger<MappingServiceFactory>>();
 
-        var factory = new MappingServiceFactory(configuration, logger.Object, provider);
+            var factory = new MappingServiceFactory(configuration, logger.Object, provider);
 
-        // Act & Assert
-        var exception = Assert.Throws<InvalidOperationException>(() => factory.CreateMappingService());
-        Assert.Contains("Unsupported mapping provider", exception.Message);
-    }
+            // Act & Assert
+            var exception = Assert.Throws<InvalidOperationException>(() => factory.CreateMappingService());
+            Assert.Contains("Unsupported mapping provider", exception.Message);
+        }
 
-    [Fact]
-    public void MappingServiceFactory_AzureMapsProvider_WithPlaceholderKey_ThrowsException()
-    {
-        // Arrange
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
+        [Fact]
+        public void MappingServiceFactory_AzureMapsProvider_WithPlaceholderKey_ThrowsException()
+        {
+            // Arrange
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
                 { "Mapping:Provider", "AzureMaps" },
                 { "Mapping:AzureMaps:SubscriptionKey", "YOUR_AZURE_MAPS_KEY_HERE" }
-            })
-            .Build();
+                })
+                .Build();
 
-        var services = new ServiceCollection();
-        var provider = services.BuildServiceProvider();
+            var services = new ServiceCollection();
+            var provider = services.BuildServiceProvider();
 
-        var logger = new Mock<ILogger<MappingServiceFactory>>();
+            var logger = new Mock<ILogger<MappingServiceFactory>>();
 
-        var factory = new MappingServiceFactory(configuration, logger.Object, provider);
+            var factory = new MappingServiceFactory(configuration, logger.Object, provider);
 
-        // Act & Assert
-        var exception = Assert.Throws<InvalidOperationException>(() => factory.CreateMappingService());
-        Assert.Contains("Unsupported mapping provider", exception.Message);
-    }
+            // Act & Assert
+            var exception = Assert.Throws<InvalidOperationException>(() => factory.CreateMappingService());
+            Assert.Contains("Unsupported mapping provider", exception.Message);
+        }
 
-    [Fact]
-    public void MappingServiceFactory_GoogleMapsProvider_WithValidKey_CreatesGoogleMapsService()
-    {
-        // Arrange
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
+        [Fact]
+        public void MappingServiceFactory_GoogleMapsProvider_WithValidKey_CreatesGoogleMapsService()
+        {
+            // Arrange
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
                 { "Mapping:Provider", "GoogleMaps" },
                 { "Mapping:GoogleMaps:ApiKey", "valid-key-123" }
-            })
-            .Build();
+                })
+                .Build();
 
-        var serviceCollection = new ServiceCollection();
-        serviceCollection.AddSingleton<IMappingService>(sp => new GoogleMapsService(new HttpClient(), new Mock<ILogger<GoogleMapsService>>().Object, Options.Create(new HotshotLogistics.Domain.DTOs.GoogleMapsSettings { ApiKey = "test-key" })));
-        var provider = serviceCollection.BuildServiceProvider();
+            var serviceCollection = new ServiceCollection();
+            serviceCollection.AddSingleton<IMappingService>(sp => new GoogleMapsService(new HttpClient(), new Mock<ILogger<GoogleMapsService>>().Object, Options.Create(new HotshotLogistics.Domain.DTOs.GoogleMapsSettings { ApiKey = "test-key" })));
+            var provider = serviceCollection.BuildServiceProvider();
 
-        var logger = new Mock<ILogger<MappingServiceFactory>>();
-        var factory = new MappingServiceFactory(configuration, logger.Object, provider);
+            var logger = new Mock<ILogger<MappingServiceFactory>>();
+            var factory = new MappingServiceFactory(configuration, logger.Object, provider);
 
-        // Act
-        var service = factory.CreateMappingService();
+            // Act
+            var service = factory.CreateMappingService();
 
-        // Assert
-        Assert.NotNull(service);
-        Assert.IsType<GoogleMapsService>(service);
-    }
+            // Assert
+            Assert.NotNull(service);
+            Assert.IsType<GoogleMapsService>(service);
+        }
 
-    [Fact]
-    public void MappingServiceFactory_GoogleMapsProvider_WithoutKey_ThrowsException()
-    {
-        // Arrange
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                { "Mapping:Provider", "GoogleMaps" }
-            })
-            .Build();
-
-        var services = new ServiceCollection();
-        var provider = services.BuildServiceProvider();
-
-        var logger = new Mock<ILogger<MappingServiceFactory>>();
-
-        var factory = new MappingServiceFactory(configuration, logger.Object, provider);
-
-        // Act & Assert
-        var exception = Assert.Throws<InvalidOperationException>(() => factory.CreateMappingService());
-        Assert.Contains("Unsupported mapping provider", exception.Message);
-    }
-
-    [Fact]
-    public void MappingServiceFactory_UnsupportedProvider_ThrowsException()
-    {
-        // Arrange
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                { "Mapping:Provider", "UnsupportedProvider" }
-            })
-            .Build();
-
-        var services = new ServiceCollection();
-        var provider = services.BuildServiceProvider();
-
-        var logger = new Mock<ILogger<MappingServiceFactory>>();
-
-        var factory = new MappingServiceFactory(configuration, logger.Object, provider);
-
-        // Act & Assert
-        var exception = Assert.Throws<InvalidOperationException>(() => factory.CreateMappingService());
-        Assert.Contains("Unsupported mapping provider", exception.Message);
-    }
-
-    [Fact]
-    public void MappingServiceFactory_NoProviderConfigured_UsesMockByDefault()
-    {
-        // Arrange
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>())
-            .Build();
-
-        var serviceCollection = new ServiceCollection();
-        serviceCollection.AddSingleton<IMappingService>(sp => new MockMappingService(new Mock<ILogger<MockMappingService>>().Object));
-        var provider = serviceCollection.BuildServiceProvider();
-
-        var logger = new Mock<ILogger<MappingServiceFactory>>();
-        var factory = new MappingServiceFactory(configuration, logger.Object, provider);
-
-        // Act
-        var service = factory.CreateMappingService();
-
-        // Assert
-        Assert.NotNull(service);
-        Assert.IsType<MockMappingService>(service);
-    }
-
-    #endregion
-
-    #region Existing Azure Maps Tests
-
-    [Fact]
-    public async Task AzureMapsService_GeocodeAddressAsync_ValidAddress_ReturnsGeocodingResult()
-    {
-        // Arrange
-        var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
-        var response = new HttpResponseMessage
+        [Fact]
+        public void MappingServiceFactory_GoogleMapsProvider_WithoutKey_ThrowsException()
         {
-            StatusCode = HttpStatusCode.OK,
-            Content = new StringContent(@"
+            // Arrange
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                { "Mapping:Provider", "GoogleMaps" }
+                })
+                .Build();
+
+            var services = new ServiceCollection();
+            var provider = services.BuildServiceProvider();
+
+            var logger = new Mock<ILogger<MappingServiceFactory>>();
+
+            var factory = new MappingServiceFactory(configuration, logger.Object, provider);
+
+            // Act & Assert
+            var exception = Assert.Throws<InvalidOperationException>(() => factory.CreateMappingService());
+            Assert.Contains("Unsupported mapping provider", exception.Message);
+        }
+
+        [Fact]
+        public void MappingServiceFactory_UnsupportedProvider_ThrowsException()
+        {
+            // Arrange
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                { "Mapping:Provider", "UnsupportedProvider" }
+                })
+                .Build();
+
+            var services = new ServiceCollection();
+            var provider = services.BuildServiceProvider();
+
+            var logger = new Mock<ILogger<MappingServiceFactory>>();
+
+            var factory = new MappingServiceFactory(configuration, logger.Object, provider);
+
+            // Act & Assert
+            var exception = Assert.Throws<InvalidOperationException>(() => factory.CreateMappingService());
+            Assert.Contains("Unsupported mapping provider", exception.Message);
+        }
+
+        [Fact]
+        public void MappingServiceFactory_NoProviderConfigured_UsesMockByDefault()
+        {
+            // Arrange
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>())
+                .Build();
+
+            var serviceCollection = new ServiceCollection();
+            serviceCollection.AddSingleton<IMappingService>(sp => new MockMappingService(new Mock<ILogger<MockMappingService>>().Object));
+            var provider = serviceCollection.BuildServiceProvider();
+
+            var logger = new Mock<ILogger<MappingServiceFactory>>();
+            var factory = new MappingServiceFactory(configuration, logger.Object, provider);
+
+            // Act
+            var service = factory.CreateMappingService();
+
+            // Assert
+            Assert.NotNull(service);
+            Assert.IsType<MockMappingService>(service);
+        }
+
+        #endregion
+
+        #region Existing Azure Maps Tests
+
+        [Fact]
+        public async Task AzureMapsService_GeocodeAddressAsync_ValidAddress_ReturnsGeocodingResult()
+        {
+            // Arrange
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            var response = new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(@"
             {
                 ""results"": [
                     {
@@ -437,71 +437,71 @@ public class MappingServiceTests
                     }
                 ]
             }")
-        };
+            };
 
-        mockHttpMessageHandler
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(response);
+            mockHttpMessageHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(response);
 
-        var httpClient = new HttpClient(mockHttpMessageHandler.Object);
-        var loggerMock = new Mock<ILogger<AzureMapsService>>();
-        var service = new AzureMapsService(httpClient, loggerMock.Object, Options.Create(new AzureMapsSettings { SubscriptionKey = "test-key" }));
+            var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var loggerMock = new Mock<ILogger<AzureMapsService>>();
+            var service = new AzureMapsService(httpClient, loggerMock.Object, Options.Create(new AzureMapsSettings { SubscriptionKey = "test-key" }));
 
-        // Act
-        var result = await service.GeocodeAddressAsync("New York, NY", CancellationToken.None);
+            // Act
+            var result = await service.GeocodeAddressAsync("New York, NY", CancellationToken.None);
 
-        // Assert
-        Assert.True(result.IsValid);
-        Assert.Equal(40.7128m, result.Latitude);
-        Assert.Equal(-74.0060m, result.Longitude);
-        Assert.Equal("New York, NY, USA", result.FormattedAddress);
-        Assert.Equal(0.9, result.Confidence);
-    }
+            // Assert
+            Assert.True(result.IsValid);
+            Assert.Equal(40.7128m, result.Latitude);
+            Assert.Equal(-74.0060m, result.Longitude);
+            Assert.Equal("New York, NY, USA", result.FormattedAddress);
+            Assert.Equal(0.9, result.Confidence);
+        }
 
-    [Fact]
-    public async Task AzureMapsService_GeocodeAddressAsync_InvalidAddress_ReturnsInvalidResult()
-    {
-        // Arrange
-        var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
-        var response = new HttpResponseMessage
+        [Fact]
+        public async Task AzureMapsService_GeocodeAddressAsync_InvalidAddress_ReturnsInvalidResult()
         {
-            StatusCode = HttpStatusCode.OK,
-            Content = new StringContent(@"{ ""results"": [] }")
-        };
+            // Arrange
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            var response = new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(@"{ ""results"": [] }")
+            };
 
-        mockHttpMessageHandler
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(response);
+            mockHttpMessageHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(response);
 
-        var httpClient = new HttpClient(mockHttpMessageHandler.Object);
-        var loggerMock = new Mock<ILogger<AzureMapsService>>();
-        var service = new AzureMapsService(httpClient, loggerMock.Object, Options.Create(new AzureMapsSettings { SubscriptionKey = "test-key" }));
+            var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var loggerMock = new Mock<ILogger<AzureMapsService>>();
+            var service = new AzureMapsService(httpClient, loggerMock.Object, Options.Create(new AzureMapsSettings { SubscriptionKey = "test-key" }));
 
-        // Act
-        var result = await service.GeocodeAddressAsync("Invalid Address", CancellationToken.None);
+            // Act
+            var result = await service.GeocodeAddressAsync("Invalid Address", CancellationToken.None);
 
-        // Assert
-        Assert.False(result.IsValid);
-        Assert.Equal("No geocoding results found", result.ErrorMessage);
-    }
+            // Assert
+            Assert.False(result.IsValid);
+            Assert.Equal("No geocoding results found", result.ErrorMessage);
+        }
 
-    [Fact]
-    public async Task AzureMapsService_ReverseGeocodeAsync_ValidCoordinates_ReturnsReverseGeocodingResult()
-    {
-        // Arrange
-        var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
-        var response = new HttpResponseMessage
+        [Fact]
+        public async Task AzureMapsService_ReverseGeocodeAsync_ValidCoordinates_ReturnsReverseGeocodingResult()
         {
-            StatusCode = HttpStatusCode.OK,
-            Content = new StringContent(@"
+            // Arrange
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            var response = new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(@"
             {
                 ""addresses"": [
                     {
@@ -516,41 +516,41 @@ public class MappingServiceTests
                     }
                 ]
             }")
-        };
+            };
 
-        mockHttpMessageHandler
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(response);
+            mockHttpMessageHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(response);
 
-        var httpClient = new HttpClient(mockHttpMessageHandler.Object);
-        var loggerMock = new Mock<ILogger<AzureMapsService>>();
-        var service = new AzureMapsService(httpClient, loggerMock.Object, Options.Create(new AzureMapsSettings { SubscriptionKey = "test-key" }));
+            var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var loggerMock = new Mock<ILogger<AzureMapsService>>();
+            var service = new AzureMapsService(httpClient, loggerMock.Object, Options.Create(new AzureMapsSettings { SubscriptionKey = "test-key" }));
 
-        // Act
-        var result = await service.ReverseGeocodeAsync(40.7128m, -74.0060m, CancellationToken.None);
+            // Act
+            var result = await service.ReverseGeocodeAsync(40.7128m, -74.0060m, CancellationToken.None);
 
-        // Assert
-        Assert.True(result.IsValid);
-        Assert.Equal("Broadway", result.Address);
-        Assert.Equal("New York", result.City);
-        Assert.Equal("NY", result.State);
-        Assert.Equal("10001", result.PostalCode);
-        Assert.Equal("US", result.Country);
-    }
+            // Assert
+            Assert.True(result.IsValid);
+            Assert.Equal("Broadway", result.Address);
+            Assert.Equal("New York", result.City);
+            Assert.Equal("NY", result.State);
+            Assert.Equal("10001", result.PostalCode);
+            Assert.Equal("US", result.Country);
+        }
 
-    [Fact]
-    public async Task AzureMapsService_CalculateRouteAsync_ValidLocations_ReturnsRouteResult()
-    {
-        // Arrange
-        var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
-        var response = new HttpResponseMessage
+        [Fact]
+        public async Task AzureMapsService_CalculateRouteAsync_ValidLocations_ReturnsRouteResult()
         {
-            StatusCode = HttpStatusCode.OK,
-            Content = new StringContent(@"
+            // Arrange
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            var response = new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(@"
             {
                 ""routes"": [
                     {
@@ -561,42 +561,42 @@ public class MappingServiceTests
                     }
                 ]
             }")
-        };
+            };
 
-        mockHttpMessageHandler
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(response);
+            mockHttpMessageHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(response);
 
-        var httpClient = new HttpClient(mockHttpMessageHandler.Object);
-        var loggerMock = new Mock<ILogger<AzureMapsService>>();
-        var service = new AzureMapsService(httpClient, loggerMock.Object, Options.Create(new AzureMapsSettings { SubscriptionKey = "test-key" }));
+            var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var loggerMock = new Mock<ILogger<AzureMapsService>>();
+            var service = new AzureMapsService(httpClient, loggerMock.Object, Options.Create(new AzureMapsSettings { SubscriptionKey = "test-key" }));
 
-        var origin = new Location { Latitude = 40.7128m, Longitude = -74.0060m };
-        var destination = new Location { Latitude = 40.7589m, Longitude = -73.9851m };
+            var origin = new Location { Latitude = 40.7128m, Longitude = -74.0060m };
+            var destination = new Location { Latitude = 40.7589m, Longitude = -73.9851m };
 
-        // Act
-        var result = await service.CalculateRouteAsync(origin, destination, CancellationToken.None);
+            // Act
+            var result = await service.CalculateRouteAsync(origin, destination, CancellationToken.None);
 
-        // Assert
-        Assert.True(result.IsValid);
-        Assert.Equal(6.21371, result.Distance, 2); // 10000 meters ≈ 6.21 miles
-        Assert.Equal(TimeSpan.FromSeconds(900), result.Duration);
-        Assert.Equal(DateTime.UtcNow.AddSeconds(900).Date, result.EstimatedArrival.Date); // Approximate time check
-    }
+            // Assert
+            Assert.True(result.IsValid);
+            Assert.Equal(6.21371, result.Distance, 2); // 10000 meters ≈ 6.21 miles
+            Assert.Equal(TimeSpan.FromSeconds(900), result.Duration);
+            Assert.Equal(DateTime.UtcNow.AddSeconds(900).Date, result.EstimatedArrival.Date); // Approximate time check
+        }
 
-    [Fact]
-    public async Task GoogleMapsService_GeocodeAddressAsync_ValidAddress_ReturnsGeocodingResult()
-    {
-        // Arrange
-        var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
-        var response = new HttpResponseMessage
+        [Fact]
+        public async Task GoogleMapsService_GeocodeAddressAsync_ValidAddress_ReturnsGeocodingResult()
         {
-            StatusCode = HttpStatusCode.OK,
-            Content = new StringContent(@"
+            // Arrange
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            var response = new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(@"
             {
                 ""status"": ""OK"",
                 ""results"": [
@@ -608,40 +608,40 @@ public class MappingServiceTests
                     }
                 ]
             }")
-        };
+            };
 
-        mockHttpMessageHandler
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(response);
+            mockHttpMessageHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(response);
 
-        var httpClient = new HttpClient(mockHttpMessageHandler.Object);
-        var loggerMock = new Mock<ILogger<GoogleMapsService>>();
-        var service = new GoogleMapsService(httpClient, loggerMock.Object, Options.Create(new GoogleMapsSettings { ApiKey = "test-key" }));
+            var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var loggerMock = new Mock<ILogger<GoogleMapsService>>();
+            var service = new GoogleMapsService(httpClient, loggerMock.Object, Options.Create(new GoogleMapsSettings { ApiKey = "test-key" }));
 
-        // Act
-        var result = await service.GeocodeAddressAsync("New York, NY", CancellationToken.None);
+            // Act
+            var result = await service.GeocodeAddressAsync("New York, NY", CancellationToken.None);
 
-        // Assert
-        Assert.True(result.IsValid);
-        Assert.Equal(40.7128m, result.Latitude);
-        Assert.Equal(-74.0060m, result.Longitude);
-        Assert.Equal("New York, NY, USA", result.FormattedAddress);
-        Assert.Equal(1.0, result.Confidence);
-    }
+            // Assert
+            Assert.True(result.IsValid);
+            Assert.Equal(40.7128m, result.Latitude);
+            Assert.Equal(-74.0060m, result.Longitude);
+            Assert.Equal("New York, NY, USA", result.FormattedAddress);
+            Assert.Equal(1.0, result.Confidence);
+        }
 
-    [Fact]
-    public async Task GoogleMapsService_CalculateRouteAsync_ValidLocations_ReturnsRouteResult()
-    {
-        // Arrange
-        var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
-        var response = new HttpResponseMessage
+        [Fact]
+        public async Task GoogleMapsService_CalculateRouteAsync_ValidLocations_ReturnsRouteResult()
         {
-            StatusCode = HttpStatusCode.OK,
-            Content = new StringContent(@"
+            // Arrange
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            var response = new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(@"
             {
                 ""status"": ""OK"",
                 ""routes"": [
@@ -656,42 +656,42 @@ public class MappingServiceTests
                     }
                 ]
             }")
-        };
+            };
 
-        mockHttpMessageHandler
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(response);
+            mockHttpMessageHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(response);
 
-        var httpClient = new HttpClient(mockHttpMessageHandler.Object);
-        var loggerMock = new Mock<ILogger<GoogleMapsService>>();
-        var service = new GoogleMapsService(httpClient, loggerMock.Object, Options.Create(new GoogleMapsSettings { ApiKey = "test-key" }));
+            var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var loggerMock = new Mock<ILogger<GoogleMapsService>>();
+            var service = new GoogleMapsService(httpClient, loggerMock.Object, Options.Create(new GoogleMapsSettings { ApiKey = "test-key" }));
 
-        var origin = new Location { Latitude = 40.7128m, Longitude = -74.0060m };
-        var destination = new Location { Latitude = 40.7589m, Longitude = -73.9851m };
+            var origin = new Location { Latitude = 40.7128m, Longitude = -74.0060m };
+            var destination = new Location { Latitude = 40.7589m, Longitude = -73.9851m };
 
-        // Act
-        var result = await service.CalculateRouteAsync(origin, destination, CancellationToken.None);
+            // Act
+            var result = await service.CalculateRouteAsync(origin, destination, CancellationToken.None);
 
-        // Assert
-        Assert.True(result.IsValid);
-        Assert.Equal(6.21371, result.Distance, 2); // 10000 meters ≈ 6.21 miles
-        Assert.Equal(TimeSpan.FromSeconds(900), result.Duration);
-        Assert.Equal("test_polyline", result.Polyline);
-    }
+            // Assert
+            Assert.True(result.IsValid);
+            Assert.Equal(6.21371, result.Distance, 2); // 10000 meters ≈ 6.21 miles
+            Assert.Equal(TimeSpan.FromSeconds(900), result.Duration);
+            Assert.Equal("test_polyline", result.Polyline);
+        }
 
-    [Fact]
-    public async Task MappingService_OptimizeRouteAsync_ValidWaypoints_ReturnsOptimizedResult()
-    {
-        // Arrange
-        var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
-        var response = new HttpResponseMessage
+        [Fact]
+        public async Task MappingService_OptimizeRouteAsync_ValidWaypoints_ReturnsOptimizedResult()
         {
-            StatusCode = HttpStatusCode.OK,
-            Content = new StringContent(@"
+            // Arrange
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            var response = new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(@"
             {
                 ""routes"": [
                     {
@@ -702,46 +702,46 @@ public class MappingServiceTests
                     }
                 ]
             }")
-        };
+            };
 
-        mockHttpMessageHandler
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(response);
+            mockHttpMessageHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(response);
 
-        var httpClient = new HttpClient(mockHttpMessageHandler.Object);
-        var loggerMock = new Mock<ILogger<AzureMapsService>>();
-        var service = new AzureMapsService(httpClient, loggerMock.Object, Options.Create(new AzureMapsSettings { SubscriptionKey = "test-key" }));
+            var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var loggerMock = new Mock<ILogger<AzureMapsService>>();
+            var service = new AzureMapsService(httpClient, loggerMock.Object, Options.Create(new AzureMapsSettings { SubscriptionKey = "test-key" }));
 
-        var waypoints = new List<Location>
+            var waypoints = new List<Location>
         {
             new Location { Latitude = 40.7128m, Longitude = -74.0060m },
             new Location { Latitude = 40.7589m, Longitude = -73.9851m }
         };
 
-        // Act
-        var result = await service.OptimizeRouteAsync(waypoints, CancellationToken.None);
+            // Act
+            var result = await service.OptimizeRouteAsync(waypoints, CancellationToken.None);
 
-        // Assert
-        Assert.True(result.IsValid);
-        Assert.Equal(2, result.OptimizedWaypoints.Count);
-        Assert.Equal(6.21371, result.TotalDistance, 2);
-        Assert.Equal(TimeSpan.FromSeconds(900), result.TotalDuration);
-        Assert.Single(result.RouteSegments);
-    }
+            // Assert
+            Assert.True(result.IsValid);
+            Assert.Equal(2, result.OptimizedWaypoints.Count);
+            Assert.Equal(6.21371, result.TotalDistance, 2);
+            Assert.Equal(TimeSpan.FromSeconds(900), result.TotalDuration);
+            Assert.Single(result.RouteSegments);
+        }
 
-    [Fact]
-    public async Task MappingService_CalculateDistanceAsync_ValidLocations_ReturnsDistanceResult()
-    {
-        // Arrange
-        var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
-        var response = new HttpResponseMessage
+        [Fact]
+        public async Task MappingService_CalculateDistanceAsync_ValidLocations_ReturnsDistanceResult()
         {
-            StatusCode = HttpStatusCode.OK,
-            Content = new StringContent(@"
+            // Arrange
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            var response = new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(@"
             {
                 ""routes"": [
                     {
@@ -752,41 +752,41 @@ public class MappingServiceTests
                     }
                 ]
             }")
-        };
+            };
 
-        mockHttpMessageHandler
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(response);
+            mockHttpMessageHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(response);
 
-        var httpClient = new HttpClient(mockHttpMessageHandler.Object);
-        var loggerMock = new Mock<ILogger<AzureMapsService>>();
-        var service = new AzureMapsService(httpClient, loggerMock.Object, Options.Create(new AzureMapsSettings { SubscriptionKey = "test-key" }));
+            var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var loggerMock = new Mock<ILogger<AzureMapsService>>();
+            var service = new AzureMapsService(httpClient, loggerMock.Object, Options.Create(new AzureMapsSettings { SubscriptionKey = "test-key" }));
 
-        var origin = new Location { Latitude = 40.7128m, Longitude = -74.0060m };
-        var destination = new Location { Latitude = 40.7589m, Longitude = -73.9851m };
+            var origin = new Location { Latitude = 40.7128m, Longitude = -74.0060m };
+            var destination = new Location { Latitude = 40.7589m, Longitude = -73.9851m };
 
-        // Act
-        var result = await service.CalculateDistanceAsync(origin, destination, CancellationToken.None);
+            // Act
+            var result = await service.CalculateDistanceAsync(origin, destination, CancellationToken.None);
 
-        // Assert
-        Assert.True(result.IsValid);
-        Assert.Equal(6.21371, result.Distance, 2);
-        Assert.Equal(TimeSpan.FromSeconds(900), result.Duration);
-    }
+            // Assert
+            Assert.True(result.IsValid);
+            Assert.Equal(6.21371, result.Distance, 2);
+            Assert.Equal(TimeSpan.FromSeconds(900), result.Duration);
+        }
 
-    [Fact]
-    public async Task MappingService_ValidateAddressAsync_ValidAddress_ReturnsTrue()
-    {
-        // Arrange
-        var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
-        var response = new HttpResponseMessage
+        [Fact]
+        public async Task MappingService_ValidateAddressAsync_ValidAddress_ReturnsTrue()
         {
-            StatusCode = HttpStatusCode.OK,
-            Content = new StringContent(@"
+            // Arrange
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            var response = new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(@"
             {
                 ""status"": ""OK"",
                 ""results"": [
@@ -798,27 +798,27 @@ public class MappingServiceTests
                     }
                 ]
             }")
-        };
+            };
 
-        mockHttpMessageHandler
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(response);
+            mockHttpMessageHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(response);
 
-        var httpClient = new HttpClient(mockHttpMessageHandler.Object);
-        var loggerMock = new Mock<ILogger<GoogleMapsService>>();
-        var service = new GoogleMapsService(httpClient, loggerMock.Object, Options.Create(new GoogleMapsSettings { ApiKey = "test-key" }));
+            var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var loggerMock = new Mock<ILogger<GoogleMapsService>>();
+            var service = new GoogleMapsService(httpClient, loggerMock.Object, Options.Create(new GoogleMapsSettings { ApiKey = "test-key" }));
 
-        // Act
-        var result = await service.ValidateAddressAsync("New York, NY", CancellationToken.None);
+            // Act
+            var result = await service.ValidateAddressAsync("New York, NY", CancellationToken.None);
 
-        // Assert
-        Assert.True(result);
+            // Assert
+            Assert.True(result);
+        }
+
+        #endregion
     }
-
-    #endregion
-}
 }

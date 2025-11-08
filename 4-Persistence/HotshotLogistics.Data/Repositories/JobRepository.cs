@@ -24,7 +24,7 @@ namespace HotshotLogistics.Data.Repositories
     /// <summary>
     /// Repository for managing Job entities using native ADO.NET.
     /// </summary>
-internal class JobRepository : BaseRepository<Job>, IJobRepository
+    internal class JobRepository : BaseRepository<Job>, IJobRepository
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="JobRepository"/> class.

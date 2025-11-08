@@ -19,7 +19,7 @@ namespace HotshotLogistics.Data.Repositories
     /// <summary>
     /// Repository implementation for location tracking operations using native ADO.NET.
     /// </summary>
-internal class LocationTrackingRepository : BaseRepository<LocationTracking>, ILocationTrackingRepository
+    internal class LocationTrackingRepository : BaseRepository<LocationTracking>, ILocationTrackingRepository
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="LocationTrackingRepository"/> class.

@@ -5,7 +5,7 @@ namespace HotshotLogistics.Domain.ValueObjects;
 /// <summary>
 /// Represents credit terms for a customer.
 /// </summary>
-public class CreditTerms 
+public class CreditTerms
 {
     /// <summary>
     /// Gets or sets the payment terms in days (e.g., NET 15, NET 30).
