@@ -58,6 +58,19 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+      - name: Install SQL Server command-line tools
+        run: |
+          # Add Microsoft package repository
+          curl https://packages.microsoft.com/keys/microsoft.asc | sudo tee /etc/apt/trusted.gpg.d/microsoft.asc
+          curl https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
+
+          # Install mssql-tools18
+          sudo apt-get update
+          sudo ACCEPT_EULA=Y apt-get install -y mssql-tools18 unixodbc-dev
+
+          # Add to PATH for subsequent steps
+          echo "/opt/mssql-tools18/bin" >> $GITHUB_PATH
+
       - name: Wait for SQL Server to be ready
         run: |
           echo "Waiting for SQL Server to be fully ready..."
