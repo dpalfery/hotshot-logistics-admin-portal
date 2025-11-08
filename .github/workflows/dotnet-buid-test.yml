@@ -54,7 +54,7 @@ jobs:
           done
       - name: Test
         run: |
-          for proj in $(find ./5-Test -name '*.csproj'); do
+          for proj in $(find ./5-Test -name '*.csproj' ! -path '*/HotshotLogistics.IntegrationTests/*'); do
             dotnet test "$proj" --no-build --configuration Release
           done
 

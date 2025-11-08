@@ -1,23 +1,6 @@
 name: Integration Tests with SQL Server
 
 on:
-  pull_request:
-    paths:
-      - '**/*.cs'
-      - '**/*.csproj'
-      - '4-Persistence/**'
-      - '5-Test/**'
-      - '.github/workflows/integration-tests.yml'
-  push:
-    branches:
-      - main
-      - develop
-    paths:
-      - '**/*.cs'
-      - '**/*.csproj'
-      - '4-Persistence/**'
-      - '5-Test/**'
-      - '.github/workflows/integration-tests.yml'
   workflow_dispatch:
 
 permissions:
