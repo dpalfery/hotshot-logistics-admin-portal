@@ -53,25 +53,45 @@ The infrastructure deploys the following Azure resources:
 ### Required Software
 
 1. **Pulumi CLI** (v3.0+)
+
+   **macOS/Linux:**
    ```bash
-   # Install Pulumi
    curl -fsSL https://get.pulumi.com | sh
    ```
 
+   **Windows (PowerShell):**
+   ```powershell
+   irm https://get.pulumi.com | iex
+   ```
+
 2. **.NET SDK** (8.0+)
+
+   **macOS/Linux:**
    ```bash
-   # Verify installation
+   dotnet --version
+   ```
+
+   **Windows (PowerShell):**
+   ```powershell
    dotnet --version
    ```
 
 3. **Azure CLI**
-   ```bash
-   # Install Azure CLI
-   curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
-   # Login to Azure
+   **macOS/Linux:**
+   ```bash
+   curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
    az login
    ```
+
+   **Windows (PowerShell):**
+   ```powershell
+   # Using winget (Windows Package Manager)
+   winget install Microsoft.AzureCLI
+   az login
+   ```
+
+   > **Note:** Windows users can also use WSL (Windows Subsystem for Linux) with bash commands
 
 4. **Pulumi Account**
    - Create a free account at [app.pulumi.com](https://app.pulumi.com)
@@ -168,10 +188,13 @@ pulumi stack output staticWebAppUrl
 Configure these secrets in your GitHub repository (Settings → Secrets and variables → Actions):
 
 #### Azure Authentication
+
+GitHub Actions uses **OpenID Connect (OIDC) authentication** instead of client secrets. No `AZURE_CLIENT_SECRET` is required.
+
 - `AZURE_CLIENT_ID` - Service principal client ID
 - `AZURE_TENANT_ID` - Azure AD tenant ID
 - `AZURE_SUBSCRIPTION_ID` - Azure subscription ID
-- `AZURE_CLIENT_SECRET` - Service principal client secret (for non-OIDC auth)
+- For local development (non-GitHub), you may need `AZURE_CLIENT_SECRET` to authenticate with Azure
 
 #### Pulumi
 - `PULUMI_ACCESS_TOKEN` - Pulumi access token from app.pulumi.com
@@ -191,6 +214,18 @@ Configure these secrets in your GitHub repository (Settings → Secrets and vari
   - Required for Next.js build to configure CSP (Content Security Policy)
   - Get with: `pulumi stack output containerAppUrl`
   - Can be set as either a Secret or Variable in GitHub Actions
+
+### Configuring GitHub Workflows for ACR
+
+The `build-and-push-container.yml` workflow uses the ACR registry name. By default, it uses `crhotshotdev`, but you can configure it via a GitHub repository variable:
+
+1. **Set the `ACR_NAME` variable** (optional if using default):
+   ```bash
+   # Get your ACR name from Pulumi output after deployment
+   pulumi stack output containerRegistryName
+   ```
+   - Go to GitHub repository → Settings → Variables and secrets → Variables
+   - Create a new variable `ACR_NAME` with your ACR name (e.g., `crhotshotdev`)
 
 ### Getting ACR Credentials
 

@@ -150,7 +150,7 @@ return await Pulumi.Deployment.RunAsync(() =>
             LogAnalyticsConfiguration = new LogAnalyticsConfigurationArgs
             {
                 CustomerId = workspace.CustomerId,
-                SharedKey = workspace.GetKeys.Apply(keys => keys.PrimarySharedKey ?? "")
+                SharedKey = Output.CreateSecret(workspace.GetKeys.Apply(keys => keys.PrimarySharedKey ?? ""))
             }
         },
         WorkloadProfiles = new[]
@@ -316,7 +316,15 @@ return await Pulumi.Deployment.RunAsync(() =>
         ["containerRegistryLoginServer"] = registry.LoginServer,
         ["containerAppUrl"] = containerApp.Configuration.Apply(c => c!.Ingress!.Fqdn),
         ["staticWebAppUrl"] = staticWebApp.DefaultHostname,
-        ["staticWebAppDeploymentToken"] = Output.CreateSecret(staticWebApp.GetSecrets.Apply(s => s.Properties ?? "")),
+        ["staticWebAppDeploymentToken"] = Output.CreateSecret(
+            Output.Tuple(resourceGroup.Name, staticWebApp.Name).Apply(t =>
+                Pulumi.AzureNative.Web.ListStaticSiteSecrets.InvokeAsync(new Pulumi.AzureNative.Web.ListStaticSiteSecretsArgs
+                {
+                    ResourceGroupName = t.Item1,
+                    Name = t.Item2
+                })
+            ).Apply(result => result.Properties?.ApiKey ?? "")
+        ),
         ["appInsightsInstrumentationKey"] = Output.CreateSecret(appInsights.InstrumentationKey),
         ["appInsightsConnectionString"] = Output.CreateSecret(appInsights.ConnectionString),
         ["sqlServerFqdn"] = sqlServer.FullyQualifiedDomainName,

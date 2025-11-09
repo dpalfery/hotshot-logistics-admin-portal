@@ -38,24 +38,33 @@ This guide provides step-by-step instructions for deploying Hotshot Logistics to
 ## Prerequisites Checklist
 
 - [ ] Azure subscription (Owner or Contributor role)
-- [ ] Pulumi CLI installed (`curl -fsSL https://get.pulumi.com | sh`)
+- [ ] Pulumi CLI installed (bash: `curl -fsSL https://get.pulumi.com | sh`, PowerShell: `irm https://get.pulumi.com | iex`)
 - [ ] .NET 8 SDK installed
 - [ ] Azure CLI installed and logged in (`az login`)
 - [ ] Docker installed (for local builds)
 - [ ] Pulumi account at [app.pulumi.com](https://app.pulumi.com)
 - [ ] GitHub repository with the code
+- [ ] For Windows: WSL (Windows Subsystem for Linux) or Git Bash recommended for bash commands
 
 ## Step 1: Azure Setup (One-time)
 
 ### 1.1 Login to Azure
 
+**Bash:**
 ```bash
+az login
+az account set --subscription <subscription-id>
+```
+
+**PowerShell:**
+```powershell
 az login
 az account set --subscription <subscription-id>
 ```
 
 ### 1.2 Create Service Principal for CI/CD
 
+**Bash:**
 ```bash
 # Get your subscription ID
 SUBSCRIPTION_ID=$(az account show --query id -o tsv)
@@ -74,10 +83,30 @@ az ad sp create-for-rbac \
 # - tenantId (AZURE_TENANT_ID)
 ```
 
+**PowerShell:**
+```powershell
+# Get your subscription ID
+$SUBSCRIPTION_ID = az account show --query id -o tsv
+
+# Create service principal
+az ad sp create-for-rbac `
+  --name "pulumi-hotshot-logistics" `
+  --role contributor `
+  --scopes /subscriptions/$SUBSCRIPTION_ID `
+  --sdk-auth
+
+# Save the output! You'll need:
+# - clientId (AZURE_CLIENT_ID)
+# - clientSecret (AZURE_CLIENT_SECRET)
+# - subscriptionId (AZURE_SUBSCRIPTION_ID)
+# - tenantId (AZURE_TENANT_ID)
+```
+
 ## Step 2: Pulumi Setup (One-time)
 
 ### 2.1 Install Pulumi
 
+**Bash (Linux/macOS):**
 ```bash
 # Install Pulumi CLI
 curl -fsSL https://get.pulumi.com | sh
@@ -85,6 +114,16 @@ curl -fsSL https://get.pulumi.com | sh
 # Add to PATH
 export PATH=$PATH:$HOME/.pulumi/bin
 
+# Verify installation
+pulumi version
+```
+
+**PowerShell (Windows):**
+```powershell
+# Install Pulumi CLI
+irm https://get.pulumi.com | iex
+
+# Pulumi installer adds itself to PATH automatically
 # Verify installation
 pulumi version
 ```
@@ -98,9 +137,19 @@ pulumi version
 
 ### 2.3 Login to Pulumi
 
+**Bash:**
 ```bash
 # Set your access token
 export PULUMI_ACCESS_TOKEN=<your-token>
+
+# Login
+pulumi login
+```
+
+**PowerShell:**
+```powershell
+# Set your access token
+$env:PULUMI_ACCESS_TOKEN = "<your-token>"
 
 # Login
 pulumi login
@@ -110,8 +159,14 @@ pulumi login
 
 ### 3.1 Navigate to Pulumi Directory
 
+**Bash:**
 ```bash
 cd 7-Deployment/pulumi
+```
+
+**PowerShell:**
+```powershell
+cd 7-Deployment\pulumi
 ```
 
 ### 3.2 Restore Dependencies
@@ -122,7 +177,17 @@ dotnet restore
 
 ### 3.3 Initialize Stack
 
+**Bash:**
 ```bash
+# Create new dev stack
+pulumi stack init dev
+
+# Or select existing
+pulumi stack select dev
+```
+
+**PowerShell:**
+```powershell
 # Create new dev stack
 pulumi stack init dev
 
@@ -220,10 +285,13 @@ Go to your GitHub repository → Settings → Secrets and variables → Actions
 Add these secrets:
 
 **Azure Authentication:**
+
+GitHub Actions uses **OpenID Connect (OIDC) authentication**. You do NOT need `AZURE_CLIENT_SECRET`.
+
 - `AZURE_CLIENT_ID` - From service principal output
 - `AZURE_TENANT_ID` - From service principal output
 - `AZURE_SUBSCRIPTION_ID` - From service principal output
-- `AZURE_CLIENT_SECRET` - From service principal output
+- For local development, you may need `AZURE_CLIENT_SECRET`, but it is not required for GitHub Actions OIDC
 
 **Pulumi:**
 - `PULUMI_ACCESS_TOKEN` - Your Pulumi access token
