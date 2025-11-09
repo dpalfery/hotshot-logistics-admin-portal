@@ -35,7 +35,16 @@ namespace HotshotLogistics.Tests
         /// Gets the database connection string for tests.
         /// </summary>
         /// <returns>The connection string.</returns>
-        protected static string GetConnectionString() => TestDatabaseHelper.GetConnectionString();
+        /// <remarks>
+        /// Note: Controller integration tests should not rely on direct database access.
+        /// For tests that require direct database access, use the integration test project instead.
+        /// </remarks>
+        protected static string GetConnectionString()
+        {
+            throw new NotImplementedException(
+                "Controller integration tests should not require direct database access. " +
+                "For repository or direct database tests, use the HotshotLogistics.IntegrationTests project instead.");
+        }
 
         /// <inheritdoc />
         public void Dispose()
