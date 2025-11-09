@@ -15,6 +15,7 @@ public class ArgumentParser
     public bool Force { get; private set; }
     public bool UseDocker { get; private set; }
     public string? DockerComposeFile { get; private set; }
+    public bool EnvVarsInProcess { get; private set; }
 
     public ArgumentParser(string[] args)
     {
@@ -104,6 +105,13 @@ public class ArgumentParser
             IsRequired = false
         };
 
+        var envVarsInProcessOption = new Option<bool>(
+            name: "--env-vars-in-proc",
+            description: "Set environment variables at process level (for CI/CD) instead of user level (for local persistence)")
+        {
+            IsRequired = false
+        };
+
         var rootCommand = new RootCommand("Database Setup CLI - Automated database provisioning with Docker support");
 
         rootCommand.AddOption(projectSlugOption);
@@ -117,6 +125,7 @@ public class ArgumentParser
         rootCommand.AddOption(forceOption);
         rootCommand.AddOption(useDockerOption);
         rootCommand.AddOption(dockerComposeFileOption);
+        rootCommand.AddOption(envVarsInProcessOption);
 
         rootCommand.SetHandler((context) =>
         {
@@ -131,6 +140,7 @@ public class ArgumentParser
             Force = context.ParseResult.GetValueForOption(forceOption);
             UseDocker = context.ParseResult.GetValueForOption(useDockerOption);
             DockerComposeFile = context.ParseResult.GetValueForOption(dockerComposeFileOption);
+            EnvVarsInProcess = context.ParseResult.GetValueForOption(envVarsInProcessOption);
         });
 
         rootCommand.Invoke(args);
@@ -155,6 +165,7 @@ public class ArgumentParser
         Console.WriteLine("  --use-docker                                   Use Docker container for SQL Server");
         Console.WriteLine("  --docker-compose-file <docker-compose-file>    Path to docker-compose.yml file");
         Console.WriteLine("  --non-interactive                              Run without interactive prompts");
+        Console.WriteLine("  --env-vars-in-proc                             Set env vars at process level (for CI/CD)");
         Console.WriteLine("  --force                                        Allow destructive operations");
         Console.WriteLine("  --version                                      Show version information");
         Console.WriteLine("  -?, -h, --help                                 Show help and usage information");
