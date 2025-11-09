@@ -93,7 +93,8 @@ jobs:
             --app-user "hotshot_app" \
             --app-password "${{ secrets.SQL_SA_PASSWORD }}" \
             --sa-password "${{ secrets.SQL_SA_PASSWORD }}" \
-            --non-interactive
+            --non-interactive \
+            --env-vars-in-proc
 
       - name: Run Integration Tests
         env:
