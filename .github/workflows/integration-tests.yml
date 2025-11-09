@@ -100,9 +100,10 @@ jobs:
         env:
           # Connection string for integration tests - explicitly set here so it's available to tests
           # This matches what DbSetup CLI sets when --env-vars-in-proc is used
-          ConnectionStrings__DefaultConnection: "Server=localhost,1433;Database=hotshot_logistics;User Id=sa;Password=${{ secrets.SQL_SA_PASSWORD }};TrustServerCertificate=true;"
           CONNECTIONSTRINGS__DEFAULTCONNECTION: "Server=localhost,1433;Database=hotshot_logistics;User Id=sa;Password=${{ secrets.SQL_SA_PASSWORD }};TrustServerCertificate=true;"
         run: |
+          # Export both case variations for TestDatabaseHelper to find
+          export ConnectionStrings__DefaultConnection="${CONNECTIONSTRINGS__DEFAULTCONNECTION}"
           dotnet test ./5-Test/HotshotLogistics.IntegrationTests/HotshotLogistics.IntegrationTests.csproj \
             --configuration Release \
             --no-build \
