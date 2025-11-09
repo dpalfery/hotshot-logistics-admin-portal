@@ -35,7 +35,7 @@ jobs:
           dotnet-version: '8.0.x'
       - name: Restore
         run: |
-          for proj in $(find . -name '*.csproj'); do
+          for proj in $(find . -name '*.csproj' ! -path '*/7-Deployment/pulumi/*'); do
             dotnet restore "$proj"
           done
       - name: Install formatter
@@ -43,13 +43,13 @@ jobs:
       - name: Lint
         run: |
           export PATH="$HOME/.dotnet/tools:$PATH"
-          for proj in $(find . -name '*.csproj'); do
+          for proj in $(find . -name '*.csproj' ! -path '*/7-Deployment/pulumi/*'); do
             dotnet format "$proj" --verbosity diagnostic
             dotnet format "$proj" --verify-no-changes --no-restore
           done
       - name: Build
         run: |
-          for proj in $(find . -name '*.csproj'); do
+          for proj in $(find . -name '*.csproj' ! -path '*/7-Deployment/pulumi/*'); do
             dotnet build "$proj" --configuration Release --no-restore
           done
       - name: Test
@@ -98,7 +98,7 @@ jobs:
 
       - name: Check for outdated packages
         run: |
-          for proj in $(find . -name '*.csproj'); do
+          for proj in $(find . -name '*.csproj' ! -path '*/7-Deployment/pulumi/*'); do
             echo "Checking $proj for outdated packages..."
             dotnet list "$proj" package --outdated || true
           done

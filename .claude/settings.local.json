@@ -4,7 +4,9 @@
       "Bash(dotnet test:*)",
       "Bash(dir:*)",
       "Bash(dotnet build:*)",
-      "Bash(gh:*)"
+      "Bash(gh:*)",
+      "Bash(xargs:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
