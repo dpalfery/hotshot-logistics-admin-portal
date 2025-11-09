@@ -66,7 +66,7 @@ dotnet build
 # Run the API (from 1-Presentation/HotshotLogistics.Api/)
 cd 1-Presentation/HotshotLogistics.Api
 dotnet run
-# API runs on https://localhost:7060 by default
+# API runs on https://localhost:5001 and http://localhost:5000 by default
 
 # Run all tests
 dotnet test
@@ -94,18 +94,18 @@ docker-compose up -d
 
 # Run DbSetup CLI to provision database and run migrations
 # (from 7-Deployment/DbSetup/HotshotLogistics.DbSetup/)
-export ConnectionStrings__DefaultConnection="Server=localhost;Database=hotshot_logistics;User Id=sa;Password=<PASSWORD>;TrustServerCertificate=true;"
-dotnet run --project-slug "hotshot" \
-  --server "localhost" \
-  --db-name "hotshot_logistics" \
-  --app-user "hotshot_app" \
+export ConnectionStrings__DefaultConnection="Server=<SERVER>;Database=<DATABASE>;User Id=<USER>;Password=<PASSWORD>;TrustServerCertificate=true;"
+dotnet run --project-slug "<PROJECT_SLUG>" \
+  --server "<SERVER>" \
+  --db-name "<DATABASE>" \
+  --app-user "<APP_USER>" \
   --app-password "<PASSWORD>"
 
 # For CI/CD environments, set variables at process level (GitHub Actions, etc)
-dotnet run --project-slug "hotshot" \
-  --server "localhost" \
-  --db-name "hotshot_logistics" \
-  --app-user "hotshot_app" \
+dotnet run --project-slug "<PROJECT_SLUG>" \
+  --server "<SERVER>" \
+  --db-name "<DATABASE>" \
+  --app-user "<APP_USER>" \
   --app-password "<PASSWORD>" \
   --env-vars-in-proc
 ```
@@ -113,7 +113,7 @@ dotnet run --project-slug "hotshot" \
 **Environment Variable Configuration:**
 - Standard .NET convention: `ConnectionStrings__DefaultConnection`
 - Also supports case-insensitive variant for Linux: `CONNECTIONSTRINGS__DEFAULTCONNECTION`
-- See `.env.example` for required environment variables and their format
+- See `.env.example` for actual configuration values and all required variables
 
 Migration files are in `4-Persistence/HotshotLogistics.Data/Migrations/`.
 FluentMigrator automatically tracks applied migrations in the `VersionInfo` table.
