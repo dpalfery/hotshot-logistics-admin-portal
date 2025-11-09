@@ -34,12 +34,16 @@ namespace HotshotLogistics.IntegrationTests
                 }
 
                 // Read the connection string from environment to match application configuration
-                var conn = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
+                // Try multiple case variations to support both Windows (case-insensitive) and Linux (case-sensitive)
+                var conn = Environment.GetEnvironmentVariable("CONNECTIONSTRINGS__DEFAULTCONNECTION")
+                    ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+                    ?? Environment.GetEnvironmentVariable("connectionstrings__defaultconnection");
+
                 if (string.IsNullOrWhiteSpace(conn))
                 {
                     // if the env var is not set raise an error and stop. never put connection strings in code
-                    //throw error here
-                    throw new InvalidOperationException("DB_CONNECTION_STRING environment variable is required for tests");
+                    throw new InvalidOperationException(
+                        "Environment variable 'CONNECTIONSTRINGS__DEFAULTCONNECTION' (or case variant 'ConnectionStrings__DefaultConnection') is required for integration tests");
                 }
 
                 cachedConnectionString = conn;

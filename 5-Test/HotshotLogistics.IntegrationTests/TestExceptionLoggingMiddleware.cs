@@ -67,18 +67,13 @@ namespace HotshotLogistics.IntegrationTests
             }
             catch (Exception ex)
             {
-                // Log detailed exception information
+                // Log detailed exception information using structured logging
+                // Note: Using structured logging parameters prevents user input from being interpreted as format strings
                 logger.LogError(ex,
-                    "TEST EXCEPTION: {ExceptionType} during {Method} {Path}\n" +
-                    "Message: {Message}\n" +
-                    "Stack Trace: {StackTrace}\n" +
-                    "Inner Exception: {InnerException}",
+                    "TEST EXCEPTION: {ExceptionType} during {Method} {Path}",
                     ex.GetType().Name,
                     context.Request.Method,
-                    context.Request.Path,
-                    ex.Message,
-                    ex.StackTrace,
-                    ex.InnerException?.ToString() ?? "None");
+                    context.Request.Path);
 
                 // Re-throw to maintain normal error handling flow
                 throw;

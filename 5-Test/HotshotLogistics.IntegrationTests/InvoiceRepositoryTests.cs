@@ -16,7 +16,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Xunit;
 
-namespace HotshotLogistics.Tests.Billing
+namespace HotshotLogistics.IntegrationTests
 {
     /// <summary>
     /// Integration tests for InvoiceRepository.
