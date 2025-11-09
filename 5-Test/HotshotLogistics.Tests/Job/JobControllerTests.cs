@@ -23,7 +23,7 @@ using Xunit;
 using HotshotLogistics.Domain.DTOs;
 namespace HotshotLogistics.Tests.Job
 {
-        /// <summary>
+    /// <summary>
     /// Integration tests for the JobController.
     /// </summary>
     public class JobControllerTests
@@ -537,7 +537,7 @@ namespace HotshotLogistics.Tests.Job
             var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
             var returnedJobs = okResult.Value.Should().BeAssignableTo<IEnumerable<Domain.Entities.Job>>().Subject;
             returnedJobs.Should().HaveCount(2);
-        }   
+        }
 
         /// <summary>
         /// Creates a test job for testing purposes.

@@ -7,7 +7,7 @@ namespace HotshotLogistics.Domain.Entities
     /// <summary>
     /// Represents a user profile from Microsoft Graph API.
     /// </summary>
-    public class UserProfile 
+    public class UserProfile
     {
         /// <summary>
         /// Gets or sets the user ID.

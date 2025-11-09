@@ -5,7 +5,7 @@ namespace HotshotLogistics.Domain.ValueObjects;
 /// <summary>
 /// Represents a physical address.
 /// </summary>
-public class Address 
+public class Address
 {
     /// <summary>
     /// Gets or sets the street address.

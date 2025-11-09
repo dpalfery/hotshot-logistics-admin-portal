@@ -131,11 +131,11 @@ namespace HotshotLogistics.IntegrationTests
                 IsActive = false,
             };
 
-        // Act
-        var response = await Client.PutAsJsonAsync($"/api/Drivers/{driverIdToUpdate}", driverToUpdate);
+            // Act
+            var response = await Client.PutAsJsonAsync($"/api/Drivers/{driverIdToUpdate}", driverToUpdate);
 
-        // Assert
-        response.EnsureSuccessStatusCode();
+            // Assert
+            response.EnsureSuccessStatusCode();
             var updatedDriver = await response.Content.ReadFromJsonAsync<DriverDto>();
 
             updatedDriver.Should().NotBeNull();

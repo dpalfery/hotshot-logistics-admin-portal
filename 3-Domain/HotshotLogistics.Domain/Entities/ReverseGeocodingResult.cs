@@ -4,12 +4,12 @@
 
 namespace HotshotLogistics.Domain.Entities
 {
-   
+
 
     /// <summary>
     /// Represents the result of a reverse geocoding operation.
     /// </summary>
-    public class ReverseGeocodingResult 
+    public class ReverseGeocodingResult
     {
         /// <inheritdoc/>
         public string Address { get; set; } = string.Empty;
