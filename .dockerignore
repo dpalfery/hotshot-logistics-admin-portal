@@ -1,0 +1,65 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# GitHub
+.github
+
+# IDE
+.vs
+.vscode
+.idea
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results
+**/bin/
+**/obj/
+**/out/
+**/build/
+**/dist/
+
+# Node modules (frontend)
+**/node_modules/
+**/.next/
+**/.expo/
+**/.expo-shared/
+
+# Test results
+**/TestResults/
+**/*.trx
+**/coverage/
+
+# Environment files
+**/.env
+**/.env.local
+**/.env.*.local
+
+# Deployment
+7-Deployment/
+Dockerfile
+.dockerignore
+
+# Documentation
+*.md
+LICENSE
+
+# Database
+**/*.db
+**/*.sqlite
+**/data/
+
+# Logs
+**/*.log
+**/logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Pulumi
+**/Pulumi.*.yaml
+**/.pulumi/
