@@ -23,7 +23,8 @@ The codebase follows **Clean Architecture** principles with strict layering:
 3-Domain/        → Domain models and contracts (interfaces)
 4-Persistence/   → Database repositories, migrations, data services
 5-Test/          → xUnit tests (unit + integration)
-7-Deployment/    → Docker Compose, database setup scripts
+6-Docs/          → All Documentation and markdown files except readmes but they should be short and point to detailed docs in 6-Docs/ folder. Create subfolders by topic
+7-Deployment/    → Docker Compose, database setup scripts, IaC
 ```
 
 ### Dependency Flow
@@ -84,20 +85,35 @@ dotnet test
 
 ### Database Migrations
 
-**IMPORTANT:** Migrations use FluentMigrator and require `DB_CONNECTION_STRING` environment variable.
+**IMPORTANT:** Migrations use FluentMigrator and require `ConnectionStrings__DefaultConnection` environment variable (standard .NET configuration).
 
 ```bash
-# Run migrations (from 4-Persistence/MigrationRunner/)
-cd 4-Persistence/MigrationRunner
-DB_CONNECTION_STRING="Server=localhost;Database=HotshotDB;..." dotnet run
-
-# Rerun all migrations from scratch
-DB_CONNECTION_STRING="Server=localhost;Database=HotshotDB;..." dotnet run -- --rerun-all
-
 # Start local SQL Server (from 7-Deployment/)
 cd 7-Deployment
 docker-compose up -d
+
+# Run DbSetup CLI to provision database and run migrations
+# (from 7-Deployment/DbSetup/HotshotLogistics.DbSetup/)
+export ConnectionStrings__DefaultConnection="Server=localhost;Database=hotshot_logistics;User Id=sa;Password=<PASSWORD>;TrustServerCertificate=true;"
+dotnet run --project-slug "hotshot" \
+  --server "localhost" \
+  --db-name "hotshot_logistics" \
+  --app-user "hotshot_app" \
+  --app-password "<PASSWORD>"
+
+# For CI/CD environments, set variables at process level (GitHub Actions, etc)
+dotnet run --project-slug "hotshot" \
+  --server "localhost" \
+  --db-name "hotshot_logistics" \
+  --app-user "hotshot_app" \
+  --app-password "<PASSWORD>" \
+  --env-vars-in-proc
 ```
+
+**Environment Variable Configuration:**
+- Standard .NET convention: `ConnectionStrings__DefaultConnection`
+- Also supports case-insensitive variant for Linux: `CONNECTIONSTRINGS__DEFAULTCONNECTION`
+- See `.env.example` for required environment variables and their format
 
 Migration files are in `4-Persistence/HotshotLogistics.Data/Migrations/`.
 FluentMigrator automatically tracks applied migrations in the `VersionInfo` table.
@@ -141,21 +157,28 @@ npm run dev
 
 ### Required Environment Variables
 
-Create a `.env` file from `.env.example`:
+Create a `.env` file from `.env.example`. Use standard .NET environment variable naming conventions:
 
 ```bash
-# REQUIRED for local development
-SQL_SA_PASSWORD=<strong-password>
-TEST_DB_PASSWORD=<strong-password>
-DB_CONNECTION_STRING=Server=localhost;Database=HotshotDB;User Id=sa;Password=...;
+# REQUIRED for database access (standard .NET configuration)
+ConnectionStrings__DefaultConnection=Server=<SERVER>;Database=<DATABASE>;User Id=<USER>;Password=<PASSWORD>;TrustServerCertificate=true;
+
+# REQUIRED for local SQL Server Docker setup
+SQL_SA_PASSWORD=<PASSWORD>
 
 # Optional for Azure integration
-AZURE_CLIENT_ID=...
-AZURE_TENANT_ID=...
-CONNECTIONSTRINGS__DEFAULTCONNECTION=...
+AZURE_CLIENT_ID=<CLIENT_ID>
+AZURE_TENANT_ID=<TENANT_ID>
 ```
 
-**Security:** Never commit secrets. Use Azure Key Vault for production.
+**Key Points:**
+- Use `ConnectionStrings__DefaultConnection` (standard .NET convention with double underscores)
+- Supports case-insensitive variant `CONNECTIONSTRINGS__DEFAULTCONNECTION` for Linux compatibility
+- DbSetup CLI automatically sets these variables when running migrations
+- For CI/CD, use `--env-vars-in-proc` flag to set at process level
+- Replace `<PASSWORD>`, `<SERVER>`, `<DATABASE>`, etc. with actual values
+
+**Security:** Never commit secrets. Use `.env.example` as a template and populate with actual values locally. Use Azure Key Vault for production.
 
 ### Configuration Files
 
@@ -256,9 +279,6 @@ Hub configuration in `RealtimeService` and Azure SignalR Service integration.
 
 The MigrationRunner has logic to skip `SeedContactsData` migration due to missing customer reference (`cust-003`). When adding new migrations, be aware of this skip logic in `Program.cs`.
 
-### Test Compilation Errors
-
-Some test files reference repositories directly (e.g., `DriverRepository`) which may need interface references instead. Check `5-Test/HotshotLogistics.Tests/Utils/Integration/` for affected tests.
 
 ## Code Quality
 
@@ -269,9 +289,9 @@ Some test files reference repositories directly (e.g., `DriverRepository`) which
 
 ## Git Workflow
 
-- **Main branch:** `demo/dp-1-full-context`
-- **Current branch:** `fix/dp-fix-all-warnings` (example feature branch)
-- Create PRs against main branch for all changes
+- **Main branch:** `maint`
+- **Current branch:** `development` (example feature branch)
+- Create PRs against development branch for all changes
 - Run tests before committing: `dotnet test` and `npm test`
 
 ## Additional Resources
@@ -279,3 +299,8 @@ Some test files reference repositories directly (e.g., `DriverRepository`) which
 - README.md - Detailed project setup and prerequisites
 - SECURITY.md - Security policies and guidelines
 - .editorconfig - Code formatting standards
+
+## Pulumi for IaC
+- All IaC should be written with Pulumi
+- C# should be the script language for Pulumi
+- Azure is our chosen cloud
