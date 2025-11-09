@@ -1,8 +1,8 @@
-// <copyright file="JobControllerIntegrationTests.cs" company="PlaceholderCompany">
+// <copyright file="JobControllerIntegrationTests_SeededData.cs" company="PlaceholderCompany">
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
-namespace HotshotLogistics.Tests.Job
+namespace HotshotLogistics.IntegrationTests
 {
     using System.Net;
     using System.Net.Http;
@@ -14,19 +14,18 @@ namespace HotshotLogistics.Tests.Job
     using Microsoft.AspNetCore.Mvc.Testing;
     using Xunit;
     using FluentAssertions;
-    using HotshotLogistics.Tests.Utils.TestHelpers;
 
     /// <summary>
-    /// Integration tests for the JobController.
+    /// Integration tests for the JobController that require seeded database data.
     /// </summary>
     [Collection("DatabaseCollection")]
-    public class JobControllerIntegrationTests : IntegrationTestBase
+    public class JobControllerIntegrationTests_SeededData : IntegrationTestBase
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="JobControllerIntegrationTests"/> class.
+        /// Initializes a new instance of the <see cref="JobControllerIntegrationTests_SeededData"/> class.
         /// </summary>
         /// <param name="factory">The web application factory.</param>
-        public JobControllerIntegrationTests(WebApplicationFactory<Program> factory)
+        public JobControllerIntegrationTests_SeededData(CustomWebApplicationFactory<Program> factory)
             : base(factory)
         {
             // Set up test authentication
