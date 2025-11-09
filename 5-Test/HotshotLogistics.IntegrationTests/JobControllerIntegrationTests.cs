@@ -52,7 +52,7 @@ namespace HotshotLogistics.IntegrationTests
         }
 
 
-        [Fact(Skip = "Requires seeded job data - GetJobs endpoint may return empty results")]
+        [Fact]
         public async Task GetJob_WithValidId_ReturnsJob()
         {
             // Arrange
@@ -88,7 +88,7 @@ namespace HotshotLogistics.IntegrationTests
             Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         }
 
-        [Fact(Skip = "Job creation endpoint serialization issue with nested Location objects")]
+        [Fact(Skip = "Job creation endpoint serialization issue with nested Location objects - requires JSON converters")]
         public async Task CreateJob_WithValidData_ReturnsCreated()
         {
             // Arrange
@@ -151,7 +151,7 @@ namespace HotshotLogistics.IntegrationTests
             Assert.Equal(uniqueId, createdJob.Id);
         }
 
-        [Fact(Skip = "Job update endpoint serialization issue with nested Location objects")]
+        [Fact(Skip = "Job update endpoint serialization issue with nested Location objects - requires JSON converters")]
         public async Task UpdateJob_WithValidData_ReturnsNoContent()
         {
             // Arrange
@@ -204,7 +204,7 @@ namespace HotshotLogistics.IntegrationTests
             Assert.Equal(JobStatus.Assigned, updatedJob.Status);
         }
 
-        [Fact(Skip = "Job creation endpoint serialization issue with nested Location objects")]
+        [Fact(Skip = "Job deletion endpoint serialization issue with nested Location objects - requires JSON converters")]
         public async Task DeleteJob_WithValidId_ReturnsNoContent()
         {
             // Arrange - First create a job to delete using Job
