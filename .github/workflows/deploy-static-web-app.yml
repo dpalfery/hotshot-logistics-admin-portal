@@ -45,6 +45,7 @@ jobs:
         working-directory: 1-Presentation/admin-dashboard
         env:
           NODE_ENV: production
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL || vars.NEXT_PUBLIC_API_URL }}
         run: |
           npm run build
 

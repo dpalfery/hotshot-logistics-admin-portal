@@ -241,10 +241,19 @@ az acr credential show --name $ACR_NAME
 
 **Static Web App:**
 ```bash
-# Get deployment token
-pulumi stack output staticWebAppDeploymentToken
+# Get deployment token (requires --show-secrets flag)
+pulumi stack output staticWebAppDeploymentToken --show-secrets
 ```
 - `AZURE_STATIC_WEB_APPS_API_TOKEN` - Deployment token
+
+**API Configuration:**
+```bash
+# Get the Container App URL
+pulumi stack output containerAppUrl
+```
+- `NEXT_PUBLIC_API_URL` - Container App URL (e.g., `https://ca-hotshot-api-dev.<region>.azurecontainerapps.io`)
+  - This can be set as either a Secret or Variable in GitHub
+  - Required for CSP (Content Security Policy) to allow API calls from the dashboard
 
 ### 5.2 Update Workflow Files
 

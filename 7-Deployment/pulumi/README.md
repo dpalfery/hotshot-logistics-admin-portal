@@ -183,6 +183,15 @@ Configure these secrets in your GitHub repository (Settings → Secrets and vari
 - `ACR_USERNAME` - ACR admin username (from `pulumi stack output`)
 - `ACR_PASSWORD` - ACR admin password (from Azure portal or CLI)
 
+#### Static Web App
+- `AZURE_STATIC_WEB_APPS_API_TOKEN` - Deployment token (get with `pulumi stack output staticWebAppDeploymentToken --show-secrets`)
+
+#### API Configuration
+- `NEXT_PUBLIC_API_URL` - Container App URL for API calls (e.g., `https://ca-hotshot-api-dev.eastus.azurecontainerapps.io`)
+  - Required for Next.js build to configure CSP (Content Security Policy)
+  - Get with: `pulumi stack output containerAppUrl`
+  - Can be set as either a Secret or Variable in GitHub Actions
+
 ### Getting ACR Credentials
 
 After the first Pulumi deployment:
