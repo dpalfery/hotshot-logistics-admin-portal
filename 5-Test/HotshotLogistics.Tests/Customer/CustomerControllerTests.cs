@@ -37,7 +37,7 @@ namespace HotshotLogistics.Tests.Customer
         {
             mockCustomerService = new Mock<ICustomerService>();
             mockLogger = new Mock<ILogger<CustomerController>>();
-            controller = null!; // controller tests are stubs for compile
+            controller = new CustomerController(mockCustomerService.Object, mockLogger.Object);
         }
 
         /// <summary>

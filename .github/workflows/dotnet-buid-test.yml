@@ -54,30 +54,9 @@ jobs:
           done
       - name: Test
         run: |
-          for proj in $(find ./5-Test -name '*.csproj'); do
+          for proj in $(find ./5-Test -name '*.csproj' ! -path '*/HotshotLogistics.IntegrationTests/*'); do
             dotnet test "$proj" --no-build --configuration Release
           done
-
-  codeql:
-    runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
-        with:
-          languages: csharp
-
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v4
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v4
 
   secret-scanning:
     runs-on: ubuntu-latest

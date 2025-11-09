@@ -368,17 +368,18 @@ namespace HotshotLogistics.Tests.Billing
         /// <returns>A test invoice instance.</returns>
         private static Invoice CreateTestInvoice(string id, string customerId, InvoiceStatus status = InvoiceStatus.Sent, decimal totalAmount = 1000m, decimal balanceDue = 1000m)
         {
-            var mockInvoice = new Mock<Invoice>();
-            mockInvoice.Setup(i => i.Id).Returns(id);
-            mockInvoice.Setup(i => i.CustomerId).Returns(customerId);
-            mockInvoice.Setup(i => i.InvoiceNumber).Returns($"INV-{id}");
-            mockInvoice.Setup(i => i.Status).Returns(status);
-            mockInvoice.Setup(i => i.TotalAmount).Returns(totalAmount);
-            mockInvoice.Setup(i => i.BalanceDue).Returns(balanceDue);
-            mockInvoice.Setup(i => i.DueDate).Returns(DateTime.UtcNow.AddDays(-30));
-            mockInvoice.Setup(i => i.CreatedAt).Returns(DateTime.UtcNow.AddDays(-35));
-            mockInvoice.Setup(i => i.LineItems).Returns(new List<InvoiceLineItem>());
-            return mockInvoice.Object;
+            return new Invoice
+            {
+                Id = id,
+                CustomerId = customerId,
+                InvoiceNumber = $"INV-{id}",
+                Status = status,
+                TotalAmount = totalAmount,
+                PaidAmount = totalAmount - balanceDue,
+                DueDate = DateTime.UtcNow.AddDays(-30),
+                CreatedAt = DateTime.UtcNow.AddDays(-35),
+                InvoiceDate = DateTime.UtcNow.AddDays(-35)
+            };
         }
     }
 }
