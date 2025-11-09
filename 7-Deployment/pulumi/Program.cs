@@ -87,7 +87,7 @@ return await Pulumi.Deployment.RunAsync(() =>
         }));
 
     var registryUsername = registryCredentials.Apply(c => c.Username ?? "");
-    var registryPassword = registryCredentials.Apply(c => c.Passwords.First().Value ?? "");
+    var registryPassword = Output.CreateSecret(registryCredentials.Apply(c => c.Passwords.First().Value ?? ""));
 
     // SQL Server
     var sqlServer = new Server($"sql-hotshot-{environment}", new ServerArgs
@@ -134,9 +134,10 @@ return await Pulumi.Deployment.RunAsync(() =>
         EndIpAddress = "0.0.0.0" // Special rule to allow Azure services
     });
 
-    // Build connection string
-    var connectionString = Output.Tuple(sqlServer.FullyQualifiedDomainName, database.Name, sqlAdminPassword)
-        .Apply(t => $"Server=tcp:{t.Item1},1433;Initial Catalog={t.Item2};Persist Security Info=False;User ID=sqladmin;Password={t.Item3};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
+    // Build connection string (marked as secret to prevent exposure in state)
+    var connectionString = Output.CreateSecret(
+        Output.Tuple(sqlServer.FullyQualifiedDomainName, database.Name, sqlAdminPassword)
+            .Apply(t => $"Server=tcp:{t.Item1},1433;Initial Catalog={t.Item2};Persist Security Info=False;User ID=sqladmin;Password={t.Item3};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"));
 
     // Container Apps Environment (Consumption only - Workload Profiles v2)
     var managedEnvironment = new ManagedEnvironment($"cae-hotshot-{environment}", new ManagedEnvironmentArgs
