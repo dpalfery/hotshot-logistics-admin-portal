@@ -316,9 +316,9 @@ return await Pulumi.Deployment.RunAsync(() =>
         ["containerRegistryLoginServer"] = registry.LoginServer,
         ["containerAppUrl"] = containerApp.Configuration.Apply(c => c!.Ingress!.Fqdn),
         ["staticWebAppUrl"] = staticWebApp.DefaultHostname,
-        ["staticWebAppDeploymentToken"] = staticWebApp.GetSecrets.Apply(s => s.Properties ?? ""),
-        ["appInsightsInstrumentationKey"] = appInsights.InstrumentationKey,
-        ["appInsightsConnectionString"] = appInsights.ConnectionString,
+        ["staticWebAppDeploymentToken"] = Output.CreateSecret(staticWebApp.GetSecrets.Apply(s => s.Properties ?? "")),
+        ["appInsightsInstrumentationKey"] = Output.CreateSecret(appInsights.InstrumentationKey),
+        ["appInsightsConnectionString"] = Output.CreateSecret(appInsights.ConnectionString),
         ["sqlServerFqdn"] = sqlServer.FullyQualifiedDomainName,
         ["databaseName"] = database.Name,
         ["logAnalyticsWorkspaceId"] = workspace.CustomerId
