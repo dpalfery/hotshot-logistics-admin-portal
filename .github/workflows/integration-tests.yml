@@ -98,8 +98,10 @@ jobs:
 
       - name: Run Integration Tests
         env:
-          # Connection string for integration tests (using SA credentials for simplicity in CI/CD)
-          DB_CONNECTION_STRING: "Server=localhost,1433;Database=hotshot_logistics;User Id=sa;Password=${{ secrets.SQL_SA_PASSWORD }};TrustServerCertificate=true;"
+          # Connection string for integration tests - explicitly set here so it's available to tests
+          # This matches what DbSetup CLI sets when --env-vars-in-proc is used
+          ConnectionStrings__DefaultConnection: "Server=localhost,1433;Database=hotshot_logistics;User Id=sa;Password=${{ secrets.SQL_SA_PASSWORD }};TrustServerCertificate=true;"
+          CONNECTIONSTRINGS__DEFAULTCONNECTION: "Server=localhost,1433;Database=hotshot_logistics;User Id=sa;Password=${{ secrets.SQL_SA_PASSWORD }};TrustServerCertificate=true;"
         run: |
           dotnet test ./5-Test/HotshotLogistics.IntegrationTests/HotshotLogistics.IntegrationTests.csproj \
             --configuration Release \
