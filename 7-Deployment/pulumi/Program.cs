@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using Pulumi;
 using Pulumi.AzureNative.Resources;
 using Pulumi.AzureNative.OperationalInsights;
-using Pulumi.AzureNative.Insights;
 using Pulumi.AzureNative.ContainerRegistry;
 using Pulumi.AzureNative.App;
 using Pulumi.AzureNative.App.Inputs;
