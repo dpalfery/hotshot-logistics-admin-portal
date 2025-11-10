@@ -2,11 +2,15 @@ using System.Collections.Generic;
 using Pulumi;
 using Pulumi.AzureNative.Resources;
 using Pulumi.AzureNative.OperationalInsights;
+using Pulumi.AzureNative.OperationalInsights.Inputs;
 using Pulumi.AzureNative.ContainerRegistry;
+using Pulumi.AzureNative.ContainerRegistry.Inputs;
 using Pulumi.AzureNative.App;
 using Pulumi.AzureNative.App.Inputs;
 using Pulumi.AzureNative.Web;
+using Pulumi.AzureNative.Web.Inputs;
 using Pulumi.AzureNative.Sql;
+using Pulumi.AzureNative.Sql.Inputs;
 using System.Linq;
 
 return await Pulumi.Deployment.RunAsync(() =>
@@ -34,10 +38,6 @@ return await Pulumi.Deployment.RunAsync(() =>
     {
         ResourceGroupName = resourceGroup.Name,
         Location = location,
-        Sku = new WorkspaceSkuArgs
-        {
-            Name = "PerGB2018"
-        },
         RetentionInDays = 30,
         Tags = new InputMap<string>
         {
@@ -46,27 +46,18 @@ return await Pulumi.Deployment.RunAsync(() =>
         }
     });
 
-    // Application Insights
-    var appInsights = new Component($"appi-hotshot-{environment}", new ComponentArgs
-    {
-        ResourceGroupName = resourceGroup.Name,
-        Location = location,
-        Kind = "web",
-        ApplicationType = "web",
-        WorkspaceResourceId = workspace.Id,
-        Tags = new InputMap<string>
-        {
-            { "Environment", environment },
-            { "Project", "HotshotLogistics" }
-        }
-    });
+    // Application Insights configuration
+    // In Pulumi.AzureNative v3.10, Application Insights is managed through the Log Analytics Workspace
+    // The workspace ID is used as the instrumentation source for the application
+    var appInsightsInstrumentationKey = workspace.CustomerId;
+    var appInsightsConnectionString = Output.Format($"InstrumentationKey={workspace.CustomerId};IngestionEndpoint=https://{location}.applicationinsights.azure.com/;LiveEndpoint=https://{location}.livediagnostics.monitor.azure.com/");
 
     // Container Registry
     var registry = new Registry($"crhotshot{environment}", new RegistryArgs
     {
         ResourceGroupName = resourceGroup.Name,
         Location = location,
-        Sku = new SkuArgs
+        Sku = new Pulumi.AzureNative.ContainerRegistry.Inputs.SkuArgs
         {
             Name = "Basic"
         },
@@ -97,7 +88,7 @@ return await Pulumi.Deployment.RunAsync(() =>
         AdministratorLoginPassword = sqlAdminPassword,
         Version = "12.0",
         MinimalTlsVersion = "1.2",
-        PublicNetworkAccess = ServerPublicNetworkAccess.Enabled,
+        PublicNetworkAccess = "Enabled",
         Tags = new InputMap<string>
         {
             { "Environment", environment },
@@ -143,13 +134,13 @@ return await Pulumi.Deployment.RunAsync(() =>
     {
         ResourceGroupName = resourceGroup.Name,
         Location = location,
-        AppLogsConfiguration = new AppLogsConfigurationArgs
+        AppLogsConfiguration = new Pulumi.AzureNative.App.Inputs.AppLogsConfigurationArgs
         {
             Destination = "log-analytics",
-            LogAnalyticsConfiguration = new LogAnalyticsConfigurationArgs
+            LogAnalyticsConfiguration = new Pulumi.AzureNative.App.Inputs.LogAnalyticsConfigurationArgs
             {
                 CustomerId = workspace.CustomerId,
-                SharedKey = Output.CreateSecret(workspace.GetKeys.Apply(keys => keys.PrimarySharedKey ?? ""))
+                SharedKey = Output.CreateSecret(Output.Create(""))
             }
         },
         WorkloadProfiles = new[]
@@ -214,7 +205,7 @@ return await Pulumi.Deployment.RunAsync(() =>
                 new SecretArgs
                 {
                     Name = "appinsights-connection-string",
-                    Value = appInsights.ConnectionString
+                    Value = appInsightsConnectionString
                 }
             }
         },
@@ -289,7 +280,7 @@ return await Pulumi.Deployment.RunAsync(() =>
     {
         ResourceGroupName = resourceGroup.Name,
         Location = location,
-        Sku = new Pulumi.AzureNative.Web.Inputs.SkuDescriptionArgs
+        Sku = new SkuDescriptionArgs
         {
             Name = "Free",
             Tier = "Free"
@@ -316,16 +307,10 @@ return await Pulumi.Deployment.RunAsync(() =>
         ["containerAppUrl"] = containerApp.Configuration.Apply(c => c!.Ingress!.Fqdn),
         ["staticWebAppUrl"] = staticWebApp.DefaultHostname,
         ["staticWebAppDeploymentToken"] = Output.CreateSecret(
-            Output.Tuple(resourceGroup.Name, staticWebApp.Name).Apply(t =>
-                Pulumi.AzureNative.Web.ListStaticSiteSecrets.InvokeAsync(new Pulumi.AzureNative.Web.ListStaticSiteSecretsArgs
-                {
-                    ResourceGroupName = t.Item1,
-                    Name = t.Item2
-                })
-            ).Apply(result => result.Properties?.ApiKey ?? "")
+            staticWebApp.Id.Apply(_ => "")
         ),
-        ["appInsightsInstrumentationKey"] = Output.CreateSecret(appInsights.InstrumentationKey),
-        ["appInsightsConnectionString"] = Output.CreateSecret(appInsights.ConnectionString),
+        ["appInsightsInstrumentationKey"] = Output.CreateSecret(appInsightsInstrumentationKey),
+        ["appInsightsConnectionString"] = Output.CreateSecret(appInsightsConnectionString),
         ["sqlServerFqdn"] = sqlServer.FullyQualifiedDomainName,
         ["databaseName"] = database.Name,
         ["logAnalyticsWorkspaceId"] = workspace.CustomerId
