@@ -1,8 +1,36 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Enable static export for Azure Static Web Apps
+  output: 'export',
+
+  // Disable image optimization for static export
+  images: {
+    unoptimized: true,
+  },
+
   // Production HTTPS enforcement
   async headers() {
+    // Get API URL from environment (must be set at build time for static export)
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+
+    // Build connect-src CSP directive
+    const connectSrcUrls = [
+      "'self'",
+      "https://*.microsoftonline.com",
+      "https://*.msecnd.net"
+    ];
+
+    // Add development localhost endpoints
+    if (process.env.NODE_ENV === 'development') {
+      connectSrcUrls.push("https://localhost:5001", "http://localhost:5000");
+    }
+
+    // Add production API URL if configured
+    if (apiUrl) {
+      connectSrcUrls.push(apiUrl);
+    }
+
     return [
       {
         // Apply security headers to all routes
@@ -33,7 +61,7 @@ const nextConfig: NextConfig = {
             key: 'Referrer-Policy',
             value: 'strict-origin-when-cross-origin'
           },
-          // Content Security Policy for Azure AD authentication
+          // Content Security Policy for Azure AD authentication and API access
           {
             key: 'Content-Security-Policy',
             value: [
@@ -41,10 +69,7 @@ const nextConfig: NextConfig = {
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.microsoftonline.com https://*.msecnd.net",
               "style-src 'self' 'unsafe-inline' https://*.microsoftonline.com",
               "img-src 'self' data: https: blob:",
-              // Allow connections to backend API in development
-              process.env.NODE_ENV === 'development' 
-                ? "connect-src 'self' https://*.microsoftonline.com https://*.msecnd.net https://localhost:5001 http://localhost:5000"
-                : "connect-src 'self' https://*.microsoftonline.com https://*.msecnd.net",
+              `connect-src ${connectSrcUrls.join(' ')}`,
               "frame-src 'self' https://*.microsoftonline.com",
               "font-src 'self' data: https://*.microsoftonline.com"
             ].join('; ')

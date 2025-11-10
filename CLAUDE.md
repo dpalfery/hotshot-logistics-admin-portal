@@ -250,6 +250,18 @@ SignalR hubs for:
 
 Hub configuration in `RealtimeService` and Azure SignalR Service integration.
 
+## Build Pipeline
+
+The CI/CD pipeline (`.github/workflows/dotnet-build-test.yml`) includes:
+- **Restore** - All projects including Pulumi infrastructure
+- **Lint** - Code formatting validation for all projects
+- **Build** - Release build of all projects
+- **Test** - Unit tests (excludes integration tests which require SQL Server)
+- **Secret Scanning** - TruffleHog verification on all changes
+- **Dependabot** - Automated dependency update checking
+
+All projects including the Pulumi infrastructure (`7-Deployment/pulumi/`) are built and linted as part of the standard pipeline.
+
 ## Known Issues & Workarounds
 
 ### Migration Skip Logic

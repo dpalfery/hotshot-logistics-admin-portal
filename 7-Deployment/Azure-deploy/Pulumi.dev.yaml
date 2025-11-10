@@ -1,0 +1,6 @@
+config:
+  hotshot-logistics-infra:location: eastus
+  hotshot-logistics-infra:environment: dev
+  hotshot-logistics-infra:containerImage: hotshot-api:latest
+  # Set this via: pulumi config set sqlAdminPassword --secret <password>
+  # hotshot-logistics-infra:sqlAdminPassword: <set-via-cli>
