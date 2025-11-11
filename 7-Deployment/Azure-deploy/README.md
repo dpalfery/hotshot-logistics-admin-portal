@@ -153,11 +153,21 @@ pulumi config set location eastus
 # Set environment name
 pulumi config set environment dev
 
+# Set SQL admin login (optional, defaults to "sqladmin")
+pulumi config set sqlAdminLogin myadmin
+
 # Set SQL admin password (stored as secret)
 pulumi config set sqlAdminPassword --secret <strong-password>
 
+# Set SQL firewall allowed IP ranges (optional, defaults to "0.0.0.0" for Azure services)
+# Use comma-separated IP addresses for multiple ranges
+# For production, specify known IP ranges or use private endpoints
+pulumi config set sqlAllowedIpRanges "52.123.45.67,52.123.45.68"
+
 # Set container image (optional, defaults to hello-world)
-pulumi config set containerImage hotshot-api:latest
+# IMPORTANT: Must be a fully qualified image name
+# Do not use partial names - they will not be prefixed with ACR login server
+pulumi config set containerImage mcr.microsoft.com/azuredocs/containerapps-helloworld:latest
 ```
 
 ### 5. Deploy Infrastructure
