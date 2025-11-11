@@ -319,6 +319,30 @@ new EnvironmentVarArgs
 }
 ```
 
+### Configure CORS for Production
+
+The API supports CORS configuration via environment variables. You can configure allowed origins in two ways:
+
+**Option 1: Comma-separated string (recommended for environment variables)**
+```csharp
+new EnvironmentVarArgs
+{
+    Name = "Cors__AllowedOrigins",
+    Value = "https://app.example.com,https://admin.example.com"
+}
+```
+
+**Option 2: JSON array in appsettings.json**
+```json
+{
+  "Cors": {
+    "AllowedOrigins": ["https://app.example.com", "https://admin.example.com"]
+  }
+}
+```
+
+The API automatically handles both formats. When using environment variables, separate multiple origins with commas (no spaces needed - they will be trimmed automatically).
+
 ## Manual Container Deployment
 
 To manually update the container image:
