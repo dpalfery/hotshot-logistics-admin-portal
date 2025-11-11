@@ -3,6 +3,7 @@ using Pulumi;
 using Pulumi.AzureNative.Resources;
 using Pulumi.AzureNative.OperationalInsights;
 using Pulumi.AzureNative.OperationalInsights.Inputs;
+using Pulumi.AzureNative.Insights;
 using Pulumi.AzureNative.ContainerRegistry;
 using Pulumi.AzureNative.ContainerRegistry.Inputs;
 using Pulumi.AzureNative.App;
@@ -18,8 +19,14 @@ return await Pulumi.Deployment.RunAsync(() =>
     var config = new Pulumi.Config();
     var location = config.Get("location") ?? "eastus";
     var environment = config.Get("environment") ?? "dev";
+    var sqlAdminLogin = config.Get("sqlAdminLogin") ?? "sqladmin";
     var sqlAdminPassword = config.RequireSecret("sqlAdminPassword");
+    // Container image must be a fully qualified image name (e.g., "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest")
+    // Do not provide partial image names - they will not be prefixed with the registry login server
     var containerImage = config.Get("containerImage") ?? "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest";
+    // SQL firewall allowed IP ranges (comma-separated). If not specified, defaults to Azure services only (0.0.0.0)
+    // For production, specify known IP ranges or use private endpoints instead
+    var sqlAllowedIpRanges = config.Get("sqlAllowedIpRanges") ?? "0.0.0.0";
 
     // Resource Group
     var resourceGroup = new ResourceGroup($"rg-hotshot-{environment}", new ResourceGroupArgs
@@ -46,11 +53,33 @@ return await Pulumi.Deployment.RunAsync(() =>
         }
     });
 
-    // Application Insights configuration
-    // In Pulumi.AzureNative v3.10, Application Insights is managed through the Log Analytics Workspace
-    // The workspace ID is used as the instrumentation source for the application
-    var appInsightsInstrumentationKey = workspace.CustomerId;
-    var appInsightsConnectionString = Output.Format($"InstrumentationKey={workspace.CustomerId};IngestionEndpoint=https://{location}.applicationinsights.azure.com/;LiveEndpoint=https://{location}.livediagnostics.monitor.azure.com/");
+    // Retrieve the Log Analytics Workspace shared keys
+    var workspaceSharedKeys = Output.Tuple(resourceGroup.Name, workspace.Name).Apply(t =>
+        GetSharedKeys.InvokeAsync(new GetSharedKeysArgs
+        {
+            ResourceGroupName = t.Item1,
+            WorkspaceName = t.Item2
+        }));
+
+    var workspaceSharedKey = Output.CreateSecret(workspaceSharedKeys.Apply(k => k.PrimarySharedKey ?? ""));
+
+    // Application Insights Component
+    var appInsights = new Component($"appi-hotshot-{environment}", new ComponentArgs
+    {
+        ResourceGroupName = resourceGroup.Name,
+        Location = location,
+        ApplicationType = "web",
+        Kind = "web",
+        WorkspaceResourceId = workspace.Id,
+        Tags = new InputMap<string>
+        {
+            { "Environment", environment },
+            { "Project", "HotshotLogistics" }
+        }
+    });
+
+    var appInsightsInstrumentationKey = appInsights.InstrumentationKey;
+    var appInsightsConnectionString = appInsights.ConnectionString;
 
     // Container Registry
     var registry = new Registry($"crhotshot{environment}", new RegistryArgs
@@ -84,7 +113,7 @@ return await Pulumi.Deployment.RunAsync(() =>
     {
         ResourceGroupName = resourceGroup.Name,
         Location = location,
-        AdministratorLogin = "sqladmin",
+        AdministratorLogin = sqlAdminLogin,
         AdministratorLoginPassword = sqlAdminPassword,
         Version = "12.0",
         MinimalTlsVersion = "1.2",
@@ -115,19 +144,31 @@ return await Pulumi.Deployment.RunAsync(() =>
         }
     });
 
-    // Firewall rule to allow Azure services
-    var firewallRule = new FirewallRule($"sqlfw-azure-services-{environment}", new FirewallRuleArgs
+    // Firewall rule to allow Azure services or specified IP ranges
+    // NOTE: 0.0.0.0 is a special rule that allows Azure services to access the server
+    // For production environments, consider using private endpoints or restricting to known IP ranges
+    var firewallRules = new List<FirewallRule>();
+    var ipRanges = sqlAllowedIpRanges.Split(',');
+    for (int i = 0; i < ipRanges.Length; i++)
     {
-        ResourceGroupName = resourceGroup.Name,
-        ServerName = sqlServer.Name,
-        StartIpAddress = "0.0.0.0",
-        EndIpAddress = "0.0.0.0" // Special rule to allow Azure services
-    });
+        var ipRange = ipRanges[i].Trim();
+        var ruleName = ipRange == "0.0.0.0"
+            ? $"sqlfw-azure-services-{environment}"
+            : $"sqlfw-allowed-{i}-{environment}";
+
+        firewallRules.Add(new FirewallRule(ruleName, new FirewallRuleArgs
+        {
+            ResourceGroupName = resourceGroup.Name,
+            ServerName = sqlServer.Name,
+            StartIpAddress = ipRange,
+            EndIpAddress = ipRange
+        }));
+    }
 
     // Build connection string (marked as secret to prevent exposure in state)
     var connectionString = Output.CreateSecret(
         Output.Tuple(sqlServer.FullyQualifiedDomainName, database.Name, sqlAdminPassword)
-            .Apply(t => $"Server=tcp:{t.Item1},1433;Initial Catalog={t.Item2};Persist Security Info=False;User ID=sqladmin;Password={t.Item3};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"));
+            .Apply(t => $"Server=tcp:{t.Item1},1433;Initial Catalog={t.Item2};Persist Security Info=False;User ID={sqlAdminLogin};Password={t.Item3};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"));
 
     // Container Apps Environment (Consumption only - Workload Profiles v2)
     var managedEnvironment = new ManagedEnvironment($"cae-hotshot-{environment}", new ManagedEnvironmentArgs
@@ -140,7 +181,7 @@ return await Pulumi.Deployment.RunAsync(() =>
             LogAnalyticsConfiguration = new Pulumi.AzureNative.App.Inputs.LogAnalyticsConfigurationArgs
             {
                 CustomerId = workspace.CustomerId,
-                SharedKey = Output.CreateSecret(Output.Create(""))
+                SharedKey = workspaceSharedKey
             }
         },
         WorkloadProfiles = new[]
@@ -216,7 +257,9 @@ return await Pulumi.Deployment.RunAsync(() =>
                 new ContainerArgs
                 {
                     Name = "hotshot-api",
-                    Image = Output.Format($"{registry.LoginServer}/{containerImage}"),
+                    // Use the fully qualified container image name as-is
+                    // Do NOT concatenate with registry.LoginServer as it produces invalid image names
+                    Image = containerImage,
                     Resources = new ContainerResourcesArgs
                     {
                         Cpu = 0.5,
