@@ -2,8 +2,7 @@ using System.Collections.Generic;
 using Pulumi;
 using Pulumi.AzureNative.Resources;
 using Pulumi.AzureNative.OperationalInsights;
-using Pulumi.AzureNative.OperationalInsights.Inputs;
-using Pulumi.AzureNative.Insights;
+using Pulumi.AzureNative.ApplicationInsights;
 using Pulumi.AzureNative.ContainerRegistry;
 using Pulumi.AzureNative.ContainerRegistry.Inputs;
 using Pulumi.AzureNative.App;
@@ -25,6 +24,12 @@ return await Pulumi.Deployment.RunAsync(() =>
     var environment = config.Get("environment") ?? "dev";
     var sqlAdminLogin = config.Get("sqlAdminLogin") ?? "sqladmin";
     var sqlAdminPassword = config.RequireSecret("sqlAdminPassword");
+    // Azure AD Tenant ID is required for Key Vault access policies
+    // Get from: az account show --query tenantId -o tsv
+    var azureTenantId = config.Require("azureTenantId");
+    // Azure Subscription ID is required for role assignments
+    // Get from: az account show --query id -o tsv
+    var subscriptionId = config.Require("subscriptionId");
     // Container image must be a fully qualified image name (e.g., "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest")
     // Do not provide partial image names - they will not be prefixed with the registry login server
     var containerImage = config.Get("containerImage") ?? "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest";
@@ -117,8 +122,16 @@ return await Pulumi.Deployment.RunAsync(() =>
 
     // Assign AcrPull role to managed identity for registry access
     // This allows the container app to pull images without admin credentials
-    // Note: Role assignment requires subscription ID which must be obtained from Azure context
-    // For now, we rely on RBAC configuration post-deployment via Azure CLI or Portal
+    // AcrPull role definition ID: 7f951dda-4ed3-4680-a7ca-43fe172d538d
+    var acrPullRoleDefinitionId = $"/subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/7f951dda-4ed3-4680-a7ca-43fe172d538d";
+
+    var acrPullRoleAssignment = new RoleAssignment($"acr-pull-{environment}", new RoleAssignmentArgs
+    {
+        PrincipalId = containerAppIdentity.PrincipalId,
+        PrincipalType = Pulumi.AzureNative.Authorization.PrincipalType.ServicePrincipal,
+        RoleDefinitionId = acrPullRoleDefinitionId,
+        Scope = registry.Id
+    });
 
     // Azure Key Vault for securely storing registry credentials
     var keyVault = new Vault($"kv-hotshot-{environment}", new VaultArgs
@@ -127,7 +140,7 @@ return await Pulumi.Deployment.RunAsync(() =>
         Location = location,
         Properties = new VaultPropertiesArgs
         {
-            TenantId = "00000000-0000-0000-0000-000000000000", // Placeholder - set via environment or config
+            TenantId = azureTenantId,
             Sku = new Pulumi.AzureNative.KeyVault.Inputs.SkuArgs
             {
                 Family = "A",
@@ -138,7 +151,7 @@ return await Pulumi.Deployment.RunAsync(() =>
                 // Grant managed identity access to retrieve secrets
                 new AccessPolicyEntryArgs
                 {
-                    TenantId = "00000000-0000-0000-0000-000000000000", // Placeholder - set via environment or config
+                    TenantId = azureTenantId,
                     ObjectId = containerAppIdentity.PrincipalId,
                     Permissions = new PermissionsArgs
                     {
