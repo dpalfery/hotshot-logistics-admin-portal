@@ -120,11 +120,22 @@ npm run build
 # Lint code
 npm run lint
 
-# Run Playwright tests
+# Run all tests (unit + component + E2E)
 npm test
 
-# Run Playwright in UI mode
-npm run test:ui
+# Run unit & component tests (Vitest)
+npm run test:unit
+npm run test:unit:watch       # Watch mode for development
+npm run test:unit:coverage    # With coverage report
+npm run test:unit:ui          # Interactive UI
+
+# Run E2E tests (Playwright)
+npm run test:e2e
+npm run test:e2e:headed       # With visible browser
+npm run test:e2e:ui           # Interactive UI
+
+# Run all tests in CI mode
+npm run test:ci
 ```
 
 ### Driver Mobile App (Expo)
@@ -165,13 +176,39 @@ CONNECTIONSTRINGS__DEFAULTCONNECTION=...
 
 ## Testing Strategy
 
-### Test Projects
+### Backend Test Projects
 
 - **HotshotLogistics.Tests** - Unit tests for services, repositories, utilities
 - **HotshotLogistics.IntegrationTests** - Integration tests for controllers and database
-- **admin-dashboard** - Playwright E2E tests for frontend
 
-### Running Specific Tests
+### Frontend Testing (3-Tier Pyramid)
+
+The admin dashboard follows a comprehensive testing pyramid:
+
+```
+         /\
+        /E2E\      ← Playwright (full flows, critical paths)
+       /------\
+      /Component\ ← React Testing Library (UI components)
+     /----------\
+    /   Unit     \ ← Vitest (utilities, services, hooks)
+   /--------------\
+```
+
+**Unit & Component Tests (Vitest + React Testing Library):**
+- Location: `1-Presentation/admin-dashboard/src/**/*.test.ts(x)`
+- Framework: Vitest with jsdom environment
+- Coverage thresholds: 60% (lines, functions, branches, statements)
+- Run: `npm run test:unit` or `npm run test:unit:coverage`
+
+**E2E Tests (Playwright):**
+- Location: `1-Presentation/admin-dashboard/tests/*.spec.ts`
+- Browsers: Chromium, Firefox, WebKit
+- Run: `npm run test:e2e`
+
+**See:** `6-Docs/frontend-testing.md` for comprehensive frontend testing guide
+
+### Running Backend Tests
 
 ```bash
 # Single test class
@@ -182,6 +219,24 @@ dotnet test --filter "FullyQualifiedName~JobServiceTests.CreateJob_ValidInput_Re
 
 # All tests in a namespace
 dotnet test --filter "FullyQualifiedName~HotshotLogistics.Tests.Job"
+```
+
+### Running Frontend Tests
+
+```bash
+# Unit & component tests
+cd 1-Presentation/admin-dashboard
+npm run test:unit              # Run once
+npm run test:unit:watch        # Watch mode
+npm run test:unit:coverage     # With coverage
+
+# E2E tests
+npm run test:e2e               # Run Playwright tests
+npm run test:e2e:ui            # Interactive mode
+
+# All tests
+npm test                       # Run all tests
+npm run test:ci                # CI mode with coverage
 ```
 
 ### Integration Test Requirements
@@ -252,7 +307,8 @@ Hub configuration in `RealtimeService` and Azure SignalR Service integration.
 
 ## Build Pipeline
 
-The CI/CD pipeline (`.github/workflows/dotnet-build-test.yml`) includes:
+### Backend CI/CD (`.github/workflows/dotnet-build-test.yml`)
+
 - **Restore** - All projects including Pulumi infrastructure
 - **Lint** - Code formatting validation for all projects
 - **Build** - Release build of all projects
@@ -261,6 +317,17 @@ The CI/CD pipeline (`.github/workflows/dotnet-build-test.yml`) includes:
 - **Dependabot** - Automated dependency update checking
 
 All projects including the Pulumi infrastructure (`7-Deployment/pulumi/`) are built and linted as part of the standard pipeline.
+
+### Frontend CI/CD (`.github/workflows/frontend-tests.yml`)
+
+Automated testing runs on every push/PR with parallel jobs:
+
+1. **Unit & Component Tests** - Vitest with coverage reporting, uploads to Codecov
+2. **E2E Tests** - Playwright tests with artifact uploads (reports, screenshots)
+3. **Lint** - ESLint code style enforcement
+4. **Build** - Production build verification
+
+**Deployment Gate:** All tests must pass before deployment to Azure Static Web Apps (`.github/workflows/deploy-static-web-app.yml`)
 
 ## Known Issues & Workarounds
 
@@ -288,6 +355,7 @@ Some test files reference repositories directly (e.g., `DriverRepository`) which
 
 ## Additional Resources
 
-- README.md - Detailed project setup and prerequisites
-- SECURITY.md - Security policies and guidelines
-- .editorconfig - Code formatting standards
+- **README.md** - Detailed project setup and prerequisites
+- **SECURITY.md** - Security policies and guidelines
+- **6-Docs/frontend-testing.md** - Comprehensive frontend testing guide
+- **.editorconfig** - Code formatting standards
