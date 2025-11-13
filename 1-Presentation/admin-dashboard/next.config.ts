@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { generateCspHeader } from "./src/lib/csp";
 
 const nextConfig: NextConfig = {
   // Enable static export for Azure Static Web Apps
@@ -13,23 +14,13 @@ const nextConfig: NextConfig = {
   async headers() {
     // Get API URL from environment (must be set at build time for static export)
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+    const isDevelopment = process.env.NODE_ENV === 'development';
 
-    // Build connect-src CSP directive
-    const connectSrcUrls = [
-      "'self'",
-      "https://*.microsoftonline.com",
-      "https://*.msecnd.net"
-    ];
-
-    // Add development localhost endpoints
-    if (process.env.NODE_ENV === 'development') {
-      connectSrcUrls.push("https://localhost:5001", "http://localhost:5000");
-    }
-
-    // Add production API URL if configured
-    if (apiUrl) {
-      connectSrcUrls.push(apiUrl);
-    }
+    // Generate CSP header using centralized utility
+    const cspHeader = generateCspHeader({
+      apiUrl,
+      isDevelopment,
+    });
 
     return [
       {
@@ -62,17 +53,10 @@ const nextConfig: NextConfig = {
             value: 'strict-origin-when-cross-origin'
           },
           // Content Security Policy for Azure AD authentication and API access
+          // Generated with secure defaults (no unsafe-inline, no unsafe-eval in production)
           {
             key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.microsoftonline.com https://*.msecnd.net",
-              "style-src 'self' 'unsafe-inline' https://*.microsoftonline.com",
-              "img-src 'self' data: https: blob:",
-              `connect-src ${connectSrcUrls.join(' ')}`,
-              "frame-src 'self' https://*.microsoftonline.com",
-              "font-src 'self' data: https://*.microsoftonline.com"
-            ].join('; ')
+            value: cspHeader
           }
         ]
       }
