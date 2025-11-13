@@ -1,0 +1,80 @@
+---
+name: "CodeQL"
+
+on:
+  push:
+    branches: ["main", "develop"]
+    paths:
+      - '**/*.cs'
+      - '**/*.csproj'
+      - '**/*.ts'
+      - '**/*.tsx'
+      - '**/*.js'
+      - '**/*.jsx'
+      - '.github/workflows/codeql-analysis.yml'
+  pull_request:
+    branches: ["main", "develop"]
+    paths:
+      - '**/*.cs'
+      - '**/*.csproj'
+      - '**/*.ts'
+      - '**/*.tsx'
+      - '**/*.js'
+      - '**/*.jsx'
+      - '.github/workflows/codeql-analysis.yml'
+  schedule:
+    - cron: '30 1 * * 0'  # Run weekly on Sunday at 1:30 AM UTC
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['csharp', 'javascript']
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        if: matrix.language == 'csharp'
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      # Initializes the CodeQL tools for scanning.
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-and-quality
+
+      # Restore and build the .NET solution
+      - name: Restore dependencies
+        if: matrix.language == 'csharp'
+        run: |
+          for proj in $(find . -name '*.csproj'); do
+            dotnet restore "$proj"
+          done
+
+      - name: Build solution
+        if: matrix.language == 'csharp'
+        run: |
+          for proj in $(find . -name '*.csproj'); do
+            dotnet build "$proj" --configuration Release --no-restore
+          done
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{matrix.language}}"
