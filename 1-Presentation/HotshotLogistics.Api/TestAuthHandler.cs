@@ -16,8 +16,6 @@ namespace HotshotLogistics.Api
     /// </summary>
     public class TestAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions>
     {
-        private readonly string _defaultRole;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="TestAuthHandler"/> class.
         /// </summary>
@@ -27,11 +25,9 @@ namespace HotshotLogistics.Api
         public TestAuthHandler(
             IOptionsMonitor<AuthenticationSchemeOptions> options,
             ILoggerFactory logger,
-            UrlEncoder encoder,
-            string defaultRole = "Admin")
+            UrlEncoder encoder)
             : base(options, logger, encoder)
         {
-            _defaultRole = defaultRole;
         }
 
         /// <inheritdoc/>
@@ -49,8 +45,8 @@ namespace HotshotLogistics.Api
                 return Task.FromResult(AuthenticateResult.Fail("Invalid Authorization Scheme"));
             }
 
-            // Allow dynamic role per request via X-Test-Role header; default to configured _defaultRole
-            var requestedRole = _defaultRole;
+            // Allow dynamic role per request via X-Test-Role header; default to Admin
+            var requestedRole = "Admin";
             if (Request.Headers.TryGetValue("X-Test-Role", out var roleHeader) && !string.IsNullOrWhiteSpace(roleHeader.ToString()))
             {
                 requestedRole = roleHeader.ToString().Trim();
