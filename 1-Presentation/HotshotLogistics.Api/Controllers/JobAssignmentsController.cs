@@ -7,6 +7,7 @@ namespace HotshotLogistics.Api.Controllers
     using HotshotLogistics.Domain.Entities;
     using HotshotLogistics.Domain.ValueObjects;
     using HotshotLogistics.Core.Enums;
+    using HotshotLogistics.Core.Logging;
     using HotshotLogistics.Domain.DTOs;
     using HotshotLogistics.Contracts.Services;
     using Microsoft.AspNetCore.Authorization;
@@ -158,12 +159,12 @@ namespace HotshotLogistics.Api.Controllers
             catch (KeyNotFoundException ex)
             {
 
-                this.logger.LogWarning(ex, "Failed to assign job: {Message}", ex.Message);
+                this.logger.LogWarning(ex, "Failed to assign job: {Message}", LogSanitizer.SanitizeExceptionMessage(ex.Message));
                 return this.NotFound(ex.Message);
             }
             catch (InvalidOperationException ex)
             {
-                this.logger.LogWarning(ex, "Failed to assign job: {Message}", ex.Message);
+                this.logger.LogWarning(ex, "Failed to assign job: {Message}", LogSanitizer.SanitizeExceptionMessage(ex.Message));
                 return this.Conflict(ex.Message);
             }
             catch (Exception ex)
@@ -198,7 +199,7 @@ namespace HotshotLogistics.Api.Controllers
             }
             catch (KeyNotFoundException ex)
             {
-                this.logger.LogWarning(ex, "Failed to update assignment status: {Message}", ex.Message);
+                this.logger.LogWarning(ex, "Failed to update assignment status: {Message}", LogSanitizer.SanitizeExceptionMessage(ex.Message));
                 return this.NotFound(ex.Message);
             }
             catch (Exception ex)

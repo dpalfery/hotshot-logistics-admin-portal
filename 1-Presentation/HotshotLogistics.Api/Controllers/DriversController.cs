@@ -2,6 +2,7 @@
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 using HotshotLogistics.Application.Authorization;
+using HotshotLogistics.Core.Logging;
 using HotshotLogistics.Domain.ValueObjects;
 using HotshotLogistics.Domain.DTOs;
 using HotshotLogistics.Contracts.Services;
@@ -247,7 +248,7 @@ namespace HotshotLogistics.Api.Controllers
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, $"An error occurred while updating driver {id}");
+                logger.LogError(ex, "An error occurred while updating driver {DriverId}", LogSanitizer.SafeId(id));
                 return StatusCode(500, "An internal error occurred.");
             }
         }
@@ -276,7 +277,7 @@ namespace HotshotLogistics.Api.Controllers
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, $"An error occurred while deleting driver {id}");
+                logger.LogError(ex, "An error occurred while deleting driver {DriverId}", LogSanitizer.SafeId(id));
                 return StatusCode(500, "An internal error occurred.");
             }
         }
