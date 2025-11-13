@@ -23,20 +23,32 @@ public class JobValidator : AbstractValidator<Job>
             .NotEmpty().WithMessage("Customer ID is required.");
 
         RuleFor(x => x.PickupLocation)
-            .NotNull().WithMessage("Pickup location is required.")
-            .SetValidator(new LocationValidator()!);
+            .NotNull().WithMessage("Pickup location is required.");
+
+        RuleFor(x => x.PickupLocation)
+            .SetValidator(new LocationValidator()!)
+            .When(x => x.PickupLocation != null);
 
         RuleFor(x => x.DeliveryLocation)
-            .NotNull().WithMessage("Delivery location is required.")
-            .SetValidator(new LocationValidator()!);
+            .NotNull().WithMessage("Delivery location is required.");
+
+        RuleFor(x => x.DeliveryLocation)
+            .SetValidator(new LocationValidator()!)
+            .When(x => x.DeliveryLocation != null);
 
         RuleFor(x => x.Cargo)
-            .NotNull().WithMessage("Cargo details are required.")
-            .SetValidator(new CargoDetailsValidator()!);
+            .NotNull().WithMessage("Cargo details are required.");
+
+        RuleFor(x => x.Cargo)
+            .SetValidator(new CargoDetailsValidator()!)
+            .When(x => x.Cargo != null);
 
         RuleFor(x => x.Pricing)
-            .NotNull().WithMessage("Pricing details are required.")
-            .SetValidator(new PricingDetailsValidator()!);
+            .NotNull().WithMessage("Pricing details are required.");
+
+        RuleFor(x => x.Pricing)
+            .SetValidator(new PricingDetailsValidator()!)
+            .When(x => x.Pricing != null);
 
         RuleFor(x => x.ScheduledPickupTime)
             .Must(dt => dt > DateTime.UtcNow).WithMessage("Scheduled pickup time must be in the future.")

@@ -1,6 +1,7 @@
 import { msalInstance } from '@/lib/providers';
 import { loginRequest } from '@/config/auth';
 import { Job, Driver, Invoice, Customer, PagedResult, JobFilter, InvoiceFilter, PaginationParameters, InvoiceSummaryMetrics, InvoiceAgingBuckets, JobStatusSummary } from '@/types';
+import { logger } from '@/lib/logger';
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || '/api').trim();
 
@@ -14,10 +15,6 @@ class ApiService {
     const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
     const url = `${baseUrl}${normalizedEndpoint}${query ? `?${query}` : ''}`;
 
-    console.log('=== API REQUEST DEBUG ===');
-    console.log('Making request to:', url);
-    console.log('Base URL from env:', API_BASE_URL);
-
     const config: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
@@ -28,35 +25,47 @@ class ApiService {
 
     // Add authentication token if available
     const token = await this.getAuthToken();
-    console.log('Auth token obtained:', token ? 'Yes' : 'No');
+    const hasToken = !!token;
     if (token) {
       // Use Test scheme for test token, Bearer for real tokens
       const scheme = token === 'test-token' ? 'Test' : 'Bearer';
-      console.log('Using auth scheme:', scheme);
       config.headers = {
         ...config.headers,
         Authorization: `${scheme} ${token}`,
       };
     }
 
+    // Log API request with sanitized context (never logs actual token or full URL)
+    logger.apiRequest(options.method || 'GET', url, {
+      hasAuthentication: hasToken,
+    });
+
     try {
       const response = await fetch(url, config);
-      console.log('Response status:', response.status);
-      console.log('Response ok:', response.ok);
 
       if (!response.ok) {
         const error = await response.text();
-        console.error('API Error response:', error);
+        logger.error('API request failed', {
+          status: response.status,
+          endpoint: normalizedEndpoint,
+        });
         throw new Error(`API Error: ${response.status} ${error}`);
       }
 
       const data = await response.json();
-      console.log('Response data length/type:', Array.isArray(data) ? data.length : typeof data);
-      console.log('=== END API REQUEST DEBUG ===');
+
+      // Log API response with sanitized context
+      logger.apiResponse(options.method || 'GET', url, response.status, {
+        dataType: Array.isArray(data) ? 'array' : typeof data,
+        itemCount: Array.isArray(data) ? data.length : undefined,
+      });
+
       return data;
     } catch (error) {
-      console.error('Fetch error:', error);
-      console.log('=== END API REQUEST DEBUG (ERROR) ===');
+      logger.error('API fetch error', {
+        endpoint: normalizedEndpoint,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
       throw error;
     }
   }
@@ -64,12 +73,13 @@ class ApiService {
   private async getAuthToken(): Promise<string | null> {
     // Always use test authentication in development
     if (process.env.NODE_ENV === 'development') {
-      console.log('Development mode: using test authentication');
+      logger.debug('Using test authentication in development mode');
       return 'test-token';
     }
 
     const account = msalInstance.getActiveAccount();
     if (!account) {
+      logger.debug('No active MSAL account found');
       return null;
     }
 
@@ -78,18 +88,24 @@ class ApiService {
         ...loginRequest,
         account,
       });
+      logger.debug('Token acquired silently');
       return response.accessToken;
     } catch (error) {
-      console.error('Silent token acquisition failed:', error);
+      logger.warn('Silent token acquisition failed, attempting interactive', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
       // Fallback to interactive method if silent acquisition fails
       try {
         const response = await msalInstance.acquireTokenPopup({
           ...loginRequest,
           account,
         });
+        logger.debug('Token acquired via popup');
         return response.accessToken;
       } catch (popupError) {
-        console.error('Popup token acquisition failed:', popupError);
+        logger.error('Token acquisition failed', {
+          error: popupError instanceof Error ? popupError.message : 'Unknown error',
+        });
         return null;
       }
     }
