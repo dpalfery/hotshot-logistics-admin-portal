@@ -304,13 +304,21 @@ Hub configuration in `RealtimeService` and Azure SignalR Service integration.
 
 ## Build Pipeline
 
-The CI/CD pipeline (`.github/workflows/dotnet-build-test.yml`) includes:
+The CI/CD pipeline includes multiple workflows:
+
+### Main Build Pipeline (`.github/workflows/dotnet-build-test.yml`)
 - **Restore** - All projects including Pulumi infrastructure
 - **Lint** - Code formatting validation for all projects
 - **Build** - Release build of all projects
 - **Test** - Unit tests (excludes integration tests which require SQL Server)
 - **Secret Scanning** - TruffleHog verification on all changes
 - **Dependabot** - Automated dependency update checking
+
+### Security Scanning (`.github/workflows/codeql-analysis.yml`)
+- **CodeQL Analysis** - Automated security vulnerability scanning for C# and JavaScript/TypeScript
+- Runs on pull requests, pushes to main/develop, and weekly schedule
+- Uses security-and-quality query suite for comprehensive coverage
+- Results published to GitHub Security tab
 
 All projects including the Pulumi infrastructure (`7-Deployment/pulumi/`) are built and linted as part of the standard pipeline.
 
