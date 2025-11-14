@@ -31,6 +31,10 @@ yarn-error.*
 .env*.local
 .env
 
+# Local appsettings with sensitive values (never commit credentials)
+appsettings.Local.json
+*.local.json
+
 # typescript
 *.tsbuildinfo
 ## Ignore Visual Studio temporary files, build results, and

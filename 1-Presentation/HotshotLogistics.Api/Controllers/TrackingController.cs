@@ -9,6 +9,7 @@ namespace HotshotLogistics.Api.Controllers
     using System.Threading;
     using System.Threading.Tasks;
     using HotshotLogistics.Contracts.Services;
+    using HotshotLogistics.Core.Logging;
     using HotshotLogistics.Domain.Entities;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
@@ -83,12 +84,12 @@ namespace HotshotLogistics.Api.Controllers
             }
             catch (ArgumentException ex)
             {
-                logger.LogWarning(ex, "Invalid start tracking request: {Message}", ex.Message);
+                logger.LogWarning(ex, "Invalid start tracking request: {Message}", LogSanitizer.SanitizeExceptionMessage(ex.Message));
                 return BadRequest(ex.Message);
             }
             catch (KeyNotFoundException ex)
             {
-                logger.LogWarning(ex, "Job or driver not found: {Message}", ex.Message);
+                logger.LogWarning(ex, "Job or driver not found: {Message}", LogSanitizer.SanitizeExceptionMessage(ex.Message));
                 return NotFound(ex.Message);
             }
             catch (Exception ex)
@@ -131,7 +132,7 @@ namespace HotshotLogistics.Api.Controllers
             }
             catch (ArgumentException ex)
             {
-                logger.LogWarning(ex, "Invalid stop tracking request for job: {Message}", ex.Message);
+                logger.LogWarning(ex, "Invalid stop tracking request for job: {Message}", LogSanitizer.SanitizeExceptionMessage(ex.Message));
                 return BadRequest(ex.Message);
             }
             catch (KeyNotFoundException ex)
@@ -195,12 +196,12 @@ namespace HotshotLogistics.Api.Controllers
             }
             catch (ArgumentException ex)
             {
-                logger.LogWarning(ex, "Invalid location update request: {Message}", ex.Message);
+                logger.LogWarning(ex, "Invalid location update request: {Message}", LogSanitizer.SanitizeExceptionMessage(ex.Message));
                 return BadRequest(ex.Message);
             }
             catch (KeyNotFoundException ex)
             {
-                logger.LogWarning(ex, "Job or driver not found for location update: {Message}", ex.Message);
+                logger.LogWarning(ex, "Job or driver not found for location update: {Message}", LogSanitizer.SanitizeExceptionMessage(ex.Message));
                 return NotFound(ex.Message);
             }
             catch (Exception ex)
@@ -330,12 +331,12 @@ namespace HotshotLogistics.Api.Controllers
             }
             catch (ArgumentException ex)
             {
-                logger.LogWarning(ex, "Invalid route deviation request: {Message}", ex.Message);
+                logger.LogWarning(ex, "Invalid route deviation request: {Message}", LogSanitizer.SanitizeExceptionMessage(ex.Message));
                 return BadRequest(ex.Message);
             }
             catch (KeyNotFoundException ex)
             {
-                logger.LogWarning(ex, "Job not found for route deviation check: {Message}", ex.Message);
+                logger.LogWarning(ex, "Job not found for route deviation check: {Message}", LogSanitizer.SanitizeExceptionMessage(ex.Message));
                 return NotFound(ex.Message);
             }
             catch (Exception ex)

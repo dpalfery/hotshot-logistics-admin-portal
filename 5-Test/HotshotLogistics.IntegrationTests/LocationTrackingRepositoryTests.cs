@@ -13,7 +13,7 @@ using HotshotLogistics.Data.Repositories;
 using Microsoft.Extensions.Configuration;
 using Xunit;
 
-namespace HotshotLogistics.Tests.Tracking
+namespace HotshotLogistics.IntegrationTests
 {
     /// <summary>
     /// Integration tests for LocationTrackingRepository.

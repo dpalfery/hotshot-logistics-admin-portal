@@ -219,6 +219,19 @@ dotnet test
 
 ---
 
+## 🔒 Security
+
+This project implements comprehensive security scanning:
+
+- **CodeQL Analysis**: Automated security vulnerability scanning for C# and JavaScript/TypeScript code
+- **Secret Scanning**: TruffleHog verification to prevent credential leaks
+- **Weekly Scans**: Scheduled security scans run every Sunday
+- **Pull Request Checks**: All PRs are automatically scanned before merge
+
+Security findings are published to the GitHub Security tab. See [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
+
+---
+
 ## 👥 Contributing
 
 PRs and issues welcome!  

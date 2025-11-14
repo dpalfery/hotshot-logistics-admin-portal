@@ -1,0 +1,3 @@
+name: hotshot-logistics-infra
+runtime: dotnet
+description: Azure infrastructure for Hotshot Logistics using Container Apps and Static Web Apps

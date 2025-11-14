@@ -217,37 +217,90 @@ namespace HotshotLogistics.DbSetup
                 Console.WriteLine("Setting environment variables...");
 
                 var envPrefix = parser.ProjectSlug!.ToUpperInvariant();
+
+                // Use Process target if --env-vars-in-proc flag is set (for CI/CD), otherwise use User target (for local persistence)
+                var envTarget = parser.EnvVarsInProcess ? EnvironmentVariableTarget.Process : EnvironmentVariableTarget.User;
+
+                if (parser.EnvVarsInProcess)
+                {
+                    logger.LogInformation("Setting environment variables at process level (--env-vars-in-proc)");
+                }
+                else
+                {
+                    logger.LogInformation("Setting environment variables at user level for persistence (use --env-vars-in-proc for process level)");
+                }
+
                 try
                 {
-                    environmentManager.SetEnvironmentVariable($"{envPrefix}_DB_SERVER", parser.Server!, EnvironmentVariableTarget.User);
+                    environmentManager.SetEnvironmentVariable($"{envPrefix}_DB_SERVER", parser.Server!, envTarget);
                     Console.WriteLine($"  ✓ {envPrefix}_DB_SERVER");
 
-                    environmentManager.SetEnvironmentVariable($"{envPrefix}_DB_PORT", parser.Port.ToString(), EnvironmentVariableTarget.User);
+                    environmentManager.SetEnvironmentVariable($"{envPrefix}_DB_PORT", parser.Port.ToString(), envTarget);
                     Console.WriteLine($"  ✓ {envPrefix}_DB_PORT");
 
-                    environmentManager.SetEnvironmentVariable($"{envPrefix}_DB_NAME", parser.DatabaseName!, EnvironmentVariableTarget.User);
+                    environmentManager.SetEnvironmentVariable($"{envPrefix}_DB_NAME", parser.DatabaseName!, envTarget);
                     Console.WriteLine($"  ✓ {envPrefix}_DB_NAME");
 
-                    environmentManager.SetEnvironmentVariable($"{envPrefix}_DB_APP_USER", parser.AppUser!, EnvironmentVariableTarget.User);
+                    environmentManager.SetEnvironmentVariable($"{envPrefix}_DB_APP_USER", parser.AppUser!, envTarget);
                     Console.WriteLine($"  ✓ {envPrefix}_DB_APP_USER");
 
-                    environmentManager.SetEnvironmentVariable($"{envPrefix}_DB_APP_PASSWORD", appPassword, EnvironmentVariableTarget.User);
+                    environmentManager.SetEnvironmentVariable($"{envPrefix}_DB_APP_PASSWORD", appPassword, envTarget);
                     Console.WriteLine($"  ✓ {envPrefix}_DB_APP_PASSWORD");
 
-                    environmentManager.SetEnvironmentVariable("ConnectionStrings__DefaultConnection", appConnectionString, EnvironmentVariableTarget.User);
+                    environmentManager.SetEnvironmentVariable("ConnectionStrings__DefaultConnection", appConnectionString, envTarget);
                     Console.WriteLine($"  ✓ ConnectionStrings__DefaultConnection");
+
+                    // Also set with uppercase for cross-platform compatibility (Linux case-sensitive)
+                    environmentManager.SetEnvironmentVariable("CONNECTIONSTRINGS__DEFAULTCONNECTION", appConnectionString, envTarget);
+                    Console.WriteLine($"  ✓ CONNECTIONSTRINGS__DEFAULTCONNECTION");
 
                     if (parser.UseDocker)
                     {
-                        environmentManager.SetEnvironmentVariable($"{envPrefix}_DB_SA_PASSWORD", parser.SaPassword!, EnvironmentVariableTarget.User);
+                        environmentManager.SetEnvironmentVariable($"{envPrefix}_DB_SA_PASSWORD", parser.SaPassword!, envTarget);
                         Console.WriteLine($"  ✓ {envPrefix}_DB_SA_PASSWORD");
 
-                        environmentManager.SetEnvironmentVariable($"{envPrefix}_DB_USE_DOCKER", "true", EnvironmentVariableTarget.User);
+                        environmentManager.SetEnvironmentVariable($"{envPrefix}_DB_USE_DOCKER", "true", envTarget);
                         Console.WriteLine($"  ✓ {envPrefix}_DB_USE_DOCKER");
                     }
 
                     Console.WriteLine();
                     Console.WriteLine("✓ All environment variables set successfully");
+
+                    // If GITHUB_ENV is detected (GitHub Actions), also write variables there for cross-step availability
+                    var githubEnv = Environment.GetEnvironmentVariable("GITHUB_ENV");
+                    if (!string.IsNullOrEmpty(githubEnv))
+                    {
+                        logger.LogInformation("Detected GitHub Actions environment, writing to GITHUB_ENV");
+                        try
+                        {
+                            var envLines = new[]
+                            {
+                                $"ConnectionStrings__DefaultConnection={appConnectionString}",
+                                $"CONNECTIONSTRINGS__DEFAULTCONNECTION={appConnectionString}",
+                                $"{envPrefix}_DB_SERVER={parser.Server}",
+                                $"{envPrefix}_DB_PORT={parser.Port}",
+                                $"{envPrefix}_DB_NAME={parser.DatabaseName}",
+                                $"{envPrefix}_DB_APP_USER={parser.AppUser}",
+                                $"{envPrefix}_DB_APP_PASSWORD={appPassword}"
+                            };
+
+                            if (parser.UseDocker)
+                            {
+                                envLines = envLines.Concat(new[]
+                                {
+                                    $"{envPrefix}_DB_SA_PASSWORD={parser.SaPassword}",
+                                    $"{envPrefix}_DB_USE_DOCKER=true"
+                                }).ToArray();
+                            }
+
+                            File.AppendAllLines(githubEnv, envLines);
+                            logger.LogInformation("Environment variables written to GitHub Actions GITHUB_ENV");
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogWarning(ex, "Failed to write to GITHUB_ENV file");
+                        }
+                    }
                 }
                 catch (Exception ex)
                 {

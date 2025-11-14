@@ -9,6 +9,7 @@ namespace HotshotLogistics.Application.Services
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
+    using HotshotLogistics.Core.Logging;
     using HotshotLogistics.Domain.Entities;
     using HotshotLogistics.Domain.ValueObjects;
     using HotshotLogistics.Contracts.Services;
@@ -61,7 +62,7 @@ namespace HotshotLogistics.Application.Services
 
             return await ExecuteWithRetryAsync(async () =>
             {
-                logger.LogInformation("Sending SMS to {PhoneNumber}", phoneNumber);
+                logger.LogInformation("Sending SMS to masked number {PhoneNumber}", LogSanitizer.MaskPhoneNumber(phoneNumber));
 
                 var commMessage = new CommunicationMessage
                 {
@@ -71,7 +72,7 @@ namespace HotshotLogistics.Application.Services
 
                 var service = communicationFactory.GetService("Sms");
                 return await service.SendAsync(commMessage, cancellationToken);
-            }, $"SMS to {phoneNumber}");
+            }, "SMS notification");
         }
 
         /// <inheritdoc/>
@@ -94,7 +95,7 @@ namespace HotshotLogistics.Application.Services
 
             return await ExecuteWithRetryAsync(async () =>
             {
-                logger.LogInformation("Sending email with subject: {Subject} to recipient", subject);
+                logger.LogInformation("Sending email with subject: {Subject} to recipient", LogSanitizer.SanitizeEmailSubject(subject));
 
                 var commMessage = new CommunicationMessage
                 {
@@ -128,7 +129,7 @@ namespace HotshotLogistics.Application.Services
 
             return await ExecuteWithRetryAsync(async () =>
             {
-                logger.LogInformation("Sending push notification to device {DeviceToken}", deviceToken);
+                logger.LogInformation("Sending push notification to device {DeviceToken}", LogSanitizer.MaskDeviceToken(deviceToken));
 
                 var commMessage = new CommunicationMessage
                 {
@@ -139,7 +140,7 @@ namespace HotshotLogistics.Application.Services
 
                 var service = communicationFactory.GetService("Push");
                 return await service.SendAsync(commMessage, cancellationToken);
-            }, $"Push notification to {deviceToken}");
+            }, "Push notification");
         }
 
         /// <inheritdoc/>

@@ -59,6 +59,10 @@ namespace HotshotLogistics.IntegrationTests
             var jobsResponse = await Client.GetAsync("/api/Job");
             var pagedResult = await jobsResponse.Content.ReadFromJsonAsync<PagedResult<Domain.Entities.Job>>();
             Assert.NotNull(pagedResult);
+            if (!pagedResult.Items.Any())
+            {
+                throw new Exception("No jobs in seed data to test");
+            }
             var validJobId = pagedResult.Items.First().Id;
 
             // Act

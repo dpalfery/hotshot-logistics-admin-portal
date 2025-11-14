@@ -10,6 +10,7 @@ namespace HotshotLogistics.Api.Controllers
     using System.Threading.Tasks;
     using HotshotLogistics.Application.Authorization;
     using HotshotLogistics.Contracts.Services;
+    using HotshotLogistics.Core.Logging;
     using HotshotLogistics.Domain.Entities;
     using HotshotLogistics.Domain.ValueObjects;
     using Microsoft.AspNetCore.Authorization;
@@ -122,7 +123,7 @@ namespace HotshotLogistics.Api.Controllers
             }
             catch (ArgumentException ex)
             {
-                logger.LogWarning(ex, "Invalid customer data provided: {Message}", ex.Message);
+                logger.LogWarning(ex, "Invalid customer data provided: {Message}", LogSanitizer.SanitizeExceptionMessage(ex.Message));
                 return BadRequest(ex.Message);
             }
             catch (Exception ex)
@@ -170,7 +171,7 @@ namespace HotshotLogistics.Api.Controllers
             }
             catch (ArgumentException ex)
             {
-                logger.LogWarning(ex, "Invalid customer data provided: {Message}", ex.Message);
+                logger.LogWarning(ex, "Invalid customer data provided: {Message}", LogSanitizer.SanitizeExceptionMessage(ex.Message));
                 return BadRequest(ex.Message);
             }
             catch (Exception ex)

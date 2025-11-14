@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { generateCspHeader, generateNonce } from './src/lib/csp';
 
 // Production HTTPS enforcement middleware
 export function middleware(request: NextRequest) {
@@ -23,16 +24,25 @@ export function middleware(request: NextRequest) {
     response.headers.set('X-XSS-Protection', '1; mode=block');
     response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
-    // Enhanced CSP for production
-    response.headers.set('Content-Security-Policy',
-      "default-src 'self'; " +
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.microsoftonline.com https://*.msecnd.net; " +
-      "style-src 'self' 'unsafe-inline' https://*.microsoftonline.com; " +
-      "img-src 'self' data: https: blob:; " +
-      "connect-src 'self' https://*.microsoftonline.com https://*.msecnd.net; " +
-      "frame-src 'self' https://*.microsoftonline.com; " +
-      "font-src 'self' data: https://*.microsoftonline.com"
-    );
+    // Get API URL from environment (runtime)
+    // This ensures the middleware CSP includes the actual API origin
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+
+    // Generate a nonce for this request (for inline scripts/styles)
+    const nonce = generateNonce();
+
+    // Generate CSP header with API origin and nonce
+    const cspHeader = generateCspHeader({
+      apiUrl,
+      isDevelopment: false,
+      nonce,
+    });
+
+    response.headers.set('Content-Security-Policy', cspHeader);
+
+    // Make nonce available to the response for use in inline scripts
+    // This can be accessed via headers in API routes or server components
+    response.headers.set('X-Nonce', nonce);
   }
 
   // Authentication bypass for static files and API routes that don't require auth

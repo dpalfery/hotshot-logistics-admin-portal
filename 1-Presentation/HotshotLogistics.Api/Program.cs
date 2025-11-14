@@ -164,7 +164,26 @@ if (app.Environment.IsDevelopment())
 // Configure CORS policy - must be after UseHttpsRedirection but before UseAuthentication
 app.UseHttpsRedirection();
 
-var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+// Handle CORS origins from either array or string format (for environment variables)
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
+if (allowedOrigins == null || allowedOrigins.Length == 0)
+{
+    // Try to get as a single string (common with environment variables)
+    var originsString = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string>();
+    if (!string.IsNullOrWhiteSpace(originsString))
+    {
+        // Split by comma and trim whitespace
+        allowedOrigins = originsString
+            .Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(o => o.Trim())
+            .Where(o => !string.IsNullOrWhiteSpace(o))
+            .ToArray();
+    }
+    else
+    {
+        allowedOrigins = Array.Empty<string>();
+    }
+}
 
 app.UseCors(policy =>
 {

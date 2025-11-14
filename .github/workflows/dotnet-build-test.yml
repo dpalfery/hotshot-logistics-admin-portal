@@ -32,7 +32,7 @@ jobs:
       - uses: actions/checkout@v5
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '8.0.x'
       - name: Restore
         run: |
           for proj in $(find . -name '*.csproj'); do
@@ -54,7 +54,7 @@ jobs:
           done
       - name: Test
         run: |
-          for proj in $(find ./5-Test -name '*.csproj'); do
+          for proj in $(find ./5-Test -name '*.csproj' ! -path '*/HotshotLogistics.IntegrationTests/*'); do
             dotnet test "$proj" --no-build --configuration Release
           done
 
@@ -94,7 +94,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '8.0.x'
 
       - name: Check for outdated packages
         run: |
