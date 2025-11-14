@@ -4,6 +4,7 @@
 
 using FluentValidation;
 using HotshotLogistics.Application.Validators;
+using HotshotLogistics.Core.Logging;
 using HotshotLogistics.Domain.Entities;
 using HotshotLogistics.Contracts.Repositories;
 using HotshotLogistics.Contracts.Services;
@@ -123,8 +124,7 @@ namespace HotshotLogistics.Api.Controllers
                 SortDirection = sortDirection
             };
 
-            logger.LogInformation("JobController.GetJobs called with filter: {@Filter}, pagination: {@Pagination}, sort: {@Sort}",
-                filter, pagination, sort);
+            logger.LogInformation("JobController.GetJobs called");
 
             var result = await jobRepository.GetJobsAsync(filter, pagination, sort, cancellationToken);
 
@@ -215,7 +215,7 @@ namespace HotshotLogistics.Api.Controllers
                 var validationResult = await jobValidator.ValidateAsync(jobDto, cancellationToken);
                 if (!validationResult.IsValid)
                 {
-                    logger.LogWarning("Job validation failed: {Errors}", string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage)));
+                    logger.LogWarning("Job validation failed: {Errors}", LogSanitizer.SanitizeValidationErrors(validationResult.Errors.Select(e => e.ErrorMessage)));
                     return BadRequest(new
                     {
                         Message = "Job validation failed",
@@ -232,17 +232,17 @@ namespace HotshotLogistics.Api.Controllers
             }
             catch (ArgumentException ex)
             {
-                logger.LogWarning(ex, "Invalid job data provided: {Message}", ex.Message);
+                logger.LogWarning(ex, "Invalid job data provided: {Message}", LogSanitizer.SanitizeExceptionMessage(ex.Message));
                 return BadRequest(ex.Message);
             }
             catch (KeyNotFoundException ex)
             {
-                logger.LogWarning(ex, "Referenced entity not found: {Message}", ex.Message);
+                logger.LogWarning(ex, "Referenced entity not found: {Message}", LogSanitizer.SanitizeExceptionMessage(ex.Message));
                 return NotFound(ex.Message);
             }
             catch (HotshotLogistics.Core.Exceptions.ValidationException ex)
             {
-                logger.LogWarning(ex, "Job validation failed: {Message}", ex.Message);
+                logger.LogWarning(ex, "Job validation failed: {Message}", LogSanitizer.SanitizeExceptionMessage(ex.Message));
                 return BadRequest(new
                 {
                     Message = "Job validation failed",
@@ -291,7 +291,7 @@ namespace HotshotLogistics.Api.Controllers
                 var validationResult = await jobValidator.ValidateAsync(jobDto, cancellationToken);
                 if (!validationResult.IsValid)
                 {
-                    logger.LogWarning("Job validation failed during update: {Errors}", string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage)));
+                    logger.LogWarning("Job validation failed during update: {Errors}", LogSanitizer.SanitizeValidationErrors(validationResult.Errors.Select(e => e.ErrorMessage)));
                     return BadRequest(new
                     {
                         Message = "Job validation failed",
@@ -313,12 +313,12 @@ namespace HotshotLogistics.Api.Controllers
             }
             catch (ArgumentException ex)
             {
-                logger.LogWarning(ex, "Invalid job data provided: {Message}", ex.Message);
+                logger.LogWarning(ex, "Invalid job data provided: {Message}", LogSanitizer.SanitizeExceptionMessage(ex.Message));
                 return BadRequest(ex.Message);
             }
             catch (HotshotLogistics.Core.Exceptions.ValidationException ex)
             {
-                logger.LogWarning(ex, "Job validation failed during update: {Message}", ex.Message);
+                logger.LogWarning(ex, "Job validation failed during update: {Message}", LogSanitizer.SanitizeExceptionMessage(ex.Message));
                 return BadRequest(new
                 {
                     Message = "Job validation failed",
@@ -361,7 +361,7 @@ namespace HotshotLogistics.Api.Controllers
             }
             catch (InvalidOperationException ex)
             {
-                logger.LogWarning(ex, "Cannot delete job: {Message}", ex.Message);
+                logger.LogWarning(ex, "Cannot delete job: {Message}", LogSanitizer.SanitizeExceptionMessage(ex.Message));
                 return BadRequest(ex.Message);
             }
             catch (Exception ex)
@@ -401,12 +401,12 @@ namespace HotshotLogistics.Api.Controllers
             }
             catch (ArgumentException ex)
             {
-                logger.LogWarning(ex, "Invalid assignment request: {Message}", ex.Message);
+                logger.LogWarning(ex, "Invalid assignment request: {Message}", LogSanitizer.SanitizeExceptionMessage(ex.Message));
                 return NotFound(ex.Message);
             }
             catch (InvalidOperationException ex)
             {
-                logger.LogWarning(ex, "Cannot assign driver to job: {Message}", ex.Message);
+                logger.LogWarning(ex, "Cannot assign driver to job: {Message}", LogSanitizer.SanitizeExceptionMessage(ex.Message));
                 return Conflict(ex.Message);
             }
             catch (Exception ex)
@@ -445,7 +445,7 @@ namespace HotshotLogistics.Api.Controllers
             }
             catch (ArgumentException ex)
             {
-                logger.LogWarning(ex, "Invalid status update request: {Message}", ex.Message);
+                logger.LogWarning(ex, "Invalid status update request: {Message}", LogSanitizer.SanitizeExceptionMessage(ex.Message));
                 return NotFound(ex.Message);
             }
             catch (Exception ex)

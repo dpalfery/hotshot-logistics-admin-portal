@@ -1,6 +1,9 @@
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## Must follow rules
+- Don't use placeholders, write only working testable code.
+- Never take shortcuts, Finish the task completely
 
 ## Project Overview
 
@@ -160,19 +163,68 @@ SQL_SA_PASSWORD=<strong-password>
 TEST_DB_PASSWORD=<strong-password>
 DB_CONNECTION_STRING=Server=localhost;Database=HotshotDB;User Id=sa;Password=...;
 
-# Optional for Azure integration
-AZURE_CLIENT_ID=...
-AZURE_TENANT_ID=...
+# Azure AD B2C Configuration (API)
+AZURE_AD_B2C_INSTANCE=https://<tenant-name>.ciamlogin.com
+AZURE_AD_B2C_CLIENT_ID=<your-client-id>
+AZURE_AD_B2C_DOMAIN=<tenant-name>.onmicrosoft.com
+AZURE_AD_B2C_TENANT_ID=<your-tenant-id>
+AZURE_AD_B2C_AUDIENCE=<your-client-id>
+
+# API Host Configuration
+ALLOWED_HOSTS=localhost,127.0.0.1,your-domain.com
+
+# Azure Integration
+AZURE_MAPS_KEY=<your-azure-maps-key>
 CONNECTIONSTRINGS__DEFAULTCONNECTION=...
+
+# Frontend Azure AD B2C (Dashboard)
+NEXT_PUBLIC_AZURE_CLIENT_ID=<your-client-id>
+NEXT_PUBLIC_AZURE_TENANT_ID=<your-tenant-id>
+NEXT_PUBLIC_API_BASE_URL=https://localhost:7060
 ```
 
 **Security:** Never commit secrets. Use Azure Key Vault for production.
 
 ### Configuration Files
 
-- **API:** `1-Presentation/HotshotLogistics.Api/appsettings.json`
+- **API Development:** `1-Presentation/HotshotLogistics.Api/appsettings.Development.json` (with placeholder env var references)
+- **API Production:** `1-Presentation/HotshotLogistics.Api/appsettings.Production.json` (with environment variable placeholders)
+- **API Default:** `1-Presentation/HotshotLogistics.Api/appsettings.json` (with environment variable placeholders for sensitive values)
 - **Dashboard:** `1-Presentation/admin-dashboard/.env.local` (generated from scripts/generate-env.js)
 - **Database:** Connection strings via environment variables or Azure App Configuration
+
+### API Configuration Security
+
+**Important:** Azure AD B2C credentials and host allowlists are now managed via environment variables to prevent accidental commit to source control:
+
+1. **appsettings.json** - Uses environment variable placeholders (e.g., `${AZURE_AD_B2C_CLIENT_ID}`)
+2. **appsettings.Development.json** - Overrides for local development with test values
+3. **appsettings.Production.json** - Production environment configuration
+4. **AllowedHosts** - Changed from permissive `"*"` to environment-specific list (e.g., `localhost,your-domain.com`)
+
+**Local Development Setup:**
+
+```bash
+# Set environment variables for local development
+export AZURE_AD_B2C_INSTANCE="https://your-tenant.ciamlogin.com"
+export AZURE_AD_B2C_CLIENT_ID="your-dev-client-id"
+export AZURE_AD_B2C_DOMAIN="your-tenant.onmicrosoft.com"
+export AZURE_AD_B2C_TENANT_ID="your-dev-tenant-id"
+export AZURE_AD_B2C_AUDIENCE="your-dev-client-id"
+export ALLOWED_HOSTS="localhost,127.0.0.1"
+```
+
+**Production Deployment:**
+
+For Azure App Service or Azure Container Instances, set these environment variables via:
+- **Azure Portal:** Application Settings / Configuration
+- **Azure CLI:** `az webapp config appsettings set`
+- **Azure Key Vault:** Reference secrets from Key Vault in Application Settings
+- **GitHub Actions:** Use GitHub Secrets for CI/CD pipelines
+
+**Dashboard Environment Variables:**
+
+The admin dashboard uses `npm scripts/generate-env.js` to safely generate `.env.local` from system environment variables with validation to prevent placeholder values in production builds.
 
 ## Testing Strategy
 
@@ -309,12 +361,21 @@ Hub configuration in `RealtimeService` and Azure SignalR Service integration.
 
 ### Backend CI/CD (`.github/workflows/dotnet-build-test.yml`)
 
+The CI/CD pipeline includes multiple workflows:
+
+### Main Build Pipeline (`.github/workflows/dotnet-build-test.yml`)
 - **Restore** - All projects including Pulumi infrastructure
 - **Lint** - Code formatting validation for all projects
 - **Build** - Release build of all projects
 - **Test** - Unit tests (excludes integration tests which require SQL Server)
 - **Secret Scanning** - TruffleHog verification on all changes
 - **Dependabot** - Automated dependency update checking
+
+### Security Scanning (`.github/workflows/codeql-analysis.yml`)
+- **CodeQL Analysis** - Automated security vulnerability scanning for C# and JavaScript/TypeScript
+- Runs on pull requests, pushes to main/develop, and weekly schedule
+- Uses security-and-quality query suite for comprehensive coverage
+- Results published to GitHub Security tab
 
 All projects including the Pulumi infrastructure (`7-Deployment/pulumi/`) are built and linted as part of the standard pipeline.
 

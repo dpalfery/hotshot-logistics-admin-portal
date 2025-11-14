@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using HotshotLogistics.Core.Logging;
 using HotshotLogistics.Domain.Entities;
 using HotshotLogistics.Contracts.Repositories;
 using HotshotLogistics.Domain.Repositories;
@@ -189,7 +190,7 @@ namespace HotshotLogistics.Application.Services
         /// <inheritdoc/>
         public async Task<bool> ProcessPaymentAsync(string invoiceId, decimal paymentAmount, string paymentMethod, CancellationToken cancellationToken = default)
         {
-            logger.LogInformation("Processing payment of ${Amount} for invoice: {InvoiceId} using {PaymentMethod}", paymentAmount, invoiceId, paymentMethod);
+            logger.LogInformation("Processing payment for invoice: {InvoiceId}", LogSanitizer.SafeId(invoiceId));
 
             var invoice = await invoiceRepository.GetByIdAsync(invoiceId);
             if (invoice == null)
@@ -468,7 +469,7 @@ namespace HotshotLogistics.Application.Services
                 OverdueAmount = statementInvoices.Where(i => i.IsOverdue()).Sum(i => i.BalanceDue)
             };
 
-            logger.LogInformation("Account statement generated for customer: {CustomerId}, Total Outstanding: ${TotalOutstanding:F2}", customerId, statement.TotalOutstanding);
+            logger.LogInformation("Account statement generated for customer: {CustomerId}", LogSanitizer.SafeId(customerId));
             return statement;
         }
 
@@ -503,7 +504,7 @@ namespace HotshotLogistics.Application.Services
                         await invoiceRepository.UpdateAsync(concreteInvoice);
                         feesApplied++;
 
-                        logger.LogInformation("Late fee of ${LateFee:F2} applied to invoice: {InvoiceNumber}", latePenalty, invoice.InvoiceNumber);
+                        logger.LogInformation("Late fee applied to invoice: {InvoiceNumber}", LogSanitizer.SafeId(invoice.InvoiceNumber));
                     }
                 }
             }

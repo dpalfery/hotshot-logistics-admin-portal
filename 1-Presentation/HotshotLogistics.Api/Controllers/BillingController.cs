@@ -7,6 +7,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using HotshotLogistics.Application.Services;
+using HotshotLogistics.Core.Logging;
 using HotshotLogistics.Domain.Entities;
 using HotshotLogistics.Core.Enums;
 using HotshotLogistics.Contracts.Services;
@@ -211,7 +212,7 @@ namespace HotshotLogistics.Api.Controllers
             }
             catch (ArgumentException ex)
             {
-                logger.LogWarning(ex, "Invalid payment request for invoice: {Message}", ex.Message);
+                logger.LogWarning(ex, "Invalid payment request for invoice: {Message}", LogSanitizer.SanitizeExceptionMessage(ex.Message));
                 return BadRequest(ex.Message);
             }
             catch (KeyNotFoundException ex)
@@ -272,7 +273,7 @@ namespace HotshotLogistics.Api.Controllers
             }
             catch (ArgumentException ex)
             {
-                logger.LogWarning(ex, "Invalid tax calculation request: {Message}", ex.Message);
+                logger.LogWarning(ex, "Invalid tax calculation request: {Message}", LogSanitizer.SanitizeExceptionMessage(ex.Message));
                 return BadRequest(ex.Message);
             }
             catch (Exception ex)

@@ -153,11 +153,21 @@ pulumi config set location eastus
 # Set environment name
 pulumi config set environment dev
 
+# Set SQL admin login (optional, defaults to "sqladmin")
+pulumi config set sqlAdminLogin myadmin
+
 # Set SQL admin password (stored as secret)
 pulumi config set sqlAdminPassword --secret <strong-password>
 
+# Set SQL firewall allowed IP ranges (optional, defaults to "0.0.0.0" for Azure services)
+# Use comma-separated IP addresses for multiple ranges
+# For production, specify known IP ranges or use private endpoints
+pulumi config set sqlAllowedIpRanges "52.123.45.67,52.123.45.68"
+
 # Set container image (optional, defaults to hello-world)
-pulumi config set containerImage hotshot-api:latest
+# IMPORTANT: Must be a fully qualified image name
+# Do not use partial names - they will not be prefixed with ACR login server
+pulumi config set containerImage mcr.microsoft.com/azuredocs/containerapps-helloworld:latest
 ```
 
 ### 5. Deploy Infrastructure
@@ -308,6 +318,30 @@ new EnvironmentVarArgs
     SecretRef = "my-secret"
 }
 ```
+
+### Configure CORS for Production
+
+The API supports CORS configuration via environment variables. You can configure allowed origins in two ways:
+
+**Option 1: Comma-separated string (recommended for environment variables)**
+```csharp
+new EnvironmentVarArgs
+{
+    Name = "Cors__AllowedOrigins",
+    Value = "https://app.example.com,https://admin.example.com"
+}
+```
+
+**Option 2: JSON array in appsettings.json**
+```json
+{
+  "Cors": {
+    "AllowedOrigins": ["https://app.example.com", "https://admin.example.com"]
+  }
+}
+```
+
+The API automatically handles both formats. When using environment variables, separate multiple origins with commas (no spaces needed - they will be trimmed automatically).
 
 ## Manual Container Deployment
 
