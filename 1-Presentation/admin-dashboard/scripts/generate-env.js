@@ -6,8 +6,10 @@
  * and generates the .env.local file automatically for secure deployments.
  */
 
+/* eslint-disable @typescript-eslint/no-require-imports */
 const fs = require('fs');
 const path = require('path');
+/* eslint-enable @typescript-eslint/no-require-imports */
 
 function generateEnvFile() {
   // Read required environment variables

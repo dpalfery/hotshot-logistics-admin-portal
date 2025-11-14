@@ -130,10 +130,10 @@ describe('JobStatusCards', () => {
 
   it('should handle undefined counts gracefully', async () => {
     vi.mocked(apiService.getJobStatusSummary).mockResolvedValueOnce({
-      pendingCount: undefined as any,
-      assignedCount: undefined as any,
-      enRouteCount: undefined as any,
-      receivedCount: undefined as any,
+      pendingCount: undefined as unknown as number,
+      assignedCount: undefined as unknown as number,
+      enRouteCount: undefined as unknown as number,
+      receivedCount: undefined as unknown as number,
     });
 
     renderComponent();

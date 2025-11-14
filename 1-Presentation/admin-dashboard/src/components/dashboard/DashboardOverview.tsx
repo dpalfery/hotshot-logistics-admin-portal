@@ -3,23 +3,22 @@
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { apiService } from '@/services/api';
-import { JobStatus } from '@/types';
 import JobStatusCards from './JobStatusCards';
 
 export function DashboardOverview() {
-  const { data: jobs, isLoading: jobsLoading, error: jobsError } = useQuery({
+  const { data: jobs, isLoading: jobsLoading } = useQuery({
     queryKey: ['jobs'],
     queryFn: () => apiService.getJobs(),
     retry: false,
   });
 
-  const { data: drivers, isLoading: driversLoading, error: driversError } = useQuery({
+  const { data: drivers, isLoading: driversLoading } = useQuery({
     queryKey: ['drivers'],
     queryFn: () => apiService.getDrivers(),
     retry: false,
   });
 
-  const { data: invoices, isLoading: invoicesLoading, error: invoicesError } = useQuery({
+  const { data: invoices, isLoading: invoicesLoading } = useQuery({
     queryKey: ['invoices'],
     queryFn: () => apiService.getInvoices(),
     retry: false,

@@ -1,6 +1,6 @@
 import { msalInstance } from '@/lib/providers';
 import { loginRequest } from '@/config/auth';
-import { Job, Driver, Invoice, Customer, PagedResult, JobFilter, InvoiceFilter, PaginationParameters, InvoiceSummaryMetrics, InvoiceAgingBuckets, JobStatusSummary } from '@/types';
+import { Job, Driver, Invoice, Customer, PagedResult, JobFilter, PaginationParameters, InvoiceSummaryMetrics, InvoiceAgingBuckets, JobStatusSummary } from '@/types';
 import { logger } from '@/lib/logger';
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || '/api').trim();
@@ -211,10 +211,7 @@ class ApiService {
   }
 
   // Invoice API methods - Get overdue invoices for dashboard
-  async getInvoices(
-    _filter?: InvoiceFilter,
-    _pagination?: PaginationParameters
-  ): Promise<PagedResult<Invoice>> {
+  async getInvoices(): Promise<PagedResult<Invoice>> {
     // For the dashboard, we want overdue invoices
     // The backend returns Invoice[] but we need to wrap it in PagedResult format
     const overdueInvoices = await this.request<Invoice[]>('/billing/invoices/overdue');
