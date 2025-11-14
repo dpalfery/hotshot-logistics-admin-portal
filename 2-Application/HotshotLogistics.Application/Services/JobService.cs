@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using HotshotLogistics.Core.Logging;
 using HotshotLogistics.Domain.Entities;
 using HotshotLogistics.Contracts.Repositories;
 using HotshotLogistics.Contracts.Services;
@@ -140,8 +141,7 @@ namespace HotshotLogistics.Application.Services
             SortParameters? sort = null,
             CancellationToken cancellationToken = default)
         {
-            logger.LogInformation("Getting jobs with filter: {@Filter}, pagination: {@Pagination}, sort: {@Sort}",
-                filter, pagination, sort);
+            logger.LogInformation("Getting jobs with filters applied");
 
             return jobRepository.GetJobsAsync(filter, pagination, sort, cancellationToken);
         }
