@@ -214,6 +214,21 @@ describe('ApiService', () => {
       );
     });
 
+    it('should get driver by id', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockDriver,
+      });
+
+      const result = await apiService.getDriverById(1);
+
+      expect(result).toEqual(mockDriver);
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/drivers/1'),
+        expect.any(Object)
+      );
+    });
+
     it('should create a driver', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -235,6 +250,121 @@ describe('ApiService', () => {
           method: 'POST',
           body: JSON.stringify(newDriver),
         })
+      );
+    });
+
+    it('should update a driver', async () => {
+      const updatedDriver = { ...mockDriver, status: 'Unavailable' };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => updatedDriver,
+      });
+
+      const result = await apiService.updateDriver(1, { status: 'Unavailable' });
+
+      expect(result).toEqual(updatedDriver);
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/drivers/1'),
+        expect.objectContaining({
+          method: 'PUT',
+          body: JSON.stringify({ status: 'Unavailable' }),
+        })
+      );
+    });
+
+    it('should delete a driver', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({}),
+      });
+
+      await apiService.deleteDriver(1);
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/drivers/1'),
+        expect.objectContaining({
+          method: 'DELETE',
+        })
+      );
+    });
+  });
+
+  describe('Customer API', () => {
+    const mockCustomer = {
+      id: 'cust-001',
+      name: 'Test Company',
+      email: 'test@company.com',
+      phone: '555-5678',
+    };
+
+    it('should get all customers', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [mockCustomer],
+      });
+
+      const result = await apiService.getCustomers();
+
+      expect(result).toEqual([mockCustomer]);
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/customer'),
+        expect.any(Object)
+      );
+    });
+
+    it('should get customer by id', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockCustomer,
+      });
+
+      const result = await apiService.getCustomerById('cust-001');
+
+      expect(result).toEqual(mockCustomer);
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/customer/cust-001'),
+        expect.any(Object)
+      );
+    });
+  });
+
+  describe('Invoice API', () => {
+    const mockInvoice = {
+      id: 'inv-001',
+      invoiceNumber: 'INV-001',
+      amount: 1500.00,
+      status: 'Sent',
+    };
+
+    it('should get invoices', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [mockInvoice],
+      });
+
+      const result = await apiService.getInvoices();
+
+      expect(result.items).toEqual([mockInvoice]);
+      expect(result.totalCount).toBe(1);
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/billing/invoices/overdue'),
+        expect.any(Object)
+      );
+    });
+
+    it('should get invoice by id', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockInvoice,
+      });
+
+      const result = await apiService.getInvoiceById('inv-001');
+
+      expect(result).toEqual(mockInvoice);
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/billing/invoices/inv-001'),
+        expect.any(Object)
       );
     });
   });
