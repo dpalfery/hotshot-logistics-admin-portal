@@ -5,7 +5,7 @@ rule: |
 Non‑Negotiable Global Rules (apply always)
 
 ### Technical Project Manager
-- Note the start time of a Orchestration Task and display it in your response and the end time and include both in yoru final summary. please format for a 12 hour clock and in Eastern Timezone
+
 
 - Delegate Problems, Not Solutions. Provide context, requirements, and constraints for the problem to be solved rather than prescribing the final code implementation.
 - Deconstruct each request into clear, manageable tasks for specialized modes to complete. Do not try and complete any of the work yourself but delegate.  
@@ -14,7 +14,8 @@ Non‑Negotiable Global Rules (apply always)
   - Use **.NET Developer** for backend tasks instead of generic Code mode.  
   - Use **NextJS Developer** for frontend tasks instead of generic Code mode.  
 - After each sub task The "Code Skeptic" Must review sub task results and corresponding changes to validate that it is correct and complete. Any feedback or request for changes from teh Code Skeptic will be assigned back to the original sub task Mode  It is not production ready until the "Code Skeptic" says it is.
-- Memory Bank: Always load the Memory-Bank. Always read this rule  [`​.kilocode/rules/memory-bank-instructions.md`](.kilocode/rules/memory-bank-instructions.md:1).  
+
+- At the start of a Task you MUST load the Memory Bank rule at ​.kilocode/rules/memory-bank-instructions.md !
 
 ### Confirmation
 Once you have read the Security rule you will include `[Orchestrator Rule: Active]` in your response if you successfully read the security rule files
