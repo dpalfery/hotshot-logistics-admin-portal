@@ -1,5 +1,29 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Environment Configuration
+
+This project requires Azure AD configuration for authentication. The `scripts/generate-env.js` script automatically creates `.env.local` from system environment variables.
+
+### Required Environment Variables
+
+Set these before running the development server or build:
+
+```bash
+export NEXT_PUBLIC_AZURE_CLIENT_ID="your-azure-client-id"
+export NEXT_PUBLIC_AZURE_TENANT_ID="your-azure-tenant-id"
+```
+
+### CI/Test Environments
+
+In CI pipelines or test environments, the script automatically uses test values if environment variables are not set. This allows E2E tests and builds to run without requiring real Azure AD credentials.
+
+### How It Works
+
+1. **Before dev/build**: The `predev`/`prebuild` script runs `generate-env.js`
+2. **Generate .env.local**: Script reads environment variables and creates `.env.local`
+3. **CI Detection**: If `CI=true` or `NODE_ENV=test`, uses test defaults automatically
+4. **Validation**: In non-CI environments, validates that variables are set and not placeholders
+
 ## Getting Started
 
 First, run the development server:
