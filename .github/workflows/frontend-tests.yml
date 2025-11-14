@@ -14,6 +14,8 @@ on:
     paths:
       - '1-Presentation/admin-dashboard/**'
       - '.github/workflows/frontend-tests.yml'
+  workflow_call:
+    # Allow this workflow to be called by other workflows
 
 permissions:
   contents: read
