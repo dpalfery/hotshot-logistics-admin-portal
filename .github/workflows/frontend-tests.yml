@@ -125,6 +125,8 @@ jobs:
         run: npm run test:e2e
         env:
           CI: true
+          NEXT_PUBLIC_AZURE_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_AZURE_CLIENT_ID || 'test-client-id' }}
+          NEXT_PUBLIC_AZURE_TENANT_ID: ${{ secrets.NEXT_PUBLIC_AZURE_TENANT_ID || 'test-tenant-id' }}
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
