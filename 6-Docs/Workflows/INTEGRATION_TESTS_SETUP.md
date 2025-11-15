@@ -210,7 +210,6 @@ The workflow sets the following environment variables:
 | `HOTSHOT_DB_APP_USER` | `hotshot_app` | Application user |
 | `HOTSHOT_DB_APP_PASSWORD` | `${{ secrets.SQL_SA_PASSWORD }}` | App user password |
 | `HOTSHOT_DB_SA_PASSWORD` | `${{ secrets.SQL_SA_PASSWORD }}` | SA password |
-| `DB_CONNECTION_STRING` | Full connection string | Used by integration tests |
 
 ## Local Development vs CI/CD
 

@@ -1,0 +1,14 @@
+{
+  "name": "hotshot-logistics-admin-tests",
+  "version": "0.1.0",
+  "description": "Playwright tests for Hotshot Logistics Admin Dashboard",
+  "scripts": {
+    "pretest": "playwright install --with-deps",
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.1"
+  }
+}

@@ -1,4 +1,4 @@
-import { Invoice, InvoiceStatus, InvoiceLineItem, PaymentTerms } from '../../src/types';
+import { Invoice, InvoiceStatus, InvoiceLineItem, PaymentTerms } from '@/admin-dashboard/types';
 
 // Mock invoice data aligned with IInvoice domain model
 export type MockInvoice = Invoice;
