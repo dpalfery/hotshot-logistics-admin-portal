@@ -26,6 +26,21 @@ on:
           - dev
           - staging
           - prod
+      region:
+        description: 'Azure region to deploy to'
+        required: true
+        default: 'eastus2'
+        type: choice
+        options:
+          - eastus
+          - eastus2
+          - centralus
+          - northcentralus
+          - southcentralus
+          - westcentralus
+          - westus
+          - westus2
+          - westus3
       deploy:
         description: 'Deploy infrastructure (pulumi up)'
         required: false
