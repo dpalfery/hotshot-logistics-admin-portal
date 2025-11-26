@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - '7-Deployment/pulumi/**'
+      - '7-Deployment/Azure-deploy/**'
   workflow_dispatch:
     inputs:
       github-environment:
@@ -58,11 +58,11 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Restore dependencies
-        working-directory: 7-Deployment/pulumi
+        working-directory: 7-Deployment/Azure-deploy
         run: dotnet restore
 
       - name: Pulumi Preview
-        working-directory: 7-Deployment/pulumi
+        working-directory: 7-Deployment/Azure-deploy
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         run: |
@@ -98,11 +98,11 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Restore dependencies
-        working-directory: 7-Deployment/pulumi
+        working-directory: 7-Deployment/Azure-deploy
         run: dotnet restore
 
       - name: Pulumi Up
-        working-directory: 7-Deployment/pulumi
+        working-directory: 7-Deployment/Azure-deploy
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         run: |
@@ -111,7 +111,7 @@ jobs:
           pulumi up --yes --skip-preview
 
       - name: Export Stack Outputs
-        working-directory: 7-Deployment/pulumi
+        working-directory: 7-Deployment/Azure-deploy
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         run: pulumi stack output --json > stack-outputs.json
@@ -120,4 +120,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: pulumi-outputs
-          path: 7-Deployment/pulumi/stack-outputs.json
+          path: 7-Deployment/Azure-deploy/stack-outputs.json
