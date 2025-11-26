@@ -30,9 +30,12 @@ return await Pulumi.Deployment.RunAsync(() =>
     // Azure Subscription ID is required for role assignments
     // Get from: az account show --query id -o tsv
     var subscriptionId = config.Require("subscriptionId");
-    // Container image must be a fully qualified image name (e.g., "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest")
-    // Do not provide partial image names - they will not be prefixed with the registry login server
-    var containerImage = config.Get("containerImage") ?? "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest";
+    // Container image name (without registry prefix). Default: hotshot-api
+    // The full image path will be constructed as: <registry>.azurecr.io/<imageName>:<imageTag>
+    var imageName = config.Get("imageName") ?? "hotshot-api";
+    var imageTag = config.Get("imageTag") ?? "latest";
+    // Set to true to use a placeholder image for initial deployment before pushing your own image
+    var usePlaceholderImage = config.GetBoolean("usePlaceholderImage") ?? false;
     // SQL firewall allowed IP ranges (comma-separated). If not specified, defaults to Azure services only (0.0.0.0)
     // For production, specify known IP ranges or use private endpoints instead
     var sqlAllowedIpRanges = config.Get("sqlAllowedIpRanges") ?? "0.0.0.0";
@@ -330,9 +333,12 @@ return await Pulumi.Deployment.RunAsync(() =>
                 new ContainerArgs
                 {
                     Name = "hotshot-api",
-                    // Use the fully qualified container image name as-is
-                    // Do NOT concatenate with registry.LoginServer as it produces invalid image names
-                    Image = containerImage,
+                    // Dynamically construct the container image path:
+                    // - If usePlaceholderImage=true: use Microsoft's hello-world image for initial deployment
+                    // - Otherwise: use <registry>.azurecr.io/<imageName>:<imageTag>
+                    Image = usePlaceholderImage
+                        ? "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
+                        : registry.LoginServer.Apply(server => $"{server}/{imageName}:{imageTag}"),
                     Resources = new ContainerResourcesArgs
                     {
                         Cpu = 0.5,
@@ -389,6 +395,11 @@ return await Pulumi.Deployment.RunAsync(() =>
             { "Environment", environment },
             { "Project", "HotshotLogistics" }
         }
+    }, new CustomResourceOptions
+    {
+        // Ensure the AcrPull role assignment is complete before creating the Container App
+        // This prevents "UNAUTHORIZED" errors when pulling images from ACR
+        DependsOn = { acrPullRoleAssignment }
     });
 
     // Static Web App (Next.js Admin Dashboard)
@@ -415,24 +426,50 @@ return await Pulumi.Deployment.RunAsync(() =>
     });
 
     // Export outputs
+    // These outputs can be consumed by CI/CD pipelines via: pulumi stack output <name>
     return new Dictionary<string, object?>
     {
+        // Resource Group
         ["resourceGroupName"] = resourceGroup.Name,
+        
+        // Container Registry (ACR)
         ["containerRegistryName"] = registry.Name,
         ["containerRegistryLoginServer"] = registry.LoginServer,
+        
+        // Container App
+        ["containerAppName"] = containerApp.Name,
         ["containerAppUrl"] = containerApp.Configuration.Apply(c => c!.Ingress!.Fqdn),
+        ["containerAppFullUrl"] = containerApp.Configuration.Apply(c => $"https://{c!.Ingress!.Fqdn}"),
+        
+        // Container Image (for CI/CD to know what to push)
+        ["containerImageName"] = imageName,
+        ["containerImageTag"] = imageTag,
+        ["containerImageFullPath"] = registry.LoginServer.Apply(server => $"{server}/{imageName}:{imageTag}"),
+        
+        // Managed Identity (for secure ACR access)
         ["containerAppIdentityId"] = containerAppIdentity.Id,
         ["containerAppPrincipalId"] = containerAppIdentity.PrincipalId,
+        
+        // Key Vault
         ["keyVaultName"] = keyVault.Name,
         ["keyVaultId"] = keyVault.Id,
+        
+        // Static Web App
         ["staticWebAppUrl"] = staticWebApp.DefaultHostname,
+        ["staticWebAppFullUrl"] = staticWebApp.DefaultHostname.Apply(h => $"https://{h}"),
         ["staticWebAppDeploymentToken"] = Output.CreateSecret(
             staticWebApp.Id.Apply(_ => "")
         ),
+        
+        // Application Insights (secrets)
         ["appInsightsInstrumentationKey"] = Output.CreateSecret(appInsightsInstrumentationKey),
         ["appInsightsConnectionString"] = Output.CreateSecret(appInsightsConnectionString),
+        
+        // SQL Server
         ["sqlServerFqdn"] = sqlServer.FullyQualifiedDomainName,
         ["databaseName"] = database.Name,
+        
+        // Log Analytics
         ["logAnalyticsWorkspaceId"] = workspace.CustomerId
     };
 });

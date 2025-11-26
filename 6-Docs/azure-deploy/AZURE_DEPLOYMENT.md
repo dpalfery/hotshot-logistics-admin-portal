@@ -237,26 +237,33 @@ pulumi stack output staticWebAppUrl
 
 ## Step 4: Build and Push Container Image
 
-### 4.1 Get ACR Credentials
+### 4.1 Option A: Use GitHub Actions (Recommended)
+
+The easiest way to deploy is to use the combined infrastructure + container workflow:
 
 ```bash
-# Get ACR name
-ACR_NAME=$(pulumi stack output containerRegistryName)
-
-# Get credentials
-az acr credential show --name $ACR_NAME
-
-# Or login directly
-az acr login --name $ACR_NAME
+# Go to GitHub Actions → Pulumi Infrastructure Deployment
+# Select "Run workflow" with these options:
+# - use_placeholder_image: false
+# - build_and_push: true
 ```
 
-### 4.2 Build and Push
+This will:
+1. Deploy infrastructure (if needed)
+2. Build the Docker image using the chiseled base
+3. Push to ACR using OIDC authentication (no secrets needed!)
+4. Update the Container App with the new image
+
+### 4.2 Option B: Manual Build and Push
 
 ```bash
-# Navigate to project root
-cd ../..
+# Get ACR name from Pulumi
+ACR_NAME=$(pulumi stack output containerRegistryName)
 
-# Build the Docker image
+# Login to ACR (uses your Azure CLI credentials)
+az acr login --name $ACR_NAME
+
+# Build the Docker image (uses chiseled Ubuntu base - smaller & more secure)
 docker build -t $ACR_NAME.azurecr.io/hotshot-api:latest .
 
 # Push to ACR
@@ -268,13 +275,27 @@ docker push $ACR_NAME.azurecr.io/hotshot-api:latest
 ```bash
 # Get resource group and container app name
 RG_NAME=$(pulumi stack output resourceGroupName)
+CONTAINER_APP=$(pulumi stack output containerAppName)
 
 # Update the container app
 az containerapp update \
-  --name ca-hotshot-api-dev \
+  --name $CONTAINER_APP \
   --resource-group $RG_NAME \
   --image $ACR_NAME.azurecr.io/hotshot-api:latest
 ```
+
+### 4.4 Security Notes
+
+**OIDC Authentication**: The workflows use OpenID Connect (OIDC) to authenticate with Azure. This means:
+- No `ACR_USERNAME` or `ACR_PASSWORD` secrets needed
+- No `AZURE_CLIENT_SECRET` needed for GitHub Actions
+- Authentication is handled securely via federated identity
+
+**Chiseled Container Image**: The Dockerfile uses `mcr.microsoft.com/dotnet/aspnet:8.0-jammy-chiseled`:
+- ~100MB smaller than standard images
+- No shell, no package manager (reduced attack surface)
+- Non-root by default
+- No apt/dpkg vulnerabilities
 
 ## Step 5: GitHub Actions Setup
 
@@ -284,28 +305,21 @@ Go to your GitHub repository → Settings → Secrets and variables → Actions
 
 Add these secrets:
 
-**Azure Authentication:**
+**Azure Authentication (OIDC - Recommended):**
 
-GitHub Actions uses **OpenID Connect (OIDC) authentication**. You do NOT need `AZURE_CLIENT_SECRET`.
+GitHub Actions uses **OpenID Connect (OIDC) authentication**. You do NOT need `AZURE_CLIENT_SECRET` or ACR credentials.
 
 - `AZURE_CLIENT_ID` - From service principal output
 - `AZURE_TENANT_ID` - From service principal output
 - `AZURE_SUBSCRIPTION_ID` - From service principal output
-- For local development, you may need `AZURE_CLIENT_SECRET`, but it is not required for GitHub Actions OIDC
+
+**Important**: You need to set up OIDC federation in Azure AD. See [GitHub OIDC with Azure](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-azure).
 
 **Pulumi:**
 - `PULUMI_ACCESS_TOKEN` - Your Pulumi access token
 
 **Database:**
 - `SQL_ADMIN_PASSWORD` - Same password you used in Pulumi config
-
-**Container Registry:**
-```bash
-# Get ACR credentials
-az acr credential show --name $ACR_NAME
-```
-- `ACR_USERNAME` - Username from output
-- `ACR_PASSWORD` - Password from output
 
 **Static Web App:**
 ```bash
@@ -317,11 +331,19 @@ pulumi stack output staticWebAppDeploymentToken --show-secrets
 **API Configuration:**
 ```bash
 # Get the Container App URL
-pulumi stack output containerAppUrl
+pulumi stack output containerAppFullUrl
 ```
 - `NEXT_PUBLIC_API_URL` - Container App URL (e.g., `https://ca-hotshot-api-dev.<region>.azurecontainerapps.io`)
   - This can be set as either a Secret or Variable in GitHub
   - Required for CSP (Content Security Policy) to allow API calls from the dashboard
+
+### 5.2 (Optional) Configure GitHub Variables
+
+Go to Settings → Secrets and variables → Actions → Variables tab
+
+These are optional fallbacks if Pulumi outputs aren't available:
+- `ACR_NAME` - Your ACR name (e.g., `crhotshotdevabcd1234`)
+- `RESOURCE_GROUP_NAME` - Your resource group name (e.g., `rg-hotshot-dev`)
 
 ### 5.2 Update Workflow Files
 

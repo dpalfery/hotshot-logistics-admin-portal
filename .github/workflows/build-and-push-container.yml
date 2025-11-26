@@ -11,37 +11,96 @@ on:
       - 'Dockerfile'
       - '.dockerignore'
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+      update_container_app:
+        description: 'Update Container App after pushing image'
+        required: false
+        default: true
+        type: boolean
 
 env:
-  REGISTRY_NAME: ${{ vars.ACR_NAME || 'crhotshotdev' }}  # Configure ACR_NAME in GitHub repository variables
   IMAGE_NAME: hotshot-api
+
+permissions:
+  contents: read
+  id-token: write  # Required for OIDC authentication with Azure
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-
+    environment: ${{ github.event.inputs.environment || 'development' }}
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tags }}
+      acr_name: ${{ steps.get-acr.outputs.acr_name }}
+      resource_group: ${{ steps.get-acr.outputs.resource_group }}
+      
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
 
+      - name: Configure Azure credentials (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Get ACR name from Pulumi outputs
+        id: get-acr
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+        run: |
+          # Install Pulumi CLI
+          curl -fsSL https://get.pulumi.com | sh
+          export PATH=$PATH:$HOME/.pulumi/bin
+          
+          # Get stack outputs
+          cd 7-Deployment/Azure-deploy
+          pulumi stack select dev --non-interactive || true
+          
+          # Get ACR name and resource group from Pulumi stack
+          ACR_NAME=$(pulumi stack output containerRegistryName --show-secrets 2>/dev/null || echo "")
+          RESOURCE_GROUP=$(pulumi stack output resourceGroupName --show-secrets 2>/dev/null || echo "")
+          
+          # Fallback to GitHub variable if Pulumi output not available
+          if [ -z "$ACR_NAME" ]; then
+            ACR_NAME="${{ vars.ACR_NAME }}"
+            echo "Using ACR_NAME from GitHub variable: $ACR_NAME"
+          else
+            echo "Using ACR_NAME from Pulumi: $ACR_NAME"
+          fi
+          
+          if [ -z "$RESOURCE_GROUP" ]; then
+            RESOURCE_GROUP="${{ vars.RESOURCE_GROUP_NAME }}"
+            echo "Using RESOURCE_GROUP from GitHub variable: $RESOURCE_GROUP"
+          else
+            echo "Using RESOURCE_GROUP from Pulumi: $RESOURCE_GROUP"
+          fi
+          
+          echo "acr_name=$ACR_NAME" >> $GITHUB_OUTPUT
+          echo "resource_group=$RESOURCE_GROUP" >> $GITHUB_OUTPUT
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Azure Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY_NAME }}.azurecr.io
-          username: ${{ secrets.ACR_USERNAME }}
-          password: ${{ secrets.ACR_PASSWORD }}
+      - name: Log in to Azure Container Registry (OIDC - No Secrets Required)
+        run: |
+          az acr login --name ${{ steps.get-acr.outputs.acr_name }}
 
       - name: Extract metadata (tags, labels)
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}
+          images: ${{ steps.get-acr.outputs.acr_name }}.azurecr.io/${{ env.IMAGE_NAME }}
           tags: |
             type=ref,event=branch
             type=sha,prefix={{branch}}-
@@ -60,4 +119,79 @@ jobs:
           platforms: linux/amd64
 
       - name: Image digest
-        run: echo ${{ steps.meta.outputs.digest }}
+        run: echo "Image digest: ${{ steps.meta.outputs.digest }}"
+
+  update-container-app:
+    name: Update Container App
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.update_container_app == 'true')
+    environment: ${{ github.event.inputs.environment || 'development' }}
+    
+    steps:
+      - name: Configure Azure credentials (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Update Container App with new image
+        run: |
+          # Determine container app name based on environment
+          ENV_SUFFIX="${{ github.event.inputs.environment || 'dev' }}"
+          if [ "$ENV_SUFFIX" == "development" ]; then
+            ENV_SUFFIX="dev"
+          elif [ "$ENV_SUFFIX" == "production" ]; then
+            ENV_SUFFIX="prod"
+          fi
+          
+          CONTAINER_APP_NAME="ca-hotshot-api-${ENV_SUFFIX}"
+          RESOURCE_GROUP="${{ needs.build-and-push.outputs.resource_group }}"
+          ACR_NAME="${{ needs.build-and-push.outputs.acr_name }}"
+          IMAGE="${ACR_NAME}.azurecr.io/${{ env.IMAGE_NAME }}:latest"
+          
+          echo "Updating Container App: $CONTAINER_APP_NAME"
+          echo "Resource Group: $RESOURCE_GROUP"
+          echo "Image: $IMAGE"
+          
+          az containerapp update \
+            --name "$CONTAINER_APP_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --image "$IMAGE"
+          
+          echo "✅ Container App updated successfully"
+
+      - name: Verify deployment
+        run: |
+          ENV_SUFFIX="${{ github.event.inputs.environment || 'dev' }}"
+          if [ "$ENV_SUFFIX" == "development" ]; then
+            ENV_SUFFIX="dev"
+          elif [ "$ENV_SUFFIX" == "production" ]; then
+            ENV_SUFFIX="prod"
+          fi
+          
+          CONTAINER_APP_NAME="ca-hotshot-api-${ENV_SUFFIX}"
+          RESOURCE_GROUP="${{ needs.build-and-push.outputs.resource_group }}"
+          
+          # Get the FQDN
+          FQDN=$(az containerapp show \
+            --name "$CONTAINER_APP_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --query "properties.configuration.ingress.fqdn" -o tsv)
+          
+          echo "Container App URL: https://$FQDN"
+          
+          # Wait for the revision to be ready
+          sleep 30
+          
+          # Health check
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://$FQDN/health" || echo "000")
+          
+          if [ "$HTTP_STATUS" == "200" ]; then
+            echo "✅ Health check passed!"
+          else
+            echo "⚠️ Health check returned: $HTTP_STATUS (may still be starting)"
+          fi

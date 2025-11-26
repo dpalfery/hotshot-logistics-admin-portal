@@ -1,6 +1,14 @@
 config:
   hotshot-logistics-infra:location: eastus
   hotshot-logistics-infra:environment: dev
-  hotshot-logistics-infra:containerImage: hotshot-api:latest
-  # Set this via: pulumi config set sqlAdminPassword --secret <password>
-  # hotshot-logistics-infra:sqlAdminPassword: <set-via-cli>
+  # Container image configuration
+  # - imageName: The name of the image (without registry prefix)
+  # - imageTag: The tag to use (default: latest)
+  # - usePlaceholderImage: Set to true for initial deployment (before pushing your own image)
+  hotshot-logistics-infra:imageName: hotshot-api
+  hotshot-logistics-infra:imageTag: latest
+  hotshot-logistics-infra:usePlaceholderImage: "true"
+  # Set these via CLI for security:
+  # pulumi config set sqlAdminPassword --secret <password>
+  # pulumi config set azureTenantId <tenant-id>
+  # pulumi config set subscriptionId <subscription-id>

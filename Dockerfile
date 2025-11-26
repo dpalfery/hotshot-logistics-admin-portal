@@ -1,8 +1,10 @@
-# Build stage
+# =============================================================================
+# STAGE 1: Build the application
+# =============================================================================
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copy solution and project files
+# Copy solution and project files first for better layer caching
 COPY ["HotshotLogistics.sln", "./"]
 COPY ["0-Base/HotshotLogistics.Core/HotshotLogistics.Core.csproj", "0-Base/HotshotLogistics.Core/"]
 COPY ["1-Presentation/HotshotLogistics.Api/HotshotLogistics.Api.csproj", "1-Presentation/HotshotLogistics.Api/"]
@@ -11,46 +13,42 @@ COPY ["3-Domain/HotshotLogistics.Contracts/HotshotLogistics.Contracts.csproj", "
 COPY ["3-Domain/HotshotLogistics.Domain/HotshotLogistics.Domain.csproj", "3-Domain/HotshotLogistics.Domain/"]
 COPY ["4-Persistence/HotshotLogistics.Data/HotshotLogistics.Data.csproj", "4-Persistence/HotshotLogistics.Data/"]
 
-# Restore dependencies
+# Restore dependencies (cached unless .csproj files change)
 RUN dotnet restore "1-Presentation/HotshotLogistics.Api/HotshotLogistics.Api.csproj"
 
 # Copy source code
 COPY . .
 
-# Build and publish
+# Build and publish in Release mode
 WORKDIR "/src/1-Presentation/HotshotLogistics.Api"
-RUN dotnet build "HotshotLogistics.Api.csproj" -c Release -o /app/build
 RUN dotnet publish "HotshotLogistics.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
-# Runtime stage
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+# =============================================================================
+# STAGE 2: Production runtime (Chiseled Ubuntu - Ultra-minimal & Secure)
+# =============================================================================
+# Benefits of chiseled images:
+# - ~100MB smaller than standard images
+# - No shell, no package manager (reduced attack surface)
+# - Non-root by default
+# - No apt/dpkg vulnerabilities
+FROM mcr.microsoft.com/dotnet/aspnet:8.0-jammy-chiseled AS runtime
 WORKDIR /app
 
-# Install curl for health checks
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
-
-# Create non-root user
-RUN groupadd -r appuser && useradd -r -g appuser appuser
-
-# Copy published files
+# Copy published files (chiseled images run as non-root 'app' user by default)
 COPY --from=build /app/publish .
 
-# Change ownership to non-root user
-RUN chown -R appuser:appuser /app
-
-# Switch to non-root user
-USER appuser
-
-# Expose port
+# Expose port (Azure Container Apps uses 8080 by default)
 EXPOSE 8080
 
 # Set environment variables
 ENV ASPNETCORE_URLS=http://+:8080
 ENV ASPNETCORE_ENVIRONMENT=Production
+ENV DOTNET_RUNNING_IN_CONTAINER=true
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-  CMD curl -f http://localhost:8080/health || exit 1
+# NOTE: Health checks in chiseled images must use ASP.NET Core's built-in health check middleware
+# since curl/wget are not available. Configure health checks in Azure Container Apps instead.
+# The app should expose a /health endpoint that returns 200 OK.
 
 # Start the application
 ENTRYPOINT ["dotnet", "HotshotLogistics.Api.dll"]
