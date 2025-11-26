@@ -71,6 +71,8 @@ jobs:
           ARM_USE_OIDC: true
         run: |
           pulumi stack select ${{ github.event.inputs.stack || 'dev' }} --create
+          pulumi config set azureTenantId ${{ secrets.AZURE_TENANT_ID }}
+          pulumi config set subscriptionId ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           pulumi config set sqlAdminPassword --secret ${{ secrets.SQL_ADMIN_PASSWORD }}
           pulumi preview --diff
 
@@ -115,6 +117,8 @@ jobs:
           ARM_USE_OIDC: true
         run: |
           pulumi stack select ${{ github.event.inputs.stack || 'dev' }}
+          pulumi config set azureTenantId ${{ secrets.AZURE_TENANT_ID }}
+          pulumi config set subscriptionId ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           pulumi config set sqlAdminPassword --secret ${{ secrets.SQL_ADMIN_PASSWORD }}
           pulumi up --yes --skip-preview
 
