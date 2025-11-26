@@ -65,6 +65,10 @@ jobs:
         working-directory: 7-Deployment/Azure-deploy
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_USE_OIDC: true
         run: |
           pulumi stack select ${{ github.event.inputs.stack || 'dev' }} --create
           pulumi config set sqlAdminPassword --secret ${{ secrets.SQL_ADMIN_PASSWORD }}
@@ -105,6 +109,10 @@ jobs:
         working-directory: 7-Deployment/Azure-deploy
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_USE_OIDC: true
         run: |
           pulumi stack select ${{ github.event.inputs.stack || 'dev' }}
           pulumi config set sqlAdminPassword --secret ${{ secrets.SQL_ADMIN_PASSWORD }}
