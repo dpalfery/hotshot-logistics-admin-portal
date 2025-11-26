@@ -60,7 +60,7 @@ jobs:
   preview:
     name: Preview Infrastructure Changes
     runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.github-environment || 'development' }}-preview
+    environment: ${{ github.event.inputs.github-environment || 'development' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
