@@ -328,6 +328,21 @@ pulumi stack output staticWebAppDeploymentToken --show-secrets
 ```
 - `AZURE_STATIC_WEB_APPS_API_TOKEN` - Deployment token
 
+**Azure AD / Entra External ID (for MSAL Authentication):**
+
+The admin dashboard uses MSAL with Azure Entra ID (formerly Azure AD B2C) for authentication.
+The app code expects `NEXT_PUBLIC_AZURE_CLIENT_ID` and `NEXT_PUBLIC_AZURE_TENANT_ID`, but GitHub
+secrets use the naming convention without the `NEXT_PUBLIC_` prefix (the workflow maps them).
+
+- `AZURE_AD_B2C_CLIENT_ID` - Your Azure AD App Registration Client ID (GUID)
+- `AZURE_AD_B2C_TENANT_ID` - Your Azure AD Tenant ID (GUID)
+
+To get these values:
+1. Go to Azure Portal → Azure Active Directory → App registrations
+2. Select your app (or create one following `6-Docs/admin-dashboard/AZURE_AD_SETUP.md`)
+3. Copy the **Application (client) ID** → `AZURE_AD_B2C_CLIENT_ID`
+4. Copy the **Directory (tenant) ID** → `AZURE_AD_B2C_TENANT_ID`
+
 **API Configuration:**
 ```bash
 # Get the Container App URL

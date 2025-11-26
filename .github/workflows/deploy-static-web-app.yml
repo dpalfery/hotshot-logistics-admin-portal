@@ -13,16 +13,35 @@ on:
     paths:
       - '1-Presentation/admin-dashboard/**'
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+          - development
+          - staging
+          - production
 
 permissions:
   contents: read
   pull-requests: write
+  id-token: write  # Required for OIDC authentication with Azure
+
+env:
+  # Azure AD / Entra External ID Configuration for MSAL
+  # These are mapped from GitHub secrets to the NEXT_PUBLIC_ prefix required by Next.js
+  # The app uses MSAL with Azure Entra ID (formerly Azure AD) for authentication
+  NEXT_PUBLIC_AZURE_CLIENT_ID: ${{ secrets.AZURE_AD_B2C_CLIENT_ID }}
+  NEXT_PUBLIC_AZURE_TENANT_ID: ${{ secrets.AZURE_AD_B2C_TENANT_ID }}
 
 jobs:
   build_and_deploy:
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
     name: Build and Deploy
+    environment: ${{ github.event.inputs.environment || 'development' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -41,12 +60,101 @@ jobs:
         working-directory: 1-Presentation/admin-dashboard
         run: npm ci
 
+      - name: Get API URL from Pulumi (if not set)
+        id: get-api-url
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          CONFIGURED_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL || vars.NEXT_PUBLIC_API_URL }}
+        run: |
+          # If API URL is already configured, use it
+          if [ -n "$CONFIGURED_API_URL" ]; then
+            echo "Using configured API URL"
+            echo "api_url=$CONFIGURED_API_URL" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          # Otherwise, try to get it from Pulumi stack outputs
+          if [ -n "$PULUMI_ACCESS_TOKEN" ]; then
+            echo "Fetching API URL from Pulumi stack..."
+            
+            # Install Pulumi CLI
+            curl -fsSL https://get.pulumi.com | sh
+            export PATH=$PATH:$HOME/.pulumi/bin
+            
+            cd 7-Deployment/Azure-deploy
+            
+            # Determine stack based on environment
+            STACK="dev"
+            if [ "${{ github.event.inputs.environment }}" == "production" ]; then
+              STACK="prod"
+            elif [ "${{ github.event.inputs.environment }}" == "staging" ]; then
+              STACK="staging"
+            fi
+            
+            pulumi stack select $STACK --non-interactive 2>/dev/null || true
+            API_URL=$(pulumi stack output containerAppFullUrl 2>/dev/null || echo "")
+            
+            if [ -n "$API_URL" ]; then
+              echo "✅ Got API URL from Pulumi: $API_URL"
+              echo "api_url=$API_URL" >> $GITHUB_OUTPUT
+            else
+              echo "⚠️ Could not get API URL from Pulumi"
+              echo "api_url=" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "⚠️ PULUMI_ACCESS_TOKEN not set, cannot fetch API URL"
+            echo "api_url=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate Azure AD Configuration
+        working-directory: 1-Presentation/admin-dashboard
+        run: |
+          echo "Validating Azure AD / Entra External ID configuration..."
+          
+          # Check if required secrets are set
+          if [ -z "$NEXT_PUBLIC_AZURE_CLIENT_ID" ]; then
+            echo "⚠️ Warning: AZURE_AD_B2C_CLIENT_ID secret is not set"
+            echo "MSAL authentication will not work in production"
+          else
+            echo "✅ Azure Client ID is configured"
+          fi
+          
+          if [ -z "$NEXT_PUBLIC_AZURE_TENANT_ID" ]; then
+            echo "⚠️ Warning: AZURE_AD_B2C_TENANT_ID secret is not set"
+            echo "MSAL authentication will not work in production"
+          else
+            echo "✅ Azure Tenant ID is configured"
+          fi
+          
+          # Validate GUID format if values are set
+          GUID_REGEX='^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+          
+          if [ -n "$NEXT_PUBLIC_AZURE_CLIENT_ID" ]; then
+            if [[ ! $NEXT_PUBLIC_AZURE_CLIENT_ID =~ $GUID_REGEX ]]; then
+              echo "❌ Error: AZURE_AD_B2C_CLIENT_ID is not a valid GUID format"
+              exit 1
+            fi
+          fi
+          
+          if [ -n "$NEXT_PUBLIC_AZURE_TENANT_ID" ]; then
+            if [[ ! $NEXT_PUBLIC_AZURE_TENANT_ID =~ $GUID_REGEX ]]; then
+              echo "❌ Error: AZURE_AD_B2C_TENANT_ID is not a valid GUID format"
+              exit 1
+            fi
+          fi
+
       - name: Build Next.js app
         working-directory: 1-Presentation/admin-dashboard
         env:
           NODE_ENV: production
-          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL || vars.NEXT_PUBLIC_API_URL }}
+          # API URL: prefer secrets/vars, fallback to Pulumi output
+          NEXT_PUBLIC_API_URL: ${{ steps.get-api-url.outputs.api_url }}
+          # Azure AD / Entra External ID configuration is set at workflow level
         run: |
+          echo "Building Next.js app with:"
+          echo "  - API URL: ${NEXT_PUBLIC_API_URL:-'not set'}"
+          echo "  - Azure Client ID: ${NEXT_PUBLIC_AZURE_CLIENT_ID:0:8}... (masked)"
+          echo "  - Azure Tenant ID: ${NEXT_PUBLIC_AZURE_TENANT_ID:0:8}... (masked)"
           npm run build
 
       - name: Deploy to Azure Static Web Apps
@@ -59,6 +167,32 @@ jobs:
           app_location: '1-Presentation/admin-dashboard'
           output_location: 'out'
           skip_app_build: true  # We already built it
+
+      - name: Deployment Summary
+        env:
+          API_URL: ${{ steps.get-api-url.outputs.api_url }}
+        run: |
+          echo "### 🚀 Static Web App Deployed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Configuration | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------------|--------|" >> $GITHUB_STEP_SUMMARY
+          if [ -n "$NEXT_PUBLIC_AZURE_CLIENT_ID" ]; then
+            echo "| Azure AD Client ID | ✅ Configured |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Azure AD Client ID | ⚠️ Not Set |" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ -n "$NEXT_PUBLIC_AZURE_TENANT_ID" ]; then
+            echo "| Azure AD Tenant ID | ✅ Configured |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Azure AD Tenant ID | ⚠️ Not Set |" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ -n "$API_URL" ]; then
+            echo "| API URL | ✅ $API_URL |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| API URL | ⚠️ Not Set |" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Authentication**: Azure Entra External ID with MSAL" >> $GITHUB_STEP_SUMMARY
 
   close_pull_request:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'

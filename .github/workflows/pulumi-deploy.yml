@@ -66,6 +66,10 @@ permissions:
   contents: read
   id-token: write  # Required for OIDC authentication with Azure
 
+env:
+  # GitHub CLI is used to update environment variables after deployment
+  GH_TOKEN: ${{ github.token }}
+
 jobs:
   preview:
     name: Preview Infrastructure Changes
@@ -180,10 +184,14 @@ jobs:
           ACR_NAME=$(pulumi stack output containerRegistryName 2>/dev/null || echo "")
           RESOURCE_GROUP=$(pulumi stack output resourceGroupName 2>/dev/null || echo "")
           CONTAINER_APP_NAME=$(pulumi stack output containerAppName 2>/dev/null || echo "")
+          CONTAINER_APP_URL=$(pulumi stack output containerAppFullUrl 2>/dev/null || echo "")
+          STATIC_WEB_APP_URL=$(pulumi stack output staticWebAppFullUrl 2>/dev/null || echo "")
           
           echo "acr_name=$ACR_NAME" >> $GITHUB_OUTPUT
           echo "resource_group=$RESOURCE_GROUP" >> $GITHUB_OUTPUT
           echo "container_app_name=$CONTAINER_APP_NAME" >> $GITHUB_OUTPUT
+          echo "container_app_url=$CONTAINER_APP_URL" >> $GITHUB_OUTPUT
+          echo "static_web_app_url=$STATIC_WEB_APP_URL" >> $GITHUB_OUTPUT
           
           echo "### Infrastructure Outputs" >> $GITHUB_STEP_SUMMARY
           echo "| Output | Value |" >> $GITHUB_STEP_SUMMARY
@@ -191,6 +199,36 @@ jobs:
           echo "| ACR Name | $ACR_NAME |" >> $GITHUB_STEP_SUMMARY
           echo "| Resource Group | $RESOURCE_GROUP |" >> $GITHUB_STEP_SUMMARY
           echo "| Container App | $CONTAINER_APP_NAME |" >> $GITHUB_STEP_SUMMARY
+          echo "| API URL | $CONTAINER_APP_URL |" >> $GITHUB_STEP_SUMMARY
+          echo "| Static Web App | $STATIC_WEB_APP_URL |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Update GitHub Environment Variables
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Get the container app URL from Pulumi outputs
+          API_URL="${{ steps.outputs.outputs.container_app_url }}"
+          ENVIRONMENT="${{ github.event.inputs.github-environment || 'development' }}"
+          
+          if [ -n "$API_URL" ]; then
+            echo "Updating NEXT_PUBLIC_API_URL in $ENVIRONMENT environment..."
+            
+            # Update environment variable using GitHub CLI
+            # Note: This requires the workflow to have write access to environment variables
+            # If this fails, the variable can be set manually in GitHub Settings
+            gh variable set NEXT_PUBLIC_API_URL \
+              --env "$ENVIRONMENT" \
+              --body "$API_URL" \
+              --repo ${{ github.repository }} 2>/dev/null || {
+                echo "⚠️ Could not auto-update NEXT_PUBLIC_API_URL variable"
+                echo "Please manually set NEXT_PUBLIC_API_URL=$API_URL"
+                echo "in GitHub Settings → Environments → $ENVIRONMENT → Variables"
+              }
+            
+            echo "✅ API URL available: $API_URL"
+          else
+            echo "⚠️ Container App URL not available yet"
+          fi
 
       - name: Upload Stack Outputs
         uses: actions/upload-artifact@v4
