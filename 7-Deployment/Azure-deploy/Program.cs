@@ -24,6 +24,12 @@ return await Pulumi.Deployment.RunAsync(() =>
     var environment = config.Get("environment") ?? "dev";
     var sqlAdminLogin = config.Get("sqlAdminLogin") ?? "sqladmin";
     var sqlAdminPassword = config.RequireSecret("sqlAdminPassword");
+    
+    // Compute the expected Container App and Static Web App FQDNs
+    // These follow Azure's naming conventions and can be predicted before resource creation
+    var containerAppFqdn = $"ca-hotshot-api-{environment}.{location}.azurecontainerapps.io";
+    var staticWebAppRegion = location == "eastus2" ? "eastus2" : "centralus"; // Static Web Apps have limited regions
+    var staticWebAppName = $"swa-hotshot-{environment}";
     // Azure AD Tenant ID is required for Key Vault access policies
     // Get from: az account show --query tenantId -o tsv
     var azureTenantId = config.Require("azureTenantId");
@@ -365,6 +371,20 @@ return await Pulumi.Deployment.RunAsync(() =>
                         {
                             Name = "APPLICATIONINSIGHTS_CONNECTION_STRING",
                             SecretRef = "appinsights-connection-string"
+                        },
+                        new EnvironmentVarArgs
+                        {
+                            Name = "ALLOWED_HOSTS",
+                            // Allow the Container App's own hostname
+                            Value = containerAppFqdn
+                        },
+                        new EnvironmentVarArgs
+                        {
+                            Name = "CORS_ALLOWED_ORIGINS",
+                            // Allow Static Web App to make CORS requests
+                            // Format: "https://static-web-app-url,https://container-app-url"
+                            Value = staticWebApp.DefaultHostname.Apply(swaHost =>
+                                $"https://{swaHost},https://{containerAppFqdn},http://localhost:3000")
                         }
                     }
                 }

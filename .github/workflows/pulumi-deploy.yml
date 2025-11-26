@@ -230,6 +230,46 @@ jobs:
             echo "⚠️ Container App URL not available yet"
           fi
 
+      - name: Configure Container App Environment Variables
+        run: |
+          # Get the actual Container App FQDN and Static Web App URL
+          CONTAINER_APP_NAME="${{ steps.outputs.outputs.container_app_name }}"
+          RESOURCE_GROUP="${{ steps.outputs.outputs.resource_group }}"
+          CONTAINER_APP_URL="${{ steps.outputs.outputs.container_app_url }}"
+          STATIC_WEB_APP_URL="${{ steps.outputs.outputs.static_web_app_url }}"
+          
+          # Extract just the hostname (remove https://)
+          CONTAINER_APP_FQDN=$(echo "$CONTAINER_APP_URL" | sed 's|https://||')
+          
+          # Set ALLOWED_HOSTS and CORS_ALLOWED_ORIGINS
+          echo "Configuring Container App environment variables..."
+          echo "  ALLOWED_HOSTS: $CONTAINER_APP_FQDN"
+          echo "  CORS_ALLOWED_ORIGINS: $STATIC_WEB_APP_URL,$CONTAINER_APP_URL,http://localhost:3000"
+          
+          az containerapp update \
+            --name "$CONTAINER_APP_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --set-env-vars \
+              "ALLOWED_HOSTS=$CONTAINER_APP_FQDN" \
+              "CORS_ALLOWED_ORIGINS=$STATIC_WEB_APP_URL,$CONTAINER_APP_URL,http://localhost:3000"
+          
+          echo "✅ Container App environment variables configured"
+          echo "🔄 Restarting Container App to apply changes..."
+          
+          # Restart the container app to pick up the new environment variables
+          az containerapp revision restart \
+            --name "$CONTAINER_APP_NAME" \
+            --resource-group "$RESOURCE_GROUP"
+          
+          echo "✅ Container App restarted successfully"
+          
+          echo "### ✅ Container App Configuration" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Variable | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| ALLOWED_HOSTS | \`$CONTAINER_APP_FQDN\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| CORS_ALLOWED_ORIGINS | \`$STATIC_WEB_APP_URL,$CONTAINER_APP_URL,http://localhost:3000\` |" >> $GITHUB_STEP_SUMMARY
+
       - name: Upload Stack Outputs
         uses: actions/upload-artifact@v4
         with:
