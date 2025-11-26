@@ -26,12 +26,13 @@ RUN dotnet publish "HotshotLogistics.Api.csproj" -c Release -o /app/publish /p:U
 # =============================================================================
 # STAGE 2: Production runtime (Chiseled Ubuntu - Ultra-minimal & Secure)
 # =============================================================================
+# Using chiseled-extra which includes ICU libraries for globalization support
 # Benefits of chiseled images:
 # - ~100MB smaller than standard images
 # - No shell, no package manager (reduced attack surface)
 # - Non-root by default
 # - No apt/dpkg vulnerabilities
-FROM mcr.microsoft.com/dotnet/aspnet:8.0-jammy-chiseled AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:8.0-jammy-chiseled-extra AS runtime
 WORKDIR /app
 
 # Copy published files (chiseled images run as non-root 'app' user by default)
@@ -44,7 +45,6 @@ EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV DOTNET_RUNNING_IN_CONTAINER=true
-ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 
 # NOTE: Health checks in chiseled images must use ASP.NET Core's built-in health check middleware
 # since curl/wget are not available. Configure health checks in Azure Container Apps instead.
