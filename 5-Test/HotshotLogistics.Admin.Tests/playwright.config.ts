@@ -77,7 +77,8 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'cd ../../1-Presentation/admin-dashboard && set NEXT_PUBLIC_AZURE_CLIENT_ID=test-client-id && set NEXT_PUBLIC_AZURE_TENANT_ID=test-tenant-id && npx next dev',
+    command: 'npx cross-env NEXT_PUBLIC_AZURE_CLIENT_ID=test-client-id NEXT_PUBLIC_AZURE_TENANT_ID=test-tenant-id npx next dev',
+    cwd: '../../1-Presentation/admin-dashboard',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: process.env.CI ? 180_000 : 60_000,
