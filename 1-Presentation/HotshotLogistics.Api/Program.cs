@@ -88,9 +88,17 @@ builder.Services.AddCommunicationServices();
 // ============================================================
 // AUTHENTICATION CONFIGURATION
 // ============================================================
-var azureAdB2cInstance = builder.Configuration["AzureAdB2C:Instance"];
+var azureAdB2cSection = builder.Configuration.GetSection("AzureAdB2C");
+var azureAdB2cInstance = azureAdB2cSection["Instance"];
+var azureAdB2cDomain = azureAdB2cSection["Domain"];
+var azureAdB2cClientId = azureAdB2cSection["ClientId"];
+// TenantId is often optional if Domain is provided, but good to check
+var azureAdB2cTenantId = azureAdB2cSection["TenantId"];
+
 var isAzureAdB2cConfigured = !string.IsNullOrEmpty(azureAdB2cInstance) 
-    && Uri.TryCreate(azureAdB2cInstance, UriKind.Absolute, out _);
+    && Uri.TryCreate(azureAdB2cInstance, UriKind.Absolute, out _)
+    && !string.IsNullOrEmpty(azureAdB2cDomain)
+    && !string.IsNullOrEmpty(azureAdB2cClientId);
 
 if (builder.Environment.IsDevelopment())
 {
@@ -100,9 +108,15 @@ if (builder.Environment.IsDevelopment())
 }
 else if (isAzureAdB2cConfigured)
 {
+    Console.WriteLine("Configuring Azure AD B2C with:");
+    Console.WriteLine($"  Instance: {azureAdB2cInstance}");
+    Console.WriteLine($"  Domain: {azureAdB2cDomain}");
+    Console.WriteLine($"  ClientId: {azureAdB2cClientId}");
+    Console.WriteLine($"  TenantId: {azureAdB2cTenantId}");
+    
     // Production with proper Azure AD B2C configuration
     builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-        .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAdB2C"));
+        .AddMicrosoftIdentityWebApi(azureAdB2cSection);
 }
 else
 {
@@ -110,10 +124,10 @@ else
     throw new InvalidOperationException(
         "FATAL: Azure AD B2C is not configured for production.\n" +
         "Please configure the following in Azure App Configuration:\n" +
-        "  - AzureAdB2C:Instance (e.g., https://yourtenant.b2clogin.com/yourtenant.onmicrosoft.com)\n" +
-        "  - AzureAdB2C:ClientId\n" +
-        "  - AzureAdB2C:Domain\n" +
-        "  - AzureAdB2C:TenantId\n" +
+        $"  - AzureAdB2C:Instance (Current: '{azureAdB2cInstance}')\n" +
+        $"  - AzureAdB2C:ClientId (Current: '{azureAdB2cClientId}')\n" +
+        $"  - AzureAdB2C:Domain (Current: '{azureAdB2cDomain}')\n" +
+        $"  - AzureAdB2C:TenantId (Current: '{azureAdB2cTenantId}')\n" +
         "Or set ASPNETCORE_ENVIRONMENT=Development to use test authentication.\n\n" +
         $"Current AppConfiguration Endpoint: {appConfigEndpoint ?? "not set"}");
 }
