@@ -243,7 +243,7 @@ return await Pulumi.Deployment.RunAsync(() =>
             // Slugify the key name for the resource name (replace : with -)
             var resourceName = $"cfg-{key.Key.Replace(":", "-").ToLower()}-{environment}";
             
-            var configKey = new ConfigurationKeyValue(resourceName, new ConfigurationKeyValueArgs
+            var configKey = new KeyValue(resourceName, new KeyValueArgs
             {
                 ResourceGroupName = resourceGroup.Name,
                 ConfigStoreName = appConfig.Name,
