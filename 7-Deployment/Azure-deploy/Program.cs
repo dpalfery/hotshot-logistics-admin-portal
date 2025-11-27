@@ -433,6 +433,13 @@ return await Pulumi.Deployment.RunAsync(() =>
                             Name = "AppConfiguration__Endpoint",
                             Value = appConfig.Endpoint
                         },
+                        // Azure AD B2C Configuration
+                        // Passed as environment variables to ensure the app starts even if App Configuration is delayed
+                        new EnvironmentVarArgs { Name = "AzureAdB2C__Instance", Value = azureAdB2cInstance },
+                        new EnvironmentVarArgs { Name = "AzureAdB2C__ClientId", Value = azureAdB2cClientId },
+                        new EnvironmentVarArgs { Name = "AzureAdB2C__Domain", Value = azureAdB2cDomain },
+                        new EnvironmentVarArgs { Name = "AzureAdB2C__TenantId", Value = azureAdB2cTenantId },
+                        new EnvironmentVarArgs { Name = "AzureAdB2C__Audience", Value = azureAdB2cAudience },
                         // Key Vault URI - for secrets referenced from App Configuration
                         new EnvironmentVarArgs
                         {
