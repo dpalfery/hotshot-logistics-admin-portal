@@ -253,15 +253,7 @@ jobs:
               "ALLOWED_HOSTS=$CONTAINER_APP_FQDN" \
               "CORS_ALLOWED_ORIGINS=$STATIC_WEB_APP_URL,$CONTAINER_APP_URL,http://localhost:3000"
           
-          echo "✅ Container App environment variables configured"
-          echo "🔄 Restarting Container App to apply changes..."
-          
-          # Restart the container app to pick up the new environment variables
-          az containerapp revision restart \
-            --name "$CONTAINER_APP_NAME" \
-            --resource-group "$RESOURCE_GROUP"
-          
-          echo "✅ Container App restarted successfully"
+          echo "✅ Container App environment variables configured (new revision created automatically)"
           
           echo "### ✅ Container App Configuration" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
