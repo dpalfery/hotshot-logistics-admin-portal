@@ -13,6 +13,7 @@ using Pulumi.AzureNative.Sql;
 using Pulumi.AzureNative.Sql.Inputs;
 using Pulumi.AzureNative.KeyVault;
 using Pulumi.AzureNative.KeyVault.Inputs;
+using Pulumi.AzureNative.AppConfiguration;
 using Pulumi.AzureNative.ManagedIdentity;
 using Pulumi.AzureNative.Authorization;
 using System.Linq;
@@ -45,6 +46,14 @@ return await Pulumi.Deployment.RunAsync(() =>
     // SQL firewall allowed IP ranges (comma-separated). If not specified, defaults to Azure services only (0.0.0.0)
     // For production, specify known IP ranges or use private endpoints instead
     var sqlAllowedIpRanges = config.Get("sqlAllowedIpRanges") ?? "0.0.0.0";
+    
+    // Azure AD B2C / Entra External ID configuration for API authentication
+    // These must be configured in Pulumi config or the API will fail to start
+    var azureAdB2cInstance = config.Get("azureAdB2cInstance") ?? "";
+    var azureAdB2cClientId = config.Get("azureAdB2cClientId") ?? "";
+    var azureAdB2cDomain = config.Get("azureAdB2cDomain") ?? "";
+    var azureAdB2cTenantId = config.Get("azureAdB2cTenantId") ?? "";
+    var azureAdB2cAudience = config.Get("azureAdB2cAudience") ?? "";
 
     // Resource Group
     var resourceGroup = new ResourceGroup($"rg-hotshot-{environment}", new ResourceGroupArgs
@@ -142,7 +151,7 @@ return await Pulumi.Deployment.RunAsync(() =>
         Scope = registry.Id
     });
 
-    // Azure Key Vault for securely storing registry credentials
+    // Azure Key Vault for secrets (using RBAC for access control)
     var keyVault = new Vault($"kv-hotshot-{environment}", new VaultArgs
     {
         ResourceGroupName = resourceGroup.Name,
@@ -155,32 +164,53 @@ return await Pulumi.Deployment.RunAsync(() =>
                 Family = "A",
                 Name = Pulumi.AzureNative.KeyVault.SkuName.Standard
             },
-            AccessPolicies = new[]
-            {
-                // Grant managed identity access to retrieve secrets
-                new AccessPolicyEntryArgs
-                {
-                    TenantId = azureTenantId,
-                    ObjectId = containerAppIdentity.PrincipalId,
-                    Permissions = new PermissionsArgs
-                    {
-                        Secrets = new InputList<Pulumi.Union<string, Pulumi.AzureNative.KeyVault.SecretPermissions>>
-                        {
-                            Pulumi.AzureNative.KeyVault.SecretPermissions.Get,
-                            Pulumi.AzureNative.KeyVault.SecretPermissions.List
-                        }
-                    }
-                }
-            },
+            EnableRbacAuthorization = true,
             EnabledForDeployment = true,
-            EnabledForDiskEncryption = false,
-            EnabledForTemplateDeployment = true
+            EnabledForTemplateDeployment = true,
+            EnableSoftDelete = true,
+            SoftDeleteRetentionInDays = 7
         },
         Tags = new InputMap<string>
         {
             { "Environment", environment },
             { "Project", "HotshotLogistics" }
         }
+    });
+
+    // Key Vault Secrets User role for managed identity (4633458b-17de-408a-b874-0445c86b69e6)
+    var kvSecretsUserRoleId = $"/subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/4633458b-17de-408a-b874-0445c86b69e6";
+    var kvSecretsRoleAssignment = new RoleAssignment($"kv-secrets-{environment}", new RoleAssignmentArgs
+    {
+        PrincipalId = containerAppIdentity.PrincipalId,
+        PrincipalType = Pulumi.AzureNative.Authorization.PrincipalType.ServicePrincipal,
+        RoleDefinitionId = kvSecretsUserRoleId,
+        Scope = keyVault.Id
+    });
+
+    // Azure App Configuration for non-secret configuration
+    var appConfig = new ConfigurationStore($"appcs-hotshot-{environment}", new ConfigurationStoreArgs
+    {
+        ResourceGroupName = resourceGroup.Name,
+        Location = location,
+        Sku = new Pulumi.AzureNative.AppConfiguration.Inputs.SkuArgs
+        {
+            Name = "free"
+        },
+        Tags = new InputMap<string>
+        {
+            { "Environment", environment },
+            { "Project", "HotshotLogistics" }
+        }
+    });
+
+    // App Configuration Data Reader role for managed identity (516239f1-63e1-4d78-a4de-a74fb236a071)
+    var appConfigDataReaderRoleId = $"/subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/516239f1-63e1-4d78-a4de-a74fb236a071";
+    var appConfigRoleAssignment = new RoleAssignment($"appconfig-reader-{environment}", new RoleAssignmentArgs
+    {
+        PrincipalId = containerAppIdentity.PrincipalId,
+        PrincipalType = Pulumi.AzureNative.Authorization.PrincipalType.ServicePrincipal,
+        RoleDefinitionId = appConfigDataReaderRoleId,
+        Scope = appConfig.Id
     });
 
     // SQL Server
@@ -266,6 +296,29 @@ return await Pulumi.Deployment.RunAsync(() =>
                 Name = "Consumption",
                 WorkloadProfileType = "Consumption"
             }
+        },
+        Tags = new InputMap<string>
+        {
+            { "Environment", environment },
+            { "Project", "HotshotLogistics" }
+        }
+    });
+
+    // Static Web App (Next.js Admin Dashboard) - declared before Container App for CORS reference
+    var staticWebApp = new StaticSite($"swa-hotshot-{environment}", new StaticSiteArgs
+    {
+        ResourceGroupName = resourceGroup.Name,
+        Location = location,
+        Sku = new SkuDescriptionArgs
+        {
+            Name = "Free",
+            Tier = "Free"
+        },
+        BuildProperties = new StaticSiteBuildPropertiesArgs
+        {
+            AppLocation = "1-Presentation/admin-dashboard",
+            OutputLocation = "out",
+            AppBuildCommand = "npm run build"
         },
         Tags = new InputMap<string>
         {
@@ -362,6 +415,25 @@ return await Pulumi.Deployment.RunAsync(() =>
                             Name = "ASPNETCORE_URLS",
                             Value = "http://+:8080"
                         },
+                        // Azure App Configuration endpoint - app loads config from here
+                        new EnvironmentVarArgs
+                        {
+                            Name = "AppConfiguration__Endpoint",
+                            Value = appConfig.Endpoint
+                        },
+                        // Key Vault URI - for secrets referenced from App Configuration
+                        new EnvironmentVarArgs
+                        {
+                            Name = "KeyVault__VaultUri",
+                            Value = keyVault.Properties.Apply(p => p.VaultUri)
+                        },
+                        // Managed Identity Client ID - for authenticating to App Config and Key Vault
+                        new EnvironmentVarArgs
+                        {
+                            Name = "Azure__ManagedIdentityClientId",
+                            Value = containerAppIdentity.ClientId
+                        },
+                        // Bootstrap secrets (until migrated to Key Vault)
                         new EnvironmentVarArgs
                         {
                             Name = "ConnectionStrings__DefaultConnection",
@@ -374,17 +446,15 @@ return await Pulumi.Deployment.RunAsync(() =>
                         },
                         new EnvironmentVarArgs
                         {
-                            Name = "ALLOWED_HOSTS",
-                            // Allow the Container App's own hostname
-                            Value = containerAppFqdn
+                            Name = "AllowedHosts",
+                            Value = "*"
                         },
+                        // CORS - computed from Static Web App hostname
                         new EnvironmentVarArgs
                         {
-                            Name = "CORS_ALLOWED_ORIGINS",
-                            // Allow Static Web App to make CORS requests
-                            // Format: "https://static-web-app-url,https://container-app-url"
+                            Name = "Cors__AllowedOrigins",
                             Value = staticWebApp.DefaultHostname.Apply(swaHost =>
-                                $"https://{swaHost},https://{containerAppFqdn},http://localhost:3000")
+                                $"https://{swaHost},http://localhost:3000")
                         }
                     }
                 }
@@ -417,32 +487,8 @@ return await Pulumi.Deployment.RunAsync(() =>
         }
     }, new CustomResourceOptions
     {
-        // Ensure the AcrPull role assignment is complete before creating the Container App
-        // This prevents "UNAUTHORIZED" errors when pulling images from ACR
-        DependsOn = { acrPullRoleAssignment }
-    });
-
-    // Static Web App (Next.js Admin Dashboard)
-    var staticWebApp = new StaticSite($"swa-hotshot-{environment}", new StaticSiteArgs
-    {
-        ResourceGroupName = resourceGroup.Name,
-        Location = location,
-        Sku = new SkuDescriptionArgs
-        {
-            Name = "Free",
-            Tier = "Free"
-        },
-        BuildProperties = new StaticSiteBuildPropertiesArgs
-        {
-            AppLocation = "1-Presentation/admin-dashboard",
-            OutputLocation = "out",
-            AppBuildCommand = "npm run build"
-        },
-        Tags = new InputMap<string>
-        {
-            { "Environment", environment },
-            { "Project", "HotshotLogistics" }
-        }
+        // Ensure role assignments are complete before creating the Container App
+        DependsOn = { acrPullRoleAssignment, kvSecretsRoleAssignment, appConfigRoleAssignment }
     });
 
     // Export outputs
@@ -466,13 +512,18 @@ return await Pulumi.Deployment.RunAsync(() =>
         ["containerImageTag"] = imageTag,
         ["containerImageFullPath"] = registry.LoginServer.Apply(server => $"{server}/{imageName}:{imageTag}"),
         
-        // Managed Identity (for secure ACR access)
+        // Managed Identity
         ["containerAppIdentityId"] = containerAppIdentity.Id,
+        ["containerAppIdentityClientId"] = containerAppIdentity.ClientId,
         ["containerAppPrincipalId"] = containerAppIdentity.PrincipalId,
         
         // Key Vault
         ["keyVaultName"] = keyVault.Name,
-        ["keyVaultId"] = keyVault.Id,
+        ["keyVaultUri"] = keyVault.Properties.Apply(p => p.VaultUri),
+        
+        // App Configuration
+        ["appConfigName"] = appConfig.Name,
+        ["appConfigEndpoint"] = appConfig.Endpoint,
         
         // Static Web App
         ["staticWebAppUrl"] = staticWebApp.DefaultHostname,

@@ -9,16 +9,62 @@ using Microsoft.AspNetCore.Authorization;
 using System.IO;
 using System.Text.Json;
 using Azure.Identity;
-using HotshotLogistics.Api;
-using Microsoft.Graph;
-using HotshotLogistics.Application.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.SignalR;
-using Microsoft.Identity.Web;
-using Microsoft.OpenApi.Models;
-using HotshotLogistics.Domain.DTOs;
+using Microsoft.Extensions.Configuration.AzureAppConfiguration;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ============================================================
+// AZURE APP CONFIGURATION + KEY VAULT INTEGRATION
+// ============================================================
+var appConfigEndpoint = builder.Configuration["AppConfiguration__Endpoint"];
+var keyVaultUri = builder.Configuration["KeyVault__VaultUri"];
+var managedIdentityClientId = builder.Configuration["Azure__ManagedIdentityClientId"];
+
+// Create credential for Azure services
+DefaultAzureCredential credential;
+if (!string.IsNullOrEmpty(managedIdentityClientId))
+{
+    // Use specific managed identity in production (Container Apps)
+    credential = new DefaultAzureCredential(new DefaultAzureCredentialOptions
+    {
+        ManagedIdentityClientId = managedIdentityClientId
+    });
+}
+else
+{
+    // Use default credential chain for local development
+    credential = new DefaultAzureCredential();
+}
+
+// Connect to Azure App Configuration if endpoint is configured
+if (!string.IsNullOrEmpty(appConfigEndpoint) && Uri.TryCreate(appConfigEndpoint, UriKind.Absolute, out _))
+{
+    builder.Configuration.AddAzureAppConfiguration(options =>
+    {
+        options.Connect(new Uri(appConfigEndpoint), credential)
+            // Load all configuration values
+            .Select(KeyFilter.Any)
+            // Load environment-specific values (e.g., "Production:")
+            .Select(KeyFilter.Any, builder.Environment.EnvironmentName)
+            // Enable Key Vault references
+            .ConfigureKeyVault(kv =>
+            {
+                kv.SetCredential(credential);
+            })
+            // Enable dynamic configuration refresh
+            .ConfigureRefresh(refresh =>
+            {
+                refresh.Register("Sentinel", refreshAll: true)
+                    .SetCacheExpiration(TimeSpan.FromMinutes(5));
+            });
+    });
+    
+    Console.WriteLine($"✅ Connected to Azure App Configuration: {appConfigEndpoint}");
+}
+else if (!builder.Environment.IsDevelopment())
+{
+    Console.WriteLine("⚠️ Azure App Configuration not configured. Using environment variables and appsettings.json");
+}
 
 // Configure settings
 builder.Services.Configure<GoogleMapsSettings>(builder.Configuration.GetSection("Mapping:GoogleMaps"));
@@ -31,17 +77,37 @@ builder.Services.AddApplicationServices();
 builder.Services.AddMappingServices();
 builder.Services.AddCommunicationServices();
 
-// Add services to the container
+// ============================================================
+// AUTHENTICATION CONFIGURATION
+// ============================================================
+var azureAdB2cInstance = builder.Configuration["AzureAdB2C:Instance"];
+var isAzureAdB2cConfigured = !string.IsNullOrEmpty(azureAdB2cInstance) 
+    && Uri.TryCreate(azureAdB2cInstance, UriKind.Absolute, out _);
+
 if (builder.Environment.IsDevelopment())
 {
-    // Use test authentication handler for local development
+    // Use test authentication handler ONLY for local development
     builder.Services.AddAuthentication("Test")
         .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("Test", options => { });
 }
-else
+else if (isAzureAdB2cConfigured)
 {
+    // Production with proper Azure AD B2C configuration
     builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAdB2C"));
+}
+else
+{
+    // FAIL FAST: Do not start the app without proper auth in production
+    throw new InvalidOperationException(
+        "FATAL: Azure AD B2C is not configured for production.\n" +
+        "Please configure the following in Azure App Configuration:\n" +
+        "  - AzureAdB2C:Instance (e.g., https://yourtenant.b2clogin.com/yourtenant.onmicrosoft.com)\n" +
+        "  - AzureAdB2C:ClientId\n" +
+        "  - AzureAdB2C:Domain\n" +
+        "  - AzureAdB2C:TenantId\n" +
+        "Or set ASPNETCORE_ENVIRONMENT=Development to use test authentication.\n\n" +
+        $"Current AppConfiguration Endpoint: {appConfigEndpoint ?? "not set"}");
 }
 
 builder.Services.AddControllers()
@@ -110,9 +176,6 @@ builder.Services.AddHttpClient();
 // Add distributed cache (using in-memory for development)
 builder.Services.AddDistributedMemoryCache();
 
-// Register Azure App Configuration refresh service
-builder.Services.AddAzureAppConfiguration();
-
 // Register GraphServiceClient
 builder.Services.AddScoped(sp =>
 {
@@ -146,6 +209,12 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddSignalR();
 
 var app = builder.Build();
+
+// Enable Azure App Configuration refresh middleware (if configured)
+if (!string.IsNullOrEmpty(appConfigEndpoint))
+{
+    app.UseAzureAppConfiguration();
+}
 
 // Configure the HTTP request pipeline.
 // Enable Swagger JSON endpoint in all environments
