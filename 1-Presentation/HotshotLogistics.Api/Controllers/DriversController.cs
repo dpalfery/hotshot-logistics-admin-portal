@@ -113,7 +113,7 @@ namespace HotshotLogistics.Api.Controllers
         /// <summary>
         /// Creates a new driver.
         /// </summary>
-        /// <param name="driver">The driver data.</param>
+        /// <param name="driverDto">The driver data.</param>
         /// <returns>The created driver.</returns>
         [HttpPost]
         [Authorize(Policy = AuthorizationPolicies.ManagerOrAdmin)]

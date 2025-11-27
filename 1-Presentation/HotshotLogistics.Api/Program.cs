@@ -9,6 +9,14 @@ using Microsoft.AspNetCore.Authorization;
 using System.IO;
 using System.Text.Json;
 using Azure.Identity;
+using HotshotLogistics.Api;
+using Microsoft.Graph;
+using HotshotLogistics.Application.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.Identity.Web;
+using Microsoft.OpenApi.Models;
+using HotshotLogistics.Domain.DTOs;
 using Microsoft.Extensions.Configuration.AzureAppConfiguration;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -55,7 +63,7 @@ if (!string.IsNullOrEmpty(appConfigEndpoint) && Uri.TryCreate(appConfigEndpoint,
             .ConfigureRefresh(refresh =>
             {
                 refresh.Register("Sentinel", refreshAll: true)
-                    .SetCacheExpiration(TimeSpan.FromMinutes(5));
+                    .SetRefreshInterval(TimeSpan.FromMinutes(5));
             });
     });
     
