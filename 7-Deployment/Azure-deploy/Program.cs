@@ -225,6 +225,39 @@ return await Pulumi.Deployment.RunAsync(() =>
         Scope = appConfig.Id
     });
 
+    // Azure AD B2C Configuration Keys in App Configuration
+    var b2cConfigKeys = new Dictionary<string, string>
+    {
+        { "AzureAdB2C:Instance", azureAdB2cInstance },
+        { "AzureAdB2C:ClientId", azureAdB2cClientId },
+        { "AzureAdB2C:Domain", azureAdB2cDomain },
+        { "AzureAdB2C:TenantId", azureAdB2cTenantId },
+        { "AzureAdB2C:Audience", azureAdB2cAudience }
+    };
+
+    foreach (var key in b2cConfigKeys)
+    {
+        // Only create the key if a value is provided
+        if (!string.IsNullOrEmpty(key.Value))
+        {
+            // Slugify the key name for the resource name (replace : with -)
+            var resourceName = $"cfg-{key.Key.Replace(":", "-").ToLower()}-{environment}";
+            
+            var configKey = new ConfigurationKeyValue(resourceName, new ConfigurationKeyValueArgs
+            {
+                ResourceGroupName = resourceGroup.Name,
+                ConfigStoreName = appConfig.Name,
+                KeyValueName = key.Key,
+                Value = key.Value,
+                Tags = new InputMap<string>
+                {
+                    { "Environment", environment },
+                    { "Project", "HotshotLogistics" }
+                }
+            });
+        }
+    }
+
     // SQL Server
     var sqlServer = new Server($"sql-hotshot-{environment}", new ServerArgs
     {
