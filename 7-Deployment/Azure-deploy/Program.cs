@@ -152,7 +152,7 @@ return await Pulumi.Deployment.RunAsync(() =>
         Scope = registry.Id
     });
 
-    // Azure Key Vault for secrets (using RBAC for access control)
+    // Azure Key Vault for secrets (using access policies - can't switch existing vault to RBAC)
     var keyVault = new Vault($"kv-hotshot-{environment}", new VaultArgs
     {
         ResourceGroupName = resourceGroup.Name,
@@ -165,11 +165,24 @@ return await Pulumi.Deployment.RunAsync(() =>
                 Family = "A",
                 Name = Pulumi.AzureNative.KeyVault.SkuName.Standard
             },
-            EnableRbacAuthorization = true,
+            AccessPolicies = new[]
+            {
+                new AccessPolicyEntryArgs
+                {
+                    TenantId = azureTenantId,
+                    ObjectId = containerAppIdentity.PrincipalId,
+                    Permissions = new PermissionsArgs
+                    {
+                        Secrets = new InputList<Pulumi.Union<string, Pulumi.AzureNative.KeyVault.SecretPermissions>>
+                        {
+                            Pulumi.AzureNative.KeyVault.SecretPermissions.Get,
+                            Pulumi.AzureNative.KeyVault.SecretPermissions.List
+                        }
+                    }
+                }
+            },
             EnabledForDeployment = true,
             EnabledForTemplateDeployment = true
-            // Note: EnableSoftDelete and SoftDeleteRetentionInDays cannot be changed after creation
-            // Defaults: EnableSoftDelete=true, SoftDeleteRetentionInDays=90
         },
         Tags = new InputMap<string>
         {
@@ -178,18 +191,8 @@ return await Pulumi.Deployment.RunAsync(() =>
         }
     });
 
-    // Key Vault Secrets User role for managed identity (4633458b-17de-408a-b874-0445c86b69e6)
-    var kvSecretsUserRoleId = $"/subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/4633458b-17de-408a-b874-0445c86b69e6";
-    var kvSecretsRoleAssignment = new RoleAssignment($"kv-secrets-{environment}", new RoleAssignmentArgs
-    {
-        PrincipalId = containerAppIdentity.PrincipalId,
-        PrincipalType = Pulumi.AzureNative.Authorization.PrincipalType.ServicePrincipal,
-        RoleDefinitionId = kvSecretsUserRoleId,
-        Scope = keyVault.Id
-    });
-
     // Azure App Configuration for non-secret configuration
-    // Note: Free tier can take 5-10 minutes to provision
+    // Note: Free tier can take 5-10 minutes to provision and doesn't support soft delete
     var appConfig = new ConfigurationStore($"appcs-hotshot-{environment}", new ConfigurationStoreArgs
     {
         ResourceGroupName = resourceGroup.Name,
@@ -198,6 +201,7 @@ return await Pulumi.Deployment.RunAsync(() =>
         {
             Name = "free"
         },
+        SoftDeleteRetentionInDays = 0, // Disable soft delete for free tier
         Tags = new InputMap<string>
         {
             { "Environment", environment },
@@ -496,7 +500,7 @@ return await Pulumi.Deployment.RunAsync(() =>
     }, new CustomResourceOptions
     {
         // Ensure role assignments are complete before creating the Container App
-        DependsOn = { acrPullRoleAssignment, kvSecretsRoleAssignment, appConfigRoleAssignment }
+        DependsOn = { acrPullRoleAssignment, appConfigRoleAssignment }
     });
 
     // Export outputs
