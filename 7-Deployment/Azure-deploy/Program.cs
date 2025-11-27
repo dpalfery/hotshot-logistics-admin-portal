@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System;
 using Pulumi;
 using Pulumi.AzureNative.Resources;
 using Pulumi.AzureNative.OperationalInsights;
@@ -166,9 +167,9 @@ return await Pulumi.Deployment.RunAsync(() =>
             },
             EnableRbacAuthorization = true,
             EnabledForDeployment = true,
-            EnabledForTemplateDeployment = true,
-            EnableSoftDelete = true,
-            SoftDeleteRetentionInDays = 7
+            EnabledForTemplateDeployment = true
+            // Note: EnableSoftDelete and SoftDeleteRetentionInDays cannot be changed after creation
+            // Defaults: EnableSoftDelete=true, SoftDeleteRetentionInDays=90
         },
         Tags = new InputMap<string>
         {
@@ -188,6 +189,7 @@ return await Pulumi.Deployment.RunAsync(() =>
     });
 
     // Azure App Configuration for non-secret configuration
+    // Note: Free tier can take 5-10 minutes to provision
     var appConfig = new ConfigurationStore($"appcs-hotshot-{environment}", new ConfigurationStoreArgs
     {
         ResourceGroupName = resourceGroup.Name,
@@ -200,6 +202,12 @@ return await Pulumi.Deployment.RunAsync(() =>
         {
             { "Environment", environment },
             { "Project", "HotshotLogistics" }
+        }
+    }, new CustomResourceOptions
+    {
+        CustomTimeouts = new CustomTimeouts
+        {
+            Create = TimeSpan.FromMinutes(15)
         }
     });
 
