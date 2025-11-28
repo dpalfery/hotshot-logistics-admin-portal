@@ -117,8 +117,7 @@ jobs:
           pulumi stack select ${{ github.event.inputs.stack || 'dev' }} --create
           pulumi config set location ${{ github.event.inputs.region || 'eastus2' }}
           pulumi config set azureTenantId ${{ secrets.AZURE_TENANT_ID }}
-          pulumi config set subscriptionId ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          # Clear any cached azure-native credentials to force re-authentication with new subscription
+          pulumi config set subscriptionId ${{ secrets.AZURE_SUBSCRIPTION_ID }} # Clear any cached azure-native credentials to force re-authentication with new subscription
           pulumi config rm azure-native:subscriptionId --path || true
           pulumi config rm azure-native:clientId --path || true
           pulumi config rm azure-native:tenantId --path || true
@@ -180,8 +179,7 @@ jobs:
           pulumi stack select ${{ github.event.inputs.stack || 'dev' }}
           pulumi config set location ${{ github.event.inputs.region || 'eastus2' }}
           pulumi config set azureTenantId ${{ secrets.AZURE_TENANT_ID }}
-          pulumi config set subscriptionId ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          # Clear any cached azure-native credentials to force re-authentication with new subscription
+          pulumi config set subscriptionId ${{ secrets.AZURE_SUBSCRIPTION_ID }} # Clear any cached azure-native credentials to force re-authentication with new subscription
           pulumi config rm azure-native:subscriptionId --path || true
           pulumi config rm azure-native:clientId --path || true
           pulumi config rm azure-native:tenantId --path || true
@@ -329,8 +327,7 @@ jobs:
           pulumi stack select ${{ github.event.inputs.stack || 'dev' }}
           pulumi config set location ${{ github.event.inputs.region || 'eastus2' }}
           pulumi config set azureTenantId ${{ secrets.AZURE_TENANT_ID }}
-          pulumi config set subscriptionId ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          # Clear any cached azure-native credentials to force re-authentication with new subscription
+          pulumi config set subscriptionId ${{ secrets.AZURE_SUBSCRIPTION_ID }}  # Clear any cached azure-native credentials to force re-authentication with new subscription
           pulumi config rm azure-native:subscriptionId --path || true
           pulumi config rm azure-native:clientId --path || true
           pulumi config rm azure-native:tenantId --path || true
