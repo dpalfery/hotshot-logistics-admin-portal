@@ -52,6 +52,15 @@ return await Pulumi.Deployment.RunAsync(() =>
     // These must be configured in Pulumi config or the API will fail to start
     // We prioritize Environment Variables (from GitHub Secrets) over Pulumi Config
     var azureAdB2cInstance = Environment.GetEnvironmentVariable("AZURE_AD_B2C_INSTANCE") ?? config.Get("azureAdB2cInstance") ?? "";
+
+    // FIX: Ensure Instance is a valid URL (if user provided just "Palfery", convert to "https://Palfery.b2clogin.com")
+    if (!string.IsNullOrEmpty(azureAdB2cInstance) && !azureAdB2cInstance.StartsWith("http"))
+    {
+        var fixedInstance = $"https://{azureAdB2cInstance}.b2clogin.com";
+        Pulumi.Log.Info($"Correcting AzureAdB2C Instance from '{azureAdB2cInstance}' to '{fixedInstance}'");
+        azureAdB2cInstance = fixedInstance;
+    }
+
     var azureAdB2cClientId = Environment.GetEnvironmentVariable("AZURE_AD_B2C_CLIENT_ID") ?? config.Get("azureAdB2cClientId") ?? "";
     var azureAdB2cDomain = Environment.GetEnvironmentVariable("AZURE_AD_B2C_DOMAIN") ?? config.Get("azureAdB2cDomain") ?? "";
     var azureAdB2cTenantId = Environment.GetEnvironmentVariable("AZURE_AD_B2C_TENANT_ID") ?? config.Get("azureAdB2cTenantId") ?? "";

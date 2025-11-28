@@ -24,9 +24,10 @@ var builder = WebApplication.CreateBuilder(args);
 // ============================================================
 // AZURE APP CONFIGURATION + KEY VAULT INTEGRATION
 // ============================================================
-var appConfigEndpoint = builder.Configuration["AppConfiguration__Endpoint"];
-var keyVaultUri = builder.Configuration["KeyVault__VaultUri"];
-var managedIdentityClientId = builder.Configuration["Azure__ManagedIdentityClientId"];
+// Access using colon separator (normalized from double underscore in env vars)
+var appConfigEndpoint = builder.Configuration["AppConfiguration:Endpoint"];
+var keyVaultUri = builder.Configuration["KeyVault:VaultUri"];
+var managedIdentityClientId = builder.Configuration["Azure:ManagedIdentityClientId"];
 
 // Create credential for Azure services
 DefaultAzureCredential credential;
@@ -94,6 +95,17 @@ var azureAdB2cDomain = azureAdB2cSection["Domain"];
 var azureAdB2cClientId = azureAdB2cSection["ClientId"];
 // TenantId is often optional if Domain is provided, but good to check
 var azureAdB2cTenantId = azureAdB2cSection["TenantId"];
+
+// Fix: Ensure Instance is a valid absolute URI (it might be just the instance name like "Palfery")
+if (!string.IsNullOrEmpty(azureAdB2cInstance) && !Uri.TryCreate(azureAdB2cInstance, UriKind.Absolute, out _))
+{
+    // Assume it's the instance name and construct the b2clogin.com URL
+    var fixedInstance = $"https://{azureAdB2cInstance}.b2clogin.com";
+    Console.WriteLine($"⚠️ Correcting AzureAdB2C:Instance from '{azureAdB2cInstance}' to '{fixedInstance}'");
+    azureAdB2cInstance = fixedInstance;
+    // Update the configuration value so MicrosoftIdentityWebApi uses the correct one
+    builder.Configuration["AzureAdB2C:Instance"] = azureAdB2cInstance;
+}
 
 var isAzureAdB2cConfigured = !string.IsNullOrEmpty(azureAdB2cInstance) 
     && Uri.TryCreate(azureAdB2cInstance, UriKind.Absolute, out _)
