@@ -50,11 +50,12 @@ return await Pulumi.Deployment.RunAsync(() =>
     
     // Azure AD B2C / Entra External ID configuration for API authentication
     // These must be configured in Pulumi config or the API will fail to start
-    var azureAdB2cInstance = config.Get("azureAdB2cInstance") ?? "";
-    var azureAdB2cClientId = config.Get("azureAdB2cClientId") ?? "";
-    var azureAdB2cDomain = config.Get("azureAdB2cDomain") ?? "";
-    var azureAdB2cTenantId = config.Get("azureAdB2cTenantId") ?? "";
-    var azureAdB2cAudience = config.Get("azureAdB2cAudience") ?? "";
+    // We prioritize Environment Variables (from GitHub Secrets) over Pulumi Config
+    var azureAdB2cInstance = Environment.GetEnvironmentVariable("AZURE_AD_B2C_INSTANCE") ?? config.Get("azureAdB2cInstance") ?? "";
+    var azureAdB2cClientId = Environment.GetEnvironmentVariable("AZURE_AD_B2C_CLIENT_ID") ?? config.Get("azureAdB2cClientId") ?? "";
+    var azureAdB2cDomain = Environment.GetEnvironmentVariable("AZURE_AD_B2C_DOMAIN") ?? config.Get("azureAdB2cDomain") ?? "";
+    var azureAdB2cTenantId = Environment.GetEnvironmentVariable("AZURE_AD_B2C_TENANT_ID") ?? config.Get("azureAdB2cTenantId") ?? "";
+    var azureAdB2cAudience = Environment.GetEnvironmentVariable("AZURE_AD_B2C_AUDIENCE") ?? config.Get("azureAdB2cAudience") ?? "";
 
     // Resource Group
     var resourceGroup = new ResourceGroup($"rg-hotshot-{environment}", new ResourceGroupArgs

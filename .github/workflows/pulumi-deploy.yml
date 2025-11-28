@@ -108,6 +108,11 @@ jobs:
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           ARM_USE_OIDC: true
+          AZURE_AD_B2C_INSTANCE: ${{ secrets.AZURE_AD_B2C_INSTANCE }}
+          AZURE_AD_B2C_CLIENT_ID: ${{ secrets.AZURE_AD_B2C_CLIENT_ID }}
+          AZURE_AD_B2C_DOMAIN: ${{ secrets.AZURE_AD_B2C_DOMAIN }}
+          AZURE_AD_B2C_TENANT_ID: ${{ secrets.AZURE_AD_B2C_TENANT_ID }}
+          AZURE_AD_B2C_AUDIENCE: ${{ secrets.AZURE_AD_B2C_AUDIENCE }}
         run: |
           pulumi stack select ${{ github.event.inputs.stack || 'dev' }} --create
           pulumi config set location ${{ github.event.inputs.region || 'eastus2' }}
@@ -162,6 +167,11 @@ jobs:
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           ARM_USE_OIDC: true
+          AZURE_AD_B2C_INSTANCE: ${{ secrets.AZURE_AD_B2C_INSTANCE }}
+          AZURE_AD_B2C_CLIENT_ID: ${{ secrets.AZURE_AD_B2C_CLIENT_ID }}
+          AZURE_AD_B2C_DOMAIN: ${{ secrets.AZURE_AD_B2C_DOMAIN }}
+          AZURE_AD_B2C_TENANT_ID: ${{ secrets.AZURE_AD_B2C_TENANT_ID }}
+          AZURE_AD_B2C_AUDIENCE: ${{ secrets.AZURE_AD_B2C_AUDIENCE }}
         run: |
           pulumi stack select ${{ github.event.inputs.stack || 'dev' }}
           pulumi config set location ${{ github.event.inputs.region || 'eastus2' }}
