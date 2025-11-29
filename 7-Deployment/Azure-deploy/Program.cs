@@ -67,8 +67,10 @@ return await Pulumi.Deployment.RunAsync(() =>
     var azureAdB2cAudience = Environment.GetEnvironmentVariable("AZURE_AD_B2C_AUDIENCE") ?? config.Get("azureAdB2cAudience") ?? "";
 
     // Resource Group
-    var resourceGroup = new ResourceGroup($"rg-hotshot-{environment}", new ResourceGroupArgs
+    var resourceGroupName = $"rg-hotshot-{environment}-{location}";
+    var resourceGroup = new ResourceGroup(resourceGroupName, new ResourceGroupArgs
     {
+        ResourceGroupName = resourceGroupName,
         Location = location,
         Tags = new InputMap<string>
         {
@@ -92,7 +94,8 @@ return await Pulumi.Deployment.RunAsync(() =>
     });
 
     // Retrieve the Log Analytics Workspace shared keys
-    var workspaceSharedKeys = Output.Tuple(resourceGroup.Name, workspace.Name).Apply(t =>
+    // We include resourceGroup.Id and workspace.Id in the tuple to ensure the resources are fully created before invoking GetSharedKeys
+    var workspaceSharedKeys = Output.Tuple(resourceGroup.Name, workspace.Name, resourceGroup.Id, workspace.Id).Apply(t =>
         GetSharedKeys.InvokeAsync(new GetSharedKeysArgs
         {
             ResourceGroupName = t.Item1,
