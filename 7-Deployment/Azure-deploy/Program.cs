@@ -31,15 +31,57 @@ return await Pulumi.Deployment.RunAsync(() =>
     var appName = config.Get("appName") ?? "hotshot";
 
     // Helper function for naming standard: {slug}-{environment}-{region}-{appName}
-    string GetResourceName(string slug, string separator = "-")
+    // Includes truncation logic for length-restricted resources (Key Vault, Storage)
+    string GetResourceName(string slug, string separator = "-", int maxLength = 0)
     {
+        string name;
         if (separator == "")
         {
-            // Special case for resources like ACR (alphanumeric only)
+            // Special case for resources like ACR/Storage (alphanumeric only)
             // Using strict lowercase for safety
-            return $"{slug}{environment}{location}{appName}".ToLowerInvariant();
+            name = $"{slug}{environment}{location}{appName}".ToLowerInvariant();
         }
-        return $"{slug}{separator}{environment}{separator}{location}{separator}{appName}";
+        else
+        {
+            name = $"{slug}{separator}{environment}{separator}{location}{separator}{appName}";
+        }
+
+        // Enforce length limits if specified
+        if (maxLength > 0 && name.Length > maxLength)
+        {
+            // Strategy: Truncate the appName first
+            // If we still exceed, we might need to truncate other parts or fail, but appName is usually the variable part.
+            // New Target Length: maxLength - (slug + env + region + separators length)
+            
+            // Calculate fixed length (everything except appName)
+            var fixedPart = separator == "" 
+                ? $"{slug}{environment}{location}"
+                : $"{slug}{separator}{environment}{separator}{location}{separator}";
+                
+            var availableSpace = maxLength - fixedPart.Length;
+
+            if (availableSpace < 3)
+            {
+                // If we have less than 3 chars for app name, something is wrong with env/region length
+                throw new InvalidOperationException($"Generated name prefix '{fixedPart}' is too long for resource with limit {maxLength}. Cannot append appName.");
+            }
+
+            var truncatedAppName = appName.Length > availableSpace 
+                ? appName.Substring(0, availableSpace) 
+                : appName;
+                
+            name = fixedPart + truncatedAppName;
+            
+            // Final check (should be valid by logic above, but verifying)
+            if (name.Length > maxLength)
+            {
+                 throw new InvalidOperationException($"Unable to satisfy length limit {maxLength} for resource '{name}'.");
+            }
+            
+            Pulumi.Log.Warn($"Resource name '{name}' was truncated to fit {maxLength} character limit.");
+        }
+
+        return name;
     }
 
     // Compute the expected Container App and Static Web App FQDNs
@@ -156,8 +198,8 @@ return await Pulumi.Deployment.RunAsync(() =>
     });
 
     // Container Registry with AdminUserEnabled DISABLED for enhanced security
-    // ACR names must be alphanumeric only
-    var registry = new Registry(GetResourceName("cr", ""), new RegistryArgs
+    // ACR names must be alphanumeric only, max 50 chars
+    var registry = new Registry(GetResourceName("cr", "", 50), new RegistryArgs
     {
         ResourceGroupName = resourceGroup.Name,
         Location = location,
@@ -187,7 +229,8 @@ return await Pulumi.Deployment.RunAsync(() =>
     });
 
     // Azure Key Vault for secrets (using access policies - can't switch existing vault to RBAC)
-    var keyVault = new Vault(GetResourceName("kv"), new VaultArgs
+    // KeyVault has 24 char limit
+    var keyVault = new Vault(GetResourceName("kv", "-", 24), new VaultArgs
     {
         ResourceGroupName = resourceGroup.Name,
         Location = location,
