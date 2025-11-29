@@ -11,6 +11,7 @@ Before responding to ANY user request, you MUST:
    - `8-Agent-Instructions/code-quality-general-rule.md`
    - `8-Agent-Instructions/testing-general-rule.md`
    - `8-Agent-Instructions/process-general-rule.md`
+   - `8-Agent-Instructions/azure-naming-standards.md`
 
 2. **CONFIRM** by stating: `[Rules Loaded: security, architecture, code-quality, testing, process]`
 
