@@ -35,35 +35,60 @@ return await Pulumi.Deployment.RunAsync(() =>
     string GetResourceName(string slug, string separator = "-", int maxLength = 0)
     {
         string name;
-        if (separator == "")
+        
+        string BuildName(string loc)
         {
-            // Special case for resources like ACR/Storage (alphanumeric only)
-            // Using strict lowercase for safety
-            name = $"{slug}{environment}{location}{appName}".ToLowerInvariant();
+             if (separator == "")
+            {
+                return $"{slug}{environment}{loc}{appName}".ToLowerInvariant();
+            }
+            else
+            {
+                return $"{slug}{separator}{environment}{separator}{loc}{separator}{appName}";
+            }
         }
-        else
-        {
-            name = $"{slug}{separator}{environment}{separator}{location}{separator}{appName}";
-        }
+
+        name = BuildName(location);
 
         // Enforce length limits if specified
         if (maxLength > 0 && name.Length > maxLength)
         {
-            // Strategy: Truncate the appName first
-            // If we still exceed, we might need to truncate other parts or fail, but appName is usually the variable part.
-            // New Target Length: maxLength - (slug + env + region + separators length)
-            
-            // Calculate fixed length (everything except appName)
+            // Strategy 1: Truncate the appName first
             var fixedPart = separator == "" 
                 ? $"{slug}{environment}{location}"
                 : $"{slug}{separator}{environment}{separator}{location}{separator}";
                 
             var availableSpace = maxLength - fixedPart.Length;
 
+            // If space is too tight (less than 3 chars for app name), try using short region code
             if (availableSpace < 3)
             {
-                // If we have less than 3 chars for app name, something is wrong with env/region length
-                throw new InvalidOperationException($"Generated name prefix '{fixedPart}' is too long for resource with limit {maxLength}. Cannot append appName.");
+                string shortRegion = location switch
+                {
+                    "eastus" => "eus",
+                    "eastus2" => "eus2",
+                    "centralus" => "cus",
+                    "northcentralus" => "ncus",
+                    "southcentralus" => "scus",
+                    "westcentralus" => "wcus",
+                    "westus" => "wus",
+                    "westus2" => "wus2",
+                    "westus3" => "wus3",
+                    _ => location // No abbreviation defined
+                };
+
+                // Re-calculate with short region
+                fixedPart = separator == "" 
+                    ? $"{slug}{environment}{shortRegion}"
+                    : $"{slug}{separator}{environment}{separator}{shortRegion}{separator}";
+                
+                availableSpace = maxLength - fixedPart.Length;
+                
+                // If still no space, we have to fail or truncate aggressively
+                if (availableSpace < 2)
+                {
+                     throw new InvalidOperationException($"Generated name prefix '{fixedPart}' is too long for resource with limit {maxLength}. Cannot append appName.");
+                }
             }
 
             var truncatedAppName = appName.Length > availableSpace 
@@ -72,7 +97,7 @@ return await Pulumi.Deployment.RunAsync(() =>
                 
             name = fixedPart + truncatedAppName;
             
-            // Final check (should be valid by logic above, but verifying)
+            // Final check
             if (name.Length > maxLength)
             {
                  throw new InvalidOperationException($"Unable to satisfy length limit {maxLength} for resource '{name}'.");
@@ -272,6 +297,14 @@ return await Pulumi.Deployment.RunAsync(() =>
             { "Environment", environment },
             { "Project", "HotshotLogistics" }
         }
+    }, new CustomResourceOptions
+    {
+        CustomTimeouts = new CustomTimeouts
+        {
+            Create = TimeSpan.FromMinutes(20),
+            Update = TimeSpan.FromMinutes(20),
+            Delete = TimeSpan.FromMinutes(20)
+        }
     });
 
     // Azure App Configuration for non-secret configuration
@@ -360,6 +393,13 @@ return await Pulumi.Deployment.RunAsync(() =>
             { "Environment", environment },
             { "Project", "HotshotLogistics" }
         }
+    }, new CustomResourceOptions
+    {
+        CustomTimeouts = new CustomTimeouts
+        {
+            Create = TimeSpan.FromMinutes(30),
+            Update = TimeSpan.FromMinutes(30)
+        }
     });
 
     // SQL Database
@@ -446,7 +486,7 @@ return await Pulumi.Deployment.RunAsync(() =>
     {
         Name = staticWebAppName,
         ResourceGroupName = resourceGroup.Name,
-        Location = location,
+        Location = staticWebAppRegion,
         Sku = new SkuDescriptionArgs
         {
             Name = "Free",
