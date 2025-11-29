@@ -129,6 +129,9 @@ return await Pulumi.Deployment.RunAsync(() =>
     // The full image path will be constructed as: <registry>.azurecr.io/<imageName>:<imageTag>
     var imageName = config.Get("imageName") ?? "hotshot-api";
     var imageTag = config.Get("imageTag") ?? "latest";
+    // Container Job image name (defaulting to a separate repo or same one depending on build strategy)
+    var jobImageName = config.Get("jobImageName") ?? "hotshot-db-migration-job";
+    var jobImageTag = config.Get("jobImageTag") ?? "latest";
     // Set to true to use a placeholder image for initial deployment before pushing your own image
     var usePlaceholderImage = config.GetBoolean("usePlaceholderImage") ?? false;
     // SQL firewall allowed IP ranges (comma-separated). If not specified, defaults to Azure services only (0.0.0.0)
@@ -480,6 +483,90 @@ return await Pulumi.Deployment.RunAsync(() =>
         }
     });
 
+    // Container App Job (DB Migration)
+    var migrationJobName = GetResourceName("caj");
+    var migrationJob = new Pulumi.AzureNative.App.Job(migrationJobName, new Pulumi.AzureNative.App.JobArgs
+    {
+        JobName = migrationJobName,
+        ResourceGroupName = resourceGroup.Name,
+        Location = location,
+        EnvironmentId = managedEnvironment.Id,
+        Identity = new Pulumi.AzureNative.App.Inputs.ManagedServiceIdentityArgs
+        {
+            Type = "UserAssigned",
+            UserAssignedIdentities = new InputList<string>
+            {
+                containerAppIdentity.Id
+            }
+        },
+        Configuration = new JobConfigurationArgs
+        {
+            TriggerType = "Manual",
+            ReplicaTimeout = 1800, // 30 minutes timeout
+            // RetryLimit removed - it seems it's not a direct property of JobConfigurationArgs in this version or needs specific placement
+            Registries = new[]
+            {
+                new RegistryCredentialsArgs
+                {
+                    Server = registry.LoginServer,
+                    Identity = containerAppIdentity.Id
+                }
+            },
+            Secrets = new[]
+            {
+                new Pulumi.AzureNative.App.Inputs.SecretArgs
+                {
+                    Name = "db-connection-string",
+                    Value = connectionString
+                }
+            },
+            ManualTriggerConfig = new JobConfigurationManualTriggerConfigArgs
+            {
+                Parallelism = 1,
+                ReplicaCompletionCount = 1
+            }
+        },
+        Template = new JobTemplateArgs
+        {
+            Containers = new[]
+            {
+                new ContainerArgs
+                {
+                    Name = "migration-job",
+                    Image = usePlaceholderImage
+                        ? "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
+                        : registry.LoginServer.Apply(server => $"{server}/{jobImageName}:{jobImageTag}"),
+                    Resources = new ContainerResourcesArgs
+                    {
+                        Cpu = 0.5,
+                        Memory = "1Gi"
+                    },
+                    Env = new[]
+                    {
+                        new EnvironmentVarArgs
+                        {
+                            Name = "DB_CONNECTION_STRING",
+                            SecretRef = "db-connection-string"
+                        },
+                        new EnvironmentVarArgs
+                        {
+                            Name = "ASPNETCORE_ENVIRONMENT",
+                            Value = "Production"
+                        }
+                    }
+                }
+            }
+        },
+        Tags = new InputMap<string>
+        {
+            { "Environment", environment },
+            { "Project", "HotshotLogistics" }
+        }
+    }, new CustomResourceOptions
+    {
+        DependsOn = { acrPullRoleAssignment }
+    });
+
     // Static Web App (Next.js Admin Dashboard) - declared before Container App for CORS reference
     // staticWebAppName is already defined at the top of the file
     var staticWebApp = new StaticSite(staticWebAppName, new StaticSiteArgs
@@ -699,6 +786,11 @@ return await Pulumi.Deployment.RunAsync(() =>
         ["containerImageTag"] = imageTag,
         ["containerImageFullPath"] = registry.LoginServer.Apply(server => $"{server}/{imageName}:{imageTag}"),
         
+        // Job Details
+        ["migrationJobName"] = migrationJob.Name,
+        ["migrationJobImageName"] = jobImageName,
+        ["migrationJobImageFullPath"] = registry.LoginServer.Apply(server => $"{server}/{jobImageName}:{jobImageTag}"),
+
         // Managed Identity
         ["containerAppIdentityId"] = containerAppIdentity.Id,
         ["containerAppIdentityClientId"] = containerAppIdentity.ClientId,

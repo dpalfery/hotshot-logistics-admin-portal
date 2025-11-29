@@ -1,17 +1,19 @@
 {
-    "azureFunctions.deploySubpath": "1-Presentation\\api\\HotshotLogistics.Api/bin/Release/net6.0/publish",
-    "azureFunctions.projectLanguage": "C#",
-    "azureFunctions.projectRuntime": "~4",
-    "debug.internalConsoleOptions": "neverOpen",
-    "azureFunctions.preDeployTask": "publish (functions)",
-    "azureFunctions.projectSubpath": "2-Application\\HotshotLogistics.Api",
-    "chat.edits2.enabled": true,
-    "chat.emptyState.history.enabled": true,
-    "chat.instructionsFilesLocations": {
-        "kilocode/rules": true
-    },
-    "chat.mcp.assisted.nuget.enabled": true,
-    "chat.promptFilesRecommendations": {},
-    "chat.useChatSessionsForCloudButton": true,
-    "inlineChat.enableV2": true
+  "azureFunctions.deploySubpath": "1-Presentation\\api\\HotshotLogistics.Api/bin/Release/net6.0/publish",
+  "azureFunctions.preDeployTask": "publish (functions)",
+  "azureFunctions.projectLanguage": "C#",
+  "azureFunctions.projectRuntime": "~4",
+  "azureFunctions.projectSubpath": "2-Application\\HotshotLogistics.Api",
+  "playwright.reuseBrowser": false,
+  "playwright.showTrace": true,
+  "chat.edits2.enabled": true,
+  "chat.emptyState.history.enabled": true,
+  "chat.instructionsFilesLocations": {
+    "kilocode/rules": true
+  },
+  "chat.mcp.assisted.nuget.enabled": true,
+  "chat.promptFilesRecommendations": {},
+  "chat.useChatSessionsForCloudButton": true,
+  "debug.internalConsoleOptions": "neverOpen",
+  "inlineChat.enableV2": true
 }
