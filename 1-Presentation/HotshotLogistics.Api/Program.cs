@@ -28,6 +28,7 @@ var builder = WebApplication.CreateBuilder(args);
 var appConfigEndpoint = builder.Configuration["AppConfiguration:Endpoint"];
 var keyVaultUri = builder.Configuration["KeyVault:VaultUri"];
 var managedIdentityClientId = builder.Configuration["Azure:ManagedIdentityClientId"];
+var isAppConfigConnected = false;
 
 // Create credential for Azure services
 DefaultAzureCredential credential;
@@ -69,6 +70,10 @@ if (!string.IsNullOrEmpty(appConfigEndpoint) && Uri.TryCreate(appConfigEndpoint,
                         .SetRefreshInterval(TimeSpan.FromMinutes(5));
                 });
         });
+
+        // Register the middleware services required by app.UseAzureAppConfiguration()
+        builder.Services.AddAzureAppConfiguration();
+        isAppConfigConnected = true;
         
         Console.WriteLine($"✅ Connected to Azure App Configuration: {appConfigEndpoint}");
     }
@@ -259,8 +264,8 @@ builder.Services.AddSignalR();
 
 var app = builder.Build();
 
-// Enable Azure App Configuration refresh middleware (if configured)
-if (!string.IsNullOrEmpty(appConfigEndpoint))
+// Enable Azure App Configuration refresh middleware (only if connected and services registered)
+if (isAppConfigConnected)
 {
     app.UseAzureAppConfiguration();
 }
