@@ -186,8 +186,10 @@ return await Pulumi.Deployment.RunAsync(() =>
 
     // Managed Identity for Container App
     // This identity is used for authentication with Container Registry instead of admin credentials
-    var containerAppIdentity = new UserAssignedIdentity(GetResourceName("id"), new UserAssignedIdentityArgs
+    var containerAppIdentityName = GetResourceName("id");
+    var containerAppIdentity = new UserAssignedIdentity(containerAppIdentityName, new UserAssignedIdentityArgs
     {
+        ResourceName = containerAppIdentityName,
         ResourceGroupName = resourceGroup.Name,
         Location = location,
         Tags = new InputMap<string>
@@ -199,8 +201,10 @@ return await Pulumi.Deployment.RunAsync(() =>
 
     // Container Registry with AdminUserEnabled DISABLED for enhanced security
     // ACR names must be alphanumeric only, max 50 chars
-    var registry = new Registry(GetResourceName("cr", "", 50), new RegistryArgs
+    var registryName = GetResourceName("cr", "", 50);
+    var registry = new Registry(registryName, new RegistryArgs
     {
+        RegistryName = registryName,
         ResourceGroupName = resourceGroup.Name,
         Location = location,
         Sku = new Pulumi.AzureNative.ContainerRegistry.Inputs.SkuArgs
@@ -230,8 +234,10 @@ return await Pulumi.Deployment.RunAsync(() =>
 
     // Azure Key Vault for secrets (using access policies - can't switch existing vault to RBAC)
     // KeyVault has 24 char limit
-    var keyVault = new Vault(GetResourceName("kv", "-", 24), new VaultArgs
+    var keyVaultName = GetResourceName("kv", "-", 24);
+    var keyVault = new Vault(keyVaultName, new VaultArgs
     {
+        VaultName = keyVaultName,
         ResourceGroupName = resourceGroup.Name,
         Location = location,
         Properties = new VaultPropertiesArgs
@@ -270,8 +276,10 @@ return await Pulumi.Deployment.RunAsync(() =>
 
     // Azure App Configuration for non-secret configuration
     // Note: Free tier can take 5-10 minutes to provision and doesn't support soft delete
-    var appConfig = new ConfigurationStore(GetResourceName("appcs"), new ConfigurationStoreArgs
+    var appConfigName = GetResourceName("appcs");
+    var appConfig = new ConfigurationStore(appConfigName, new ConfigurationStoreArgs
     {
+        ConfigStoreName = appConfigName,
         ResourceGroupName = resourceGroup.Name,
         Location = location,
         Sku = new Pulumi.AzureNative.AppConfiguration.Inputs.SkuArgs
@@ -336,8 +344,10 @@ return await Pulumi.Deployment.RunAsync(() =>
     }
 
     // SQL Server
-    var sqlServer = new Server(GetResourceName("sql"), new ServerArgs
+    var sqlServerName = GetResourceName("sql");
+    var sqlServer = new Server(sqlServerName, new ServerArgs
     {
+        ServerName = sqlServerName,
         ResourceGroupName = resourceGroup.Name,
         Location = location,
         AdministratorLogin = sqlAdminLogin,
@@ -353,8 +363,10 @@ return await Pulumi.Deployment.RunAsync(() =>
     });
 
     // SQL Database
-    var database = new Database(GetResourceName("sqldb"), new DatabaseArgs
+    var databaseName = GetResourceName("sqldb");
+    var database = new Database(databaseName, new DatabaseArgs
     {
+        DatabaseName = databaseName,
         ResourceGroupName = resourceGroup.Name,
         Location = location,
         ServerName = sqlServer.Name,
@@ -398,8 +410,10 @@ return await Pulumi.Deployment.RunAsync(() =>
             .Apply(t => $"Server=tcp:{t.Item1},1433;Initial Catalog={t.Item2};Persist Security Info=False;User ID={sqlAdminLogin};Password={t.Item3};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"));
 
     // Container Apps Environment (Consumption only - Workload Profiles v2)
-    var managedEnvironment = new ManagedEnvironment(GetResourceName("cae"), new ManagedEnvironmentArgs
+    var managedEnvironmentName = GetResourceName("cae");
+    var managedEnvironment = new ManagedEnvironment(managedEnvironmentName, new ManagedEnvironmentArgs
     {
+        EnvironmentName = managedEnvironmentName,
         ResourceGroupName = resourceGroup.Name,
         Location = location,
         AppLogsConfiguration = new Pulumi.AzureNative.App.Inputs.AppLogsConfigurationArgs
@@ -427,8 +441,10 @@ return await Pulumi.Deployment.RunAsync(() =>
     });
 
     // Static Web App (Next.js Admin Dashboard) - declared before Container App for CORS reference
-    var staticWebApp = new StaticSite(GetResourceName("swa"), new StaticSiteArgs
+    // staticWebAppName is already defined at the top of the file
+    var staticWebApp = new StaticSite(staticWebAppName, new StaticSiteArgs
     {
+        Name = staticWebAppName,
         ResourceGroupName = resourceGroup.Name,
         Location = location,
         Sku = new SkuDescriptionArgs
@@ -450,8 +466,10 @@ return await Pulumi.Deployment.RunAsync(() =>
     });
 
     // Container App (API) with Managed Identity authentication
-    var containerApp = new ContainerApp(GetResourceName("ca"), new ContainerAppArgs
+    var containerAppName = GetResourceName("ca");
+    var containerApp = new ContainerApp(containerAppName, new ContainerAppArgs
     {
+        ContainerAppName = containerAppName,
         ResourceGroupName = resourceGroup.Name,
         Location = location,
         ManagedEnvironmentId = managedEnvironment.Id,
