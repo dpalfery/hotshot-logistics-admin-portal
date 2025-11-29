@@ -579,19 +579,62 @@ export class TestHelpers {
     this.assertionHelpers = new AssertionHelpers(page);
   }
 
-  async setupBasicMocks() {
-    await this.apiMocker.mockJobsApi([]);
-    await this.apiMocker.mockDriversApi([]);
-    // NOTE: Do NOT register a default invoices mock here.
-    // Registering a blanket invoices mock in setupBasicMocks causes the handler
-    // to fulfill requests before any per-test invoice mocks are registered,
-    // which makes tests that register their own invoice routes non-deterministic
-    // across browsers. Tests should call `page.route(...)` or
-    // `this.apiMocker.mockInvoicesApi(...)` explicitly when they need invoice data.
-    await this.apiMocker.mockCustomersApi([]);
-    await this.apiMocker.mockDashboardStatsApi();
-    await this.apiMocker.mockInvoiceSummaryApi();
-    await this.apiMocker.mockInvoiceAgingApi();
+  async setupBasicMocks(): Promise<void> {
+    // Mock jobs API - use /api/job (singular) to match apiService
+    await this.page.route('**/api/job**', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          items: [],
+          totalCount: 0
+        })
+      });
+    });
+
+    // Mock drivers API
+    await this.page.route('**/api/drivers**', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([])
+      });
+    });
+
+    // Mock customers API - use /api/customer (singular) to match apiService
+    await this.page.route('**/api/customer**', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([])
+      });
+    });
+
+    // Mock invoices API - for billing/invoices endpoints
+    await this.page.route('**/api/billing/invoices**', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          items: [],
+          totalCount: 0
+        })
+      });
+    });
+
+    // Mock dashboard stats if needed
+    await this.page.route('**/api/dashboard/stats**', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          totalJobs: 0,
+          activeDrivers: 0,
+          revenue: 0,
+          pendingJobs: 0
+        })
+      });
+    });
   }
 
   /**

@@ -65,7 +65,7 @@ test.describe('Dashboard Overview', () => {
     });
 
     // Mock drivers API with active drivers - matches apiService.getDrivers() endpoint
-    await page.route('https://localhost:5001/api/driver', async route => {
+    await page.route('https://localhost:5001/api/drivers', async route => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -453,7 +453,7 @@ test.describe('Dashboard Overview', () => {
       });
 
       // Mock drivers API with active drivers - matches apiService.getDrivers() endpoint
-      await page.route('**/api/driver**', async route => {
+      await page.route('**/api/drivers**', async route => {
         console.log('Intercepted drivers API call:', route.request().url());
         await route.fulfill({
           status: 200,

@@ -72,8 +72,9 @@ export function JobForm({ job, onSubmit, onCancel, isLoading }: JobFormProps) {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Title</label>
+                <label htmlFor="title" className="block text-sm font-medium text-gray-700">Title</label>
                 <input
+                  id="title"
                   type="text"
                   required
                   value={formData.title}
@@ -83,8 +84,9 @@ export function JobForm({ job, onSubmit, onCancel, isLoading }: JobFormProps) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Pickup Address</label>
+                <label htmlFor="pickupAddress" className="block text-sm font-medium text-gray-700">Pickup Address</label>
                 <input
+                  id="pickupAddress"
                   type="text"
                   required
                   value={formData.pickupAddress}
@@ -94,8 +96,9 @@ export function JobForm({ job, onSubmit, onCancel, isLoading }: JobFormProps) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Dropoff Address</label>
+                <label htmlFor="dropoffAddress" className="block text-sm font-medium text-gray-700">Dropoff Address</label>
                 <input
+                  id="dropoffAddress"
                   type="text"
                   required
                   value={formData.dropoffAddress}
@@ -106,8 +109,9 @@ export function JobForm({ job, onSubmit, onCancel, isLoading }: JobFormProps) {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Amount</label>
+                  <label htmlFor="amount" className="block text-sm font-medium text-gray-700">Amount</label>
                   <input
+                    id="amount"
                     type="number"
                     step="0.01"
                     required
@@ -118,8 +122,9 @@ export function JobForm({ job, onSubmit, onCancel, isLoading }: JobFormProps) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Priority</label>
+                  <label htmlFor="priority" className="block text-sm font-medium text-gray-700">Priority</label>
                   <select
+                    id="priority"
                     value={formData.priority}
                     onChange={(e) => handleChange('priority', e.target.value as JobPriority)}
                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
@@ -133,8 +138,9 @@ export function JobForm({ job, onSubmit, onCancel, isLoading }: JobFormProps) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Scheduled Pickup Time</label>
+                <label htmlFor="scheduledPickupTime" className="block text-sm font-medium text-gray-700">Scheduled Pickup Time</label>
                 <input
+                  id="scheduledPickupTime"
                   type="datetime-local"
                   required
                   value={formData.scheduledPickupTime}
@@ -144,8 +150,9 @@ export function JobForm({ job, onSubmit, onCancel, isLoading }: JobFormProps) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Customer ID</label>
+                <label htmlFor="customerId" className="block text-sm font-medium text-gray-700">Customer ID</label>
                 <input
+                  id="customerId"
                   type="text"
                   required
                   value={formData.customerId}
@@ -155,8 +162,9 @@ export function JobForm({ job, onSubmit, onCancel, isLoading }: JobFormProps) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Special Instructions</label>
+                <label htmlFor="specialInstructions" className="block text-sm font-medium text-gray-700">Special Instructions</label>
                 <textarea
+                  id="specialInstructions"
                   rows={3}
                   value={formData.specialInstructions}
                   onChange={(e) => handleChange('specialInstructions', e.target.value)}
