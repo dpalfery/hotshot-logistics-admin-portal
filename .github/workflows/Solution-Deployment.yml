@@ -1,0 +1,218 @@
+name: Solution Deployment (Mono)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '7-Deployment/Azure-deploy/**'
+  workflow_dispatch:
+    inputs:
+      github-environment:
+        description: 'GitHub Environment to deploy to'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+      stack:
+        description: 'Pulumi stack to deploy'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      region:
+        description: 'Azure region to deploy to'
+        required: true
+        default: 'eastus2'
+        type: choice
+        options:
+          - eastus
+          - eastus2
+          - centralus
+          - northcentralus
+          - southcentralus
+          - westcentralus
+          - westus
+          - westus2
+          - westus3
+      use_placeholder_image:
+        description: 'Use placeholder image for initial deployment (before pushing your own image)'
+        required: false
+        default: true
+        type: boolean
+      deploy:
+        description: 'Deploy infrastructure (pulumi up)'
+        required: false
+        default: true
+        type: boolean
+      build_and_push:
+        description: 'Build and push container image after infrastructure deployment'
+        required: false
+        default: false
+        type: boolean
+      destroy:
+        description: '⚠️ DESTROY infrastructure (pulumi destroy) - USE WITH CAUTION'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write  # Required for OIDC authentication with Azure
+
+env:
+  # GitHub CLI is used to update environment variables after deployment
+  GH_TOKEN: ${{ github.token }}
+
+jobs:
+  infrastructure:
+    name: Azure Infrastructure
+    uses: ./.github/workflows/Azure-deploy.yml
+    with:
+      github-environment: ${{ github.event.inputs.github-environment || 'development' }}
+      stack: ${{ github.event.inputs.stack || 'dev' }}
+      region: ${{ github.event.inputs.region || 'eastus2' }}
+      use_placeholder_image: ${{ github.event.inputs.use_placeholder_image == 'true' }}
+      deploy: ${{ github.event.inputs.deploy == 'true' }}
+      destroy: ${{ github.event.inputs.destroy == 'true' }}
+    secrets:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+      SQL_ADMIN_PASSWORD: ${{ secrets.SQL_ADMIN_PASSWORD }}
+      AZURE_AD_B2C_INSTANCE: ${{ secrets.AZURE_AD_B2C_INSTANCE }}
+      AZURE_AD_B2C_CLIENT_ID: ${{ secrets.AZURE_AD_B2C_CLIENT_ID }}
+      AZURE_AD_B2C_DOMAIN: ${{ secrets.AZURE_AD_B2C_DOMAIN }}
+      AZURE_AD_B2C_TENANT_ID: ${{ secrets.AZURE_AD_B2C_TENANT_ID }}
+      AZURE_AD_B2C_AUDIENCE: ${{ secrets.AZURE_AD_B2C_AUDIENCE }}
+
+  # Build and push container image after infrastructure is ready
+  build-and-push:
+    name: Build and Push Container Images
+    runs-on: ubuntu-latest
+    needs: infrastructure
+    if: |
+      (github.event_name == 'push') || 
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.build_and_push == 'true' && github.event.inputs.destroy != 'true')
+    environment: ${{ github.event.inputs.github-environment || 'development' }}
+    env:
+      IMAGE_NAME: hotshot-api
+      MIGRATION_JOB_IMAGE_NAME: hotshot-db-migration-job
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Configure Azure credentials (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Azure Container Registry (OIDC)
+        run: |
+          az acr login --name ${{ needs.infrastructure.outputs.acr_name }}
+
+      - name: Extract metadata (tags, labels) for API
+        id: meta-api
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ needs.infrastructure.outputs.acr_name }}.azurecr.io/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push API Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta-api.outputs.tags }}
+          labels: ${{ steps.meta-api.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+      - name: Extract metadata (tags, labels) for Migration Job
+        id: meta-job
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ needs.infrastructure.outputs.acr_name }}.azurecr.io/${{ env.MIGRATION_JOB_IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Migration Job Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./7-Deployment/HotshotLogistics.DbMigrationJob/Dockerfile
+          push: true
+          tags: ${{ steps.meta-job.outputs.tags }}
+          labels: ${{ steps.meta-job.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+      - name: Update Container Apps with new images
+        run: |
+          RESOURCE_GROUP="${{ needs.infrastructure.outputs.resource_group }}"
+          ACR_NAME="${{ needs.infrastructure.outputs.acr_name }}"
+          
+          # Update API Container App
+          CONTAINER_APP_NAME="${{ needs.infrastructure.outputs.container_app_name }}"
+          API_IMAGE="${ACR_NAME}.azurecr.io/${{ env.IMAGE_NAME }}:latest"
+          
+          if [ -n "$CONTAINER_APP_NAME" ]; then
+            echo "Updating Container App: $CONTAINER_APP_NAME"
+            echo "Image: $API_IMAGE"
+            
+            az containerapp update \
+              --name "$CONTAINER_APP_NAME" \
+              --resource-group "$RESOURCE_GROUP" \
+              --image "$API_IMAGE"
+            
+            echo "✅ Container App updated successfully"
+          fi
+
+          # Update Migration Job
+          MIGRATION_JOB_NAME="${{ needs.infrastructure.outputs.migration_job_name }}"
+          JOB_IMAGE="${ACR_NAME}.azurecr.io/${{ env.MIGRATION_JOB_IMAGE_NAME }}:latest"
+
+          if [ -n "$MIGRATION_JOB_NAME" ]; then
+            echo "Updating Migration Job: $MIGRATION_JOB_NAME"
+            echo "Image: $JOB_IMAGE"
+            
+            az containerapp job update \
+              --name "$MIGRATION_JOB_NAME" \
+              --resource-group "$RESOURCE_GROUP" \
+              --image "$JOB_IMAGE"
+            
+            echo "✅ Migration Job updated successfully"
+          fi
+
+      - name: Summary
+        run: |
+          echo "### 🚀 Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Resource | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Container Registry | ${{ needs.infrastructure.outputs.acr_name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Container App | ${{ needs.infrastructure.outputs.container_app_name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Migration Job | ${{ needs.infrastructure.outputs.migration_job_name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| API Image | ${{ needs.infrastructure.outputs.acr_name }}.azurecr.io/${{ env.IMAGE_NAME }}:latest |" >> $GITHUB_STEP_SUMMARY
+          echo "| Job Image | ${{ needs.infrastructure.outputs.acr_name }}.azurecr.io/${{ env.MIGRATION_JOB_IMAGE_NAME }}:latest |" >> $GITHUB_STEP_SUMMARY
