@@ -3,10 +3,12 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /app
 
 # Copy the project files
-# Note: We need to copy the Data project as well since it's referenced
-COPY ["4-Persistence/HotshotLogistics.Data/HotshotLogistics.Data.csproj", "4-Persistence/HotshotLogistics.Data/"]
-COPY ["3-Domain/HotshotLogistics.Domain/HotshotLogistics.Domain.csproj", "3-Domain/HotshotLogistics.Domain/"]
+# Note: We need to copy all referenced projects for proper dependency resolution
+COPY ["0-Base/HotshotLogistics.Core/HotshotLogistics.Core.csproj", "0-Base/HotshotLogistics.Core/"]
+COPY ["2-Application/HotshotLogistics.Application/HotshotLogistics.Application.csproj", "2-Application/HotshotLogistics.Application/"]
 COPY ["3-Domain/HotshotLogistics.Contracts/HotshotLogistics.Contracts.csproj", "3-Domain/HotshotLogistics.Contracts/"]
+COPY ["3-Domain/HotshotLogistics.Domain/HotshotLogistics.Domain.csproj", "3-Domain/HotshotLogistics.Domain/"]
+COPY ["4-Persistence/HotshotLogistics.Data/HotshotLogistics.Data.csproj", "4-Persistence/HotshotLogistics.Data/"]
 COPY ["7-Deployment/HotshotLogistics.DbMigrationJob/HotshotLogistics.DbMigrationJob.csproj", "7-Deployment/HotshotLogistics.DbMigrationJob/"]
 
 # Restore dependencies
