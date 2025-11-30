@@ -38,8 +38,9 @@
 **/.env.local
 **/.env.*.local
 
-# Deployment
-7-Deployment/
+# Deployment (exclude infrastructure/setup but keep migration job)
+7-Deployment/Azure-deploy/
+7-Deployment/DbSetup/
 Dockerfile
 .dockerignore
 

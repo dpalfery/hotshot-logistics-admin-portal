@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiService } from '@/services/api';
 import { signalRService } from '@/services/signalr';
-import { LocationUpdate, NotificationMessage } from '@/types';
+import { LocationUpdate, NotificationMessage, JobStatus } from '@/types';
 import { MapIcon, BellIcon } from '@heroicons/react/24/outline';
 
 export function TrackingDashboard() {
@@ -44,7 +44,7 @@ export function TrackingDashboard() {
   }, []);
 
   const activeJobs = jobsResult?.items.filter(job =>
-    job.status === 'InProgress' || job.status === 'Assigned'
+    job.status === JobStatus.EnRoute || job.status === JobStatus.Assigned
   ) || [];
 
   return (
@@ -86,7 +86,7 @@ export function TrackingDashboard() {
                       </p>
                     </div>
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      job.status === 'InProgress'
+                      job.status === JobStatus.EnRoute
                         ? 'bg-green-100 text-green-800'
                         : 'bg-blue-100 text-blue-800'
                     }`}>

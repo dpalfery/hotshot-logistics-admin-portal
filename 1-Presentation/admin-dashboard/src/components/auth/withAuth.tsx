@@ -11,7 +11,7 @@ const withAuth = <P extends object>(WrappedComponent: ComponentType<P>) => {
 
     // Check for E2E test auth state injected by Playwright tests
     const hasE2EAuthState = typeof window !== 'undefined' && 
-      !!(window as Record<string, unknown>).__E2E_AUTH_STATE__;
+      !!(window as unknown as Record<string, unknown>).__E2E_AUTH_STATE__;
 
     // Always allow access in development mode
     const isDevelopment = process.env.NODE_ENV === 'development';
