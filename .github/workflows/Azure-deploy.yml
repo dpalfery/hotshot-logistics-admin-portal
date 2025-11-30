@@ -67,6 +67,60 @@ on:
       migration_job_name:
         description: "Name of the Migration Container App Job"
         value: ${{ jobs.deploy.outputs.migration_job_name }}
+  workflow_dispatch:
+    inputs:
+      github-environment:
+        description: 'GitHub Environment to deploy to'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+      stack:
+        description: 'Pulumi stack to deploy'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      region:
+        description: 'Azure region to deploy to'
+        required: true
+        default: 'eastus2'
+        type: choice
+        options:
+          - eastus
+          - eastus2
+          - centralus
+          - northcentralus
+          - southcentralus
+          - westcentralus
+          - westus
+          - westus2
+          - westus3
+      use_placeholder_image:
+        description: 'Use placeholder image for initial deployment'
+        required: false
+        default: true
+        type: boolean
+      deploy:
+        description: 'Deploy infrastructure (pulumi up)'
+        required: false
+        default: true
+        type: boolean
+      destroy:
+        description: '⚠️ DESTROY infrastructure (pulumi destroy) - USE WITH CAUTION'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write  # Required for OIDC authentication with Azure
 
 jobs:
   preview:

@@ -84,6 +84,14 @@ bld/
 test-results/
 playwright-report/
 
+# Playwright auth state (contains tokens - never commit!)
+.auth-state.json
+*/.auth-state.json
+
+# Test environment files with secrets
+.env.test.local
+.env.test
+
 # NUNIT
 *.VisualState.xml
 TestResult.xml

@@ -1,5 +1,10 @@
-import { chromium } from '@playwright/test';
+import { chromium, FullConfig } from '@playwright/test';
 import { execSync } from 'node:child_process';
+import { AuthHelper } from './utils/auth-helper';
+import * as path from 'path';
+import * as fs from 'fs';
+
+const AUTH_STATE_PATH = path.join(__dirname, '.auth-state.json');
 
 async function launchBrowserWithTimeout(timeoutMs: number): Promise<void> {
   const launchPromise = chromium.launch();
@@ -11,12 +16,12 @@ async function launchBrowserWithTimeout(timeoutMs: number): Promise<void> {
   await browser.close();
 }
 
-async function setup(): Promise<void> {
+async function setupBrowsers(): Promise<void> {
   try {
     console.log('Verifying browser installation...');
     await launchBrowserWithTimeout(10_000);
     console.log('Browser verification successful.');
-  } catch (error) {
+  } catch {
     console.warn('Browser not found, installing Playwright browsers...');
     try {
       execSync('npx playwright install --with-deps', { timeout: 300_000, stdio: 'inherit' });
@@ -30,4 +35,64 @@ async function setup(): Promise<void> {
   }
 }
 
-export default setup;
+async function setupAuthentication(config: FullConfig): Promise<void> {
+  // Skip if real auth is not enabled
+  if (!AuthHelper.isRealAuthEnabled()) {
+    console.log('\n📋 Auth mode: BYPASS (development mode)');
+    console.log('   To enable real auth testing, set:');
+    console.log('   - E2E_TEST_USER_EMAIL');
+    console.log('   - E2E_TEST_USER_PASSWORD\n');
+    return;
+  }
+
+  console.log('\n🔐 Auth mode: REAL (using test account)');
+  console.log('   Setting up authenticated session...');
+
+  const browser = await chromium.launch();
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const authHelper = new AuthHelper(page, context);
+
+  try {
+    const credentials = AuthHelper.getTestCredentials();
+    const baseURL = config.projects[0]?.use?.baseURL || 'http://localhost:3000';
+
+    // Try ROPC first (faster), fall back to interactive if not enabled
+    try {
+      console.log('   Attempting ROPC token acquisition...');
+      const authState = await authHelper.getTokenViaROPC(credentials);
+      
+      // Navigate to app and inject state
+      await page.goto(baseURL);
+      await authHelper.injectAuthState(authState);
+      
+      // Save browser storage state
+      await authHelper.saveAuthState(AUTH_STATE_PATH);
+      console.log('   ✅ Auth setup complete via ROPC.\n');
+    } catch (ropcError) {
+      console.log('   ROPC not available, using interactive login...');
+      
+      // Fall back to interactive login
+      await authHelper.loginInteractive(credentials);
+      await authHelper.saveAuthState(AUTH_STATE_PATH);
+      console.log('   ✅ Auth setup complete via interactive login.\n');
+    }
+  } catch (error) {
+    console.error('   ❌ Auth setup failed:', error);
+    console.log('   Tests will run in bypass mode.\n');
+    // Delete any stale auth state
+    if (fs.existsSync(AUTH_STATE_PATH)) {
+      fs.unlinkSync(AUTH_STATE_PATH);
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
+async function globalSetup(config: FullConfig): Promise<void> {
+  await setupBrowsers();
+  await setupAuthentication(config);
+}
+
+export default globalSetup;
+export { AUTH_STATE_PATH };

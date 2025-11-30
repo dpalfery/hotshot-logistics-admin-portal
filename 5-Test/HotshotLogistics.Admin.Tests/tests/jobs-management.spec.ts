@@ -61,8 +61,8 @@ test.describe('Jobs Management', () => {
     });
 
     test('should create a new job with valid data', async ({ page }) => {
-      // Mock API response for job creation
-      await page.route('**/api/jobs', async route => {
+      // Mock API response for job creation - use /api/job (singular) to match apiService
+      await page.route('**/api/job', async route => {
         if (route.request().method() === 'POST') {
           await route.fulfill({
             status: 201,
@@ -111,8 +111,8 @@ test.describe('Jobs Management', () => {
     });
 
     test('should display job status with appropriate styling', async ({ page }) => {
-      // Mock jobs data with different statuses
-      await page.route('**/api/jobs*', async route => {
+      // Mock jobs data with different statuses - use /api/job** to match apiService
+      await page.route('**/api/job**', async route => {
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
@@ -159,8 +159,8 @@ test.describe('Jobs Management', () => {
     });
 
     test('should open edit job form when edit button is clicked', async ({ page }) => {
-      // Mock jobs data
-      await page.route('**/api/jobs*', async route => {
+      // Mock jobs data - use /api/job** to match apiService
+      await page.route('**/api/job**', async route => {
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
@@ -198,8 +198,8 @@ test.describe('Jobs Management', () => {
     });
 
     test('should show assign driver modal for pending jobs', async ({ page }) => {
-      // Mock jobs and drivers data
-      await page.route('**/api/jobs*', async route => {
+      // Mock jobs and drivers data - use /api/job** to match apiService
+      await page.route('**/api/job**', async route => {
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
@@ -260,8 +260,8 @@ test.describe('Jobs Management', () => {
     });
 
     test('should assign driver to job', async ({ page }) => {
-      // Mock initial data
-      await page.route('**/api/jobs*', async route => {
+      // Mock initial data - use /api/job** to match apiService
+      await page.route('**/api/job**', async route => {
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
@@ -299,8 +299,8 @@ test.describe('Jobs Management', () => {
         });
       });
 
-      // Mock driver assignment API
-      await page.route('**/api/jobs/job-1/assign-driver', async route => {
+      // Mock driver assignment API - use /api/job/ to match apiService
+      await page.route('**/api/job/job-1/assign-driver', async route => {
         if (route.request().method() === 'POST') {
           await route.fulfill({
             status: 200,
@@ -323,8 +323,8 @@ test.describe('Jobs Management', () => {
     });
 
     test('should filter and sort jobs', async ({ page }) => {
-      // Mock jobs data with various statuses and dates
-      await page.route('**/api/jobs*', async route => {
+      // Mock jobs data with various statuses and dates - use /api/job** to match apiService
+      await page.route('**/api/job**', async route => {
         const url = new URL(route.request().url());
         const status = url.searchParams.get('status');
         const sortBy = url.searchParams.get('sortBy');
@@ -375,8 +375,8 @@ test.describe('Jobs Management', () => {
     });
 
     test('should handle loading states', async ({ page }) => {
-      // Mock slow API response
-      await page.route('**/api/jobs*', async route => {
+      // Mock slow API response - use /api/job** to match apiService
+      await page.route('**/api/job**', async route => {
         await new Promise(resolve => setTimeout(resolve, 1000));
         await route.fulfill({
           status: 200,
@@ -398,8 +398,8 @@ test.describe('Jobs Management', () => {
     });
 
     test('should handle empty jobs list', async ({ page }) => {
-      // Mock empty response
-      await page.route('**/api/jobs*', async route => {
+      // Mock empty response - use /api/job** to match apiService
+      await page.route('**/api/job**', async route => {
         await route.fulfill({
           status: 200,
           contentType: 'application/json',

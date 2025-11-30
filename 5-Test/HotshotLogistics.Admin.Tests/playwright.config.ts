@@ -1,4 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
+import * as path from 'path';
+import { AuthHelper } from './tests/utils/auth-helper';
+
+const AUTH_STATE_PATH = path.join(__dirname, 'tests', '.auth-state.json');
 
 /**
  * @see https://playwright.dev/docs/test-configuration
@@ -34,24 +38,42 @@ export default defineConfig({
     /* Action timeout */
     actionTimeout: 15_000,
   },
-  /* Global setup */
+  /* Global setup - browser verification + optional auth */
   globalSetup: './tests/global-setup.ts',
 
   /* Configure projects for major browsers */
   projects: [
+    // ============================================
+    // BYPASS AUTH PROJECTS (fast, for most tests)
+    // ============================================
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+      testIgnore: /.*\.auth\.spec\.ts$/, // Ignore auth-specific tests
     },
-
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
+      testIgnore: /.*\.auth\.spec\.ts$/,
     },
-
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
+      testIgnore: /.*\.auth\.spec\.ts$/,
+    },
+
+    // ============================================
+    // REAL AUTH PROJECT (for auth flow tests)
+    // Runs only when E2E_TEST_USER_EMAIL and E2E_TEST_USER_PASSWORD are set
+    // ============================================
+    {
+      name: 'chromium-authenticated',
+      use: {
+        ...devices['Desktop Chrome'],
+        // Use saved auth state from global setup (if real auth is enabled)
+        storageState: AuthHelper.isRealAuthEnabled() ? AUTH_STATE_PATH : undefined,
+      },
+      testMatch: /.*\.auth\.spec\.ts$/, // Only run auth-specific tests
     },
 
     /* Test against mobile viewports. */

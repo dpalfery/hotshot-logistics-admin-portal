@@ -158,6 +158,8 @@ export function JobsManagement() {
                       <button
                         onClick={() => setEditingJob(job)}
                         className="text-blue-600 hover:text-blue-900"
+                        data-testid="edit-job-button"
+                        aria-label={`Edit job ${job.title}`}
                       >
                         <PencilIcon className="h-5 w-5" />
                       </button>
@@ -165,6 +167,8 @@ export function JobsManagement() {
                         <button
                           onClick={() => setAssigningJob(job)}
                           className="text-green-600 hover:text-green-900"
+                          data-testid="assign-driver-button"
+                          aria-label={`Assign driver to job ${job.title}`}
                         >
                           <TruckIcon className="h-5 w-5" />
                         </button>
