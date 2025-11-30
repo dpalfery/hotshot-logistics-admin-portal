@@ -364,14 +364,21 @@ jobs:
           
           echo "Deploying to Static Web App: $SWA_NAME"
           
-          # Deploy using Azure CLI (uses OIDC service principal)
-          az staticwebapp deploy \
+          # Install SWA CLI
+          npm install -g @azure/static-web-apps-cli
+          
+          # Get deployment token using Azure CLI (we're already logged in via OIDC)
+          DEPLOYMENT_TOKEN=$(az staticwebapp secrets list \
             --name "$SWA_NAME" \
             --resource-group "$RESOURCE_GROUP" \
-            --source "1-Presentation/admin-dashboard/out" \
-            --no-wait
+            --query "properties.apiKey" -o tsv)
           
-          echo "✅ Deployment initiated successfully"
+          # Deploy using SWA CLI with the token
+          swa deploy "1-Presentation/admin-dashboard/out" \
+            --deployment-token "$DEPLOYMENT_TOKEN" \
+            --env production
+          
+          echo "✅ Deployment completed successfully"
 
       - name: Deployment Summary
         env:
