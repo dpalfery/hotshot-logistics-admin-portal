@@ -323,16 +323,55 @@ jobs:
           echo "  - Azure Tenant ID: ${NEXT_PUBLIC_AZURE_TENANT_ID:0:8}... (masked)"
           npm run build
 
+      - name: Configure Azure credentials (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Get Static Web App Name from Pulumi
+        id: get-swa-name
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+        run: |
+          # Install Pulumi CLI
+          curl -fsSL https://get.pulumi.com | sh
+          export PATH=$PATH:$HOME/.pulumi/bin
+          
+          cd 7-Deployment/Azure-deploy
+          
+          STACK="${{ github.event.inputs.stack || 'dev' }}"
+          pulumi stack select $STACK --non-interactive 2>/dev/null || true
+          
+          SWA_NAME=$(pulumi stack output staticWebAppName 2>/dev/null || echo "")
+          RESOURCE_GROUP=$(pulumi stack output resourceGroupName 2>/dev/null || echo "")
+          
+          if [ -n "$SWA_NAME" ]; then
+            echo "✅ Found Static Web App: $SWA_NAME in $RESOURCE_GROUP"
+            echo "swa_name=$SWA_NAME" >> $GITHUB_OUTPUT
+            echo "resource_group=$RESOURCE_GROUP" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Could not find Static Web App name from Pulumi"
+            exit 1
+          fi
+
       - name: Deploy to Azure Static Web Apps
         id: deploy
-        uses: Azure/static-web-apps-deploy@v1
-        with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          action: 'upload'
-          app_location: '1-Presentation/admin-dashboard'
-          output_location: 'out'
-          skip_app_build: true
+        run: |
+          SWA_NAME="${{ steps.get-swa-name.outputs.swa_name }}"
+          RESOURCE_GROUP="${{ steps.get-swa-name.outputs.resource_group }}"
+          
+          echo "Deploying to Static Web App: $SWA_NAME"
+          
+          # Deploy using Azure CLI (uses OIDC service principal)
+          az staticwebapp deploy \
+            --name "$SWA_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --source "1-Presentation/admin-dashboard/out" \
+            --no-wait
+          
+          echo "✅ Deployment initiated successfully"
 
       - name: Deployment Summary
         env:
