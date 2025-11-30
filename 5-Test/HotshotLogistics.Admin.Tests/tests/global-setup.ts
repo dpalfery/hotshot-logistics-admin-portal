@@ -38,10 +38,16 @@ async function setupBrowsers(): Promise<void> {
 async function setupAuthentication(config: FullConfig): Promise<void> {
   // Skip if real auth is not enabled
   if (!AuthHelper.isRealAuthEnabled()) {
-    console.log('\n📋 Auth mode: BYPASS (development mode)');
-    console.log('   To enable real auth testing, set:');
-    console.log('   - E2E_TEST_USER_EMAIL');
-    console.log('   - E2E_TEST_USER_PASSWORD\n');
+    console.log('\n⚠️  Authentication not configured');
+    console.log('   Playwright tests require real Azure AD authentication.');
+    console.log('   ');
+    console.log('   Please set the following environment variables:');
+    console.log('   - E2E_TEST_USER_EMAIL: Your test user email');
+    console.log('   - E2E_TEST_USER_PASSWORD: Your test user password');
+    console.log('   - NEXT_PUBLIC_AZURE_CLIENT_ID: Your Azure AD client ID');
+    console.log('   - NEXT_PUBLIC_AZURE_TENANT_ID: Your Azure AD tenant ID');
+    console.log('   ');
+    console.log('   Tests will be skipped until authentication is configured.\n');
     return;
   }
 

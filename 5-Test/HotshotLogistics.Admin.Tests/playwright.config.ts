@@ -44,36 +44,31 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     // ============================================
-    // BYPASS AUTH PROJECTS (fast, for most tests)
+    // AUTHENTICATED PROJECTS (use real auth state)
     // ============================================
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-      testIgnore: /.*\.auth\.spec\.ts$/, // Ignore auth-specific tests
+      use: {
+        ...devices['Desktop Chrome'],
+        // Use saved auth state from global setup
+        storageState: AuthHelper.isRealAuthEnabled() ? AUTH_STATE_PATH : undefined,
+      },
     },
     {
       name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-      testIgnore: /.*\.auth\.spec\.ts$/,
+      use: {
+        ...devices['Desktop Firefox'],
+        // Use saved auth state from global setup
+        storageState: AuthHelper.isRealAuthEnabled() ? AUTH_STATE_PATH : undefined,
+      },
     },
     {
       name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-      testIgnore: /.*\.auth\.spec\.ts$/,
-    },
-
-    // ============================================
-    // REAL AUTH PROJECT (for auth flow tests)
-    // Runs only when E2E_TEST_USER_EMAIL and E2E_TEST_USER_PASSWORD are set
-    // ============================================
-    {
-      name: 'chromium-authenticated',
       use: {
-        ...devices['Desktop Chrome'],
-        // Use saved auth state from global setup (if real auth is enabled)
+        ...devices['Desktop Safari'],
+        // Use saved auth state from global setup
         storageState: AuthHelper.isRealAuthEnabled() ? AUTH_STATE_PATH : undefined,
       },
-      testMatch: /.*\.auth\.spec\.ts$/, // Only run auth-specific tests
     },
 
     /* Test against mobile viewports. */
@@ -99,7 +94,7 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'npx cross-env NEXT_PUBLIC_AZURE_CLIENT_ID=test-client-id NEXT_PUBLIC_AZURE_TENANT_ID=test-tenant-id npx next dev',
+    command: `npx cross-env NEXT_PUBLIC_AZURE_CLIENT_ID=${process.env.NEXT_PUBLIC_AZURE_CLIENT_ID || 'not-set'} NEXT_PUBLIC_AZURE_TENANT_ID=${process.env.NEXT_PUBLIC_AZURE_TENANT_ID || 'not-set'} npx next dev`,
     cwd: '../../1-Presentation/admin-dashboard',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,

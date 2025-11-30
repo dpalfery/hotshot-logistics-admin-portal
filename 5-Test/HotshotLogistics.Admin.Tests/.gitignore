@@ -1,0 +1,17 @@
+# Environment variables with secrets
+.env
+
+# Authentication state (contains tokens)
+tests/.auth-state.json
+
+# Test results
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Playwright browsers (installed via npx playwright install)
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db

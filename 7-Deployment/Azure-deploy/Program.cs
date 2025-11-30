@@ -564,7 +564,8 @@ return await Pulumi.Deployment.RunAsync(() =>
         }
     }, new CustomResourceOptions
     {
-        DependsOn = { acrPullRoleAssignment }
+        DependsOn = { acrPullRoleAssignment },
+        IgnoreChanges = new[] { "template.containers[*].image" }
     });
 
     // Static Web App (Next.js Admin Dashboard) - declared before Container App for CORS reference
@@ -762,7 +763,8 @@ return await Pulumi.Deployment.RunAsync(() =>
     }, new CustomResourceOptions
     {
         // Ensure role assignments are complete before creating the Container App
-        DependsOn = { acrPullRoleAssignment, appConfigRoleAssignment }
+        DependsOn = { acrPullRoleAssignment, appConfigRoleAssignment },
+        IgnoreChanges = new[] { "template.containers[*].image" }
     });
 
     // Export outputs

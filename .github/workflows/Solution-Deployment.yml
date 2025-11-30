@@ -44,7 +44,7 @@ on:
       use_placeholder_image:
         description: 'Use placeholder image for initial deployment (before pushing your own image)'
         required: false
-        default: false
+        default: true
         type: boolean
       deploy:
         description: 'Deploy infrastructure (pulumi up)'
@@ -83,8 +83,8 @@ jobs:
       github-environment: ${{ github.event.inputs.github-environment || 'development' }}
       stack: ${{ github.event.inputs.stack || 'dev' }}
       region: ${{ github.event.inputs.region || 'eastus2' }}
-      use_placeholder_image: ${{ github.event.inputs.use_placeholder_image == 'true' }}
-      deploy: ${{ github.event.inputs.deploy == 'true' }}
+      use_placeholder_image: ${{ github.event_name == 'push' || github.event.inputs.use_placeholder_image == 'true' }}
+      deploy: ${{ github.event_name == 'push' || github.event.inputs.deploy == 'true' }}
       destroy: ${{ github.event.inputs.destroy == 'true' }}
     secrets:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}

@@ -1,72 +1,57 @@
 import { test, expect } from '@playwright/test';
+import { AuthHelper } from './utils/auth-helper';
 
+/**
+ * Basic authentication tests - these tests verify the auth system works correctly.
+ * These tests now use real authentication when credentials are provided.
+ */
 test.describe('MSAL Authentication Flow', () => {
 
-  test.beforeEach(async ({ page }) => {
-    // Set test mode bypass flag to skip authentication
-    await page.addInitScript(() => {
-      (window as any).__BYPASS_AUTH__ = true;
-    });
-
-    // Mock the environment variables for MSAL configuration
-    await page.addInitScript(() => {
-      window.sessionStorage.setItem('playwright-mock-env', JSON.stringify({
-        NEXT_PUBLIC_AZURE_CLIENT_ID: 'mock-client-id',
-        NEXT_PUBLIC_AZURE_TENANT_ID: 'mock-tenant-id',
-      }));
-    });
-
-    // Mock MSAL authentication to avoid interference
-    await page.addInitScript(() => {
-      // Mock MSAL instance
-      const mockMsalInstance = {
-        getActiveAccount: () => ({ username: 'test@example.com' }),
-        getAllAccounts: () => [{ username: 'test@example.com' }],
-        setActiveAccount: () => {},
-        addEventCallback: () => {},
-        acquireTokenSilent: async () => ({ accessToken: 'test-token' }),
-        acquireTokenPopup: async () => ({ accessToken: 'test-token' }),
-      };
-
-      // Replace global MSAL instance
-      (window as any).msalInstance = mockMsalInstance;
-
-      // Mock Azure MSAL React hooks
-      (window as any).useMsal = () => ({
-        instance: mockMsalInstance,
-        inProgress: 'none',
-        accounts: [{ username: 'test@example.com' }]
-      });
-
-      (window as any).useIsAuthenticated = () => true;
-      (window as any).useMsalAuthentication = () => ({});
-    });
-  });
-
-  test('should allow access to protected routes in test mode', async ({ page }) => {
+  test('should allow access to protected routes when authenticated', async ({ page }) => {
+    // With real auth state loaded from global setup, user should be authenticated
     await page.goto('/jobs');
-    // In test mode, should not redirect to login
+    
+    // Should not redirect to login if authenticated
+    if (AuthHelper.isRealAuthEnabled()) {
+      await expect(page).toHaveURL('/jobs');
+      await expect(page.getByText('Job Management')).toBeVisible();
+    } else {
+      console.log('Skipping test - authentication not configured');
+      test.skip();
+    }
+  });
+
+  test('should display user information when authenticated', async ({ page }) => {
+    if (!AuthHelper.isRealAuthEnabled()) {
+      test.skip();
+      return;
+    }
+
+    await page.goto('/');
+    
+    // Should see authenticated content (user info, navigation, etc.)
+    // This is a basic check that authentication worked
+    await expect(page.locator('nav')).toBeVisible();
+  });
+
+  test('should persist authentication across page navigations', async ({ page }) => {
+    if (!AuthHelper.isRealAuthEnabled()) {
+      test.skip();
+      return;
+    }
+
+    // Navigate to different pages
+    await page.goto('/jobs');
     await expect(page).toHaveURL('/jobs');
-  });
-
-  test('should handle successful login and redirect', async ({ page }) => {
-    // This test will require mocking the MSAL redirect response.
-    // For now, we will just check if the login button is present.
-    await page.goto('/login');
-    const loginButton = page.getByRole('button', { name: 'Login' });
-    await expect(loginButton).toBeVisible();
-  });
-
-  test('should manage and persist authentication state', async ({ page }) => {
-    // This test would involve mocking a login, then reloading the page
-    // and ensuring the user is still authenticated.
-    // Placeholder for now.
-  });
-
-  test('should handle logout correctly', async ({ page }) => {
-    // This test would involve mocking a login, then clicking the logout
-    // button and verifying the user is redirected to the login page.
-    // Placeholder for now.
+    
+    await page.goto('/drivers');
+    await expect(page).toHaveURL('/drivers');
+    
+    await page.goto('/');
+    await expect(page).toHaveURL('/');
+    
+    // Should remain authenticated throughout
+    await expect(page.locator('nav')).toBeVisible();
   });
 
 });
