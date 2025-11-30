@@ -244,8 +244,8 @@ jobs:
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         run: |
-          # Export full JSON for artifact
-          pulumi stack output --json > stack-outputs.json
+          # Export full JSON for artifact (exclude secrets)
+          pulumi stack output --json --show-secrets=false > stack-outputs.json
           
           # Extract key outputs for job outputs (used by subsequent jobs)
           ACR_NAME=$(pulumi stack output containerRegistryName 2>/dev/null || echo "")
@@ -253,6 +253,7 @@ jobs:
           CONTAINER_APP_NAME=$(pulumi stack output containerAppName 2>/dev/null || echo "")
           CONTAINER_APP_URL=$(pulumi stack output containerAppFullUrl 2>/dev/null || echo "")
           STATIC_WEB_APP_URL=$(pulumi stack output staticWebAppFullUrl 2>/dev/null || echo "")
+          STATIC_WEB_APP_NAME=$(pulumi stack output staticWebAppName 2>/dev/null || echo "")
           MIGRATION_JOB_NAME=$(pulumi stack output migrationJobName 2>/dev/null || echo "")
           
           echo "acr_name=$ACR_NAME" >> $GITHUB_OUTPUT
@@ -260,6 +261,7 @@ jobs:
           echo "container_app_name=$CONTAINER_APP_NAME" >> $GITHUB_OUTPUT
           echo "container_app_url=$CONTAINER_APP_URL" >> $GITHUB_OUTPUT
           echo "static_web_app_url=$STATIC_WEB_APP_URL" >> $GITHUB_OUTPUT
+          echo "static_web_app_name=$STATIC_WEB_APP_NAME" >> $GITHUB_OUTPUT
           echo "migration_job_name=$MIGRATION_JOB_NAME" >> $GITHUB_OUTPUT
           
           echo "### Infrastructure Outputs" >> $GITHUB_STEP_SUMMARY
@@ -296,6 +298,55 @@ jobs:
             echo "✅ API URL available: $API_URL"
           else
             echo "⚠️ Container App URL not available yet"
+          fi
+
+      - name: Set Static Web App Deployment Token
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+        working-directory: 7-Deployment/Azure-deploy
+        run: |
+          ENVIRONMENT="${{ inputs.github-environment }}"
+          RESOURCE_GROUP="${{ steps.outputs.outputs.resource_group }}"
+          SWA_NAME="${{ steps.outputs.outputs.static_web_app_name }}"
+          
+          if [ -z "$SWA_NAME" ]; then
+            echo "⚠️ Static Web App name not available, skipping token setup"
+            exit 0
+          fi
+          
+          echo "Retrieving Static Web App deployment token..."
+          
+          # Get the deployment token using Azure CLI (more reliable than Pulumi output for secrets)
+          SWA_TOKEN=$(az staticwebapp secrets list \
+            --name "$SWA_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --query "properties.apiKey" -o tsv 2>/dev/null || echo "")
+          
+          if [ -z "$SWA_TOKEN" ]; then
+            # Fallback to Pulumi output
+            echo "Falling back to Pulumi output for deployment token..."
+            SWA_TOKEN=$(pulumi stack output staticWebAppDeploymentToken --show-secrets 2>/dev/null || echo "")
+          fi
+          
+          if [ -n "$SWA_TOKEN" ] && [ "$SWA_TOKEN" != "[secret]" ]; then
+            echo "Setting AZURE_STATIC_WEB_APPS_API_TOKEN in $ENVIRONMENT environment..."
+            
+            # Set as environment secret using GitHub CLI
+            echo "$SWA_TOKEN" | gh secret set AZURE_STATIC_WEB_APPS_API_TOKEN \
+              --env "$ENVIRONMENT" \
+              --repo ${{ github.repository }} 2>/dev/null && {
+                echo "✅ Static Web App deployment token configured successfully"
+              } || {
+                echo "⚠️ Could not auto-set AZURE_STATIC_WEB_APPS_API_TOKEN secret"
+                echo "The GITHUB_TOKEN may not have permission to create environment secrets."
+                echo "Please either:"
+                echo "  1. Use a PAT with 'repo' scope as GH_TOKEN"
+                echo "  2. Manually copy the token from Azure Portal:"
+                echo "     Azure Portal → Static Web App ($SWA_NAME) → Manage deployment token"
+                echo "     GitHub → Settings → Environments → $ENVIRONMENT → Secrets"
+              }
+          else
+            echo "⚠️ Could not retrieve Static Web App deployment token"
           fi
 
       - name: Configure Container App Environment Variables

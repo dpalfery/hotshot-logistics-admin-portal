@@ -807,10 +807,20 @@ return await Pulumi.Deployment.RunAsync(() =>
         ["appConfigEndpoint"] = appConfig.Endpoint,
         
         // Static Web App
+        ["staticWebAppName"] = staticWebApp.Name,
         ["staticWebAppUrl"] = staticWebApp.DefaultHostname,
         ["staticWebAppFullUrl"] = staticWebApp.DefaultHostname.Apply(h => $"https://{h}"),
+        // Retrieve the deployment token (API key) for CI/CD deployments
         ["staticWebAppDeploymentToken"] = Output.CreateSecret(
-            staticWebApp.Id.Apply(_ => "")
+            Output.Tuple(resourceGroup.Name, staticWebApp.Name, staticWebApp.Id).Apply(async t =>
+            {
+                var secrets = await ListStaticSiteSecrets.InvokeAsync(new ListStaticSiteSecretsArgs
+                {
+                    ResourceGroupName = t.Item1,
+                    Name = t.Item2
+                });
+                return secrets.Properties.GetValueOrDefault("apiKey", "");
+            })
         ),
         
         // Application Insights (secrets)
