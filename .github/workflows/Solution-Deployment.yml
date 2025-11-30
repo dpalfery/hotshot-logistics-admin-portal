@@ -44,7 +44,7 @@ on:
       use_placeholder_image:
         description: 'Use placeholder image for initial deployment (before pushing your own image)'
         required: false
-        default: true
+        default: false
         type: boolean
       deploy:
         description: 'Deploy infrastructure (pulumi up)'
@@ -55,6 +55,11 @@ on:
         description: 'Build and push container image after infrastructure deployment'
         required: false
         default: false
+        type: boolean
+      deploy_static_web_app:
+        description: 'Deploy static web app (Next.js admin dashboard)'
+        required: false
+        default: true
         type: boolean
       destroy:
         description: '⚠️ DESTROY infrastructure (pulumi destroy) - USE WITH CAUTION'
@@ -207,7 +212,7 @@ jobs:
 
       - name: Summary
         run: |
-          echo "### 🚀 Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "### 🚀 Container Deployment Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Resource | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
@@ -216,3 +221,141 @@ jobs:
           echo "| Migration Job | ${{ needs.infrastructure.outputs.migration_job_name }} |" >> $GITHUB_STEP_SUMMARY
           echo "| API Image | ${{ needs.infrastructure.outputs.acr_name }}.azurecr.io/${{ env.IMAGE_NAME }}:latest |" >> $GITHUB_STEP_SUMMARY
           echo "| Job Image | ${{ needs.infrastructure.outputs.acr_name }}.azurecr.io/${{ env.MIGRATION_JOB_IMAGE_NAME }}:latest |" >> $GITHUB_STEP_SUMMARY
+
+  # Deploy Static Web App (Next.js Admin Dashboard)
+  deploy-static-web-app:
+    name: Deploy Static Web App
+    runs-on: ubuntu-latest
+    needs: infrastructure
+    if: |
+      (github.event_name == 'push') || 
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_static_web_app == 'true' && github.event.inputs.destroy != 'true')
+    environment: ${{ github.event.inputs.github-environment || 'development' }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          submodules: true
+          lfs: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 1-Presentation/admin-dashboard/package-lock.json
+
+      - name: Install dependencies
+        working-directory: 1-Presentation/admin-dashboard
+        run: npm ci
+
+      - name: Get API URL from infrastructure outputs
+        id: get-api-url
+        env:
+          CONFIGURED_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL || vars.NEXT_PUBLIC_API_URL }}
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+        run: |
+          # Prefer configured API URL from GitHub secrets/vars
+          if [ -n "$CONFIGURED_API_URL" ]; then
+            echo "Using configured API URL: $CONFIGURED_API_URL"
+            echo "api_url=$CONFIGURED_API_URL" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          # Try to get it from Pulumi stack outputs
+          if [ -n "$PULUMI_ACCESS_TOKEN" ]; then
+            echo "Fetching API URL from Pulumi stack..."
+            
+            # Install Pulumi CLI
+            curl -fsSL https://get.pulumi.com | sh
+            export PATH=$PATH:$HOME/.pulumi/bin
+            
+            cd 7-Deployment/Azure-deploy
+            
+            # Use the stack from workflow inputs
+            STACK="${{ github.event.inputs.stack || 'dev' }}"
+            pulumi stack select $STACK --non-interactive 2>/dev/null || true
+            API_URL=$(pulumi stack output containerAppFullUrl 2>/dev/null || echo "")
+            
+            if [ -n "$API_URL" ]; then
+              echo "✅ Got API URL from Pulumi: $API_URL"
+              echo "api_url=$API_URL" >> $GITHUB_OUTPUT
+            else
+              echo "⚠️ Could not get API URL from Pulumi"
+              echo "api_url=" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "⚠️ PULUMI_ACCESS_TOKEN not set, cannot fetch API URL"
+            echo "api_url=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate Azure AD Configuration
+        env:
+          NEXT_PUBLIC_AZURE_CLIENT_ID: ${{ secrets.AZURE_AD_B2C_CLIENT_ID }}
+          NEXT_PUBLIC_AZURE_TENANT_ID: ${{ secrets.AZURE_AD_B2C_TENANT_ID }}
+        run: |
+          echo "Validating Azure AD / Entra External ID configuration..."
+          
+          if [ -z "$NEXT_PUBLIC_AZURE_CLIENT_ID" ]; then
+            echo "⚠️ Warning: AZURE_AD_B2C_CLIENT_ID secret is not set"
+          else
+            echo "✅ Azure Client ID is configured"
+          fi
+          
+          if [ -z "$NEXT_PUBLIC_AZURE_TENANT_ID" ]; then
+            echo "⚠️ Warning: AZURE_AD_B2C_TENANT_ID secret is not set"
+          else
+            echo "✅ Azure Tenant ID is configured"
+          fi
+
+      - name: Build Next.js app
+        working-directory: 1-Presentation/admin-dashboard
+        env:
+          NODE_ENV: production
+          NEXT_PUBLIC_API_URL: ${{ steps.get-api-url.outputs.api_url }}
+          NEXT_PUBLIC_AZURE_CLIENT_ID: ${{ secrets.AZURE_AD_B2C_CLIENT_ID }}
+          NEXT_PUBLIC_AZURE_TENANT_ID: ${{ secrets.AZURE_AD_B2C_TENANT_ID }}
+        run: |
+          echo "Building Next.js app with:"
+          echo "  - API URL: ${NEXT_PUBLIC_API_URL:-'not set'}"
+          echo "  - Azure Client ID: ${NEXT_PUBLIC_AZURE_CLIENT_ID:0:8}... (masked)"
+          echo "  - Azure Tenant ID: ${NEXT_PUBLIC_AZURE_TENANT_ID:0:8}... (masked)"
+          npm run build
+
+      - name: Deploy to Azure Static Web Apps
+        id: deploy
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: 'upload'
+          app_location: '1-Presentation/admin-dashboard'
+          output_location: 'out'
+          skip_app_build: true
+
+      - name: Deployment Summary
+        env:
+          API_URL: ${{ steps.get-api-url.outputs.api_url }}
+          NEXT_PUBLIC_AZURE_CLIENT_ID: ${{ secrets.AZURE_AD_B2C_CLIENT_ID }}
+          NEXT_PUBLIC_AZURE_TENANT_ID: ${{ secrets.AZURE_AD_B2C_TENANT_ID }}
+        run: |
+          echo "### 🚀 Static Web App Deployed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Configuration | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------------|--------|" >> $GITHUB_STEP_SUMMARY
+          if [ -n "$NEXT_PUBLIC_AZURE_CLIENT_ID" ]; then
+            echo "| Azure AD Client ID | ✅ Configured |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Azure AD Client ID | ⚠️ Not Set |" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ -n "$NEXT_PUBLIC_AZURE_TENANT_ID" ]; then
+            echo "| Azure AD Tenant ID | ✅ Configured |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Azure AD Tenant ID | ⚠️ Not Set |" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ -n "$API_URL" ]; then
+            echo "| API URL | ✅ $API_URL |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| API URL | ⚠️ Not Set |" >> $GITHUB_STEP_SUMMARY
+          fi
