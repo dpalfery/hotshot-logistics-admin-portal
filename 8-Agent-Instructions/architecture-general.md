@@ -145,3 +145,4 @@ rule: |
 
 * `Docker files`
 * `scripts`
+* **important rule**: when deciding on which sku to use in Azure you must pick from teh free service skus provided as part of the 1 year azure free account

@@ -237,7 +237,7 @@ return await Pulumi.Deployment.RunAsync(() =>
         Location = location,
         Sku = new Pulumi.AzureNative.ContainerRegistry.Inputs.SkuArgs
         {
-            Name = "Basic"
+            Name = "Standard"
         },
         AdminUserEnabled = false, // SECURITY: Disabled admin user - use managed identity instead
         Tags = new InputMap<string>
@@ -415,8 +415,8 @@ return await Pulumi.Deployment.RunAsync(() =>
         ServerName = sqlServer.Name,
         Sku = new Pulumi.AzureNative.Sql.Inputs.SkuArgs
         {
-            Name = "Basic",
-            Tier = "Basic"
+            Name = "S0",
+            Tier = "Standard"
         },
         MaxSizeBytes = 2147483648, // 2GB
         Tags = new InputMap<string>
