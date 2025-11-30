@@ -210,29 +210,40 @@ jobs:
             exit 1
           fi
 
-      - name: Deploy to Azure Static Web Apps
-        id: deploy
+      - name: Get Static Web App deployment token
+        id: get-swa-token
         run: |
           SWA_NAME="${{ steps.get-swa-name.outputs.swa_name }}"
           RESOURCE_GROUP="${{ steps.get-swa-name.outputs.resource_group }}"
-          
-          echo "Deploying to Static Web App: $SWA_NAME"
-          
-          # Install SWA CLI
-          npm install -g @azure/static-web-apps-cli
-          
-          # Get deployment token using Azure CLI (we're already logged in via OIDC)
+
+          if [ -z "$SWA_NAME" ] || [ -z "$RESOURCE_GROUP" ]; then
+            echo "❌ Static Web App metadata missing"
+            exit 1
+          fi
+
           DEPLOYMENT_TOKEN=$(az staticwebapp secrets list \
             --name "$SWA_NAME" \
             --resource-group "$RESOURCE_GROUP" \
             --query "properties.apiKey" -o tsv)
-          
-          # Deploy using SWA CLI with the token
-          swa deploy "1-Presentation/admin-dashboard/out" \
-            --deployment-token "$DEPLOYMENT_TOKEN" \
-            --env production
-          
-          echo "✅ Deployment completed successfully"
+
+          if [ -z "$DEPLOYMENT_TOKEN" ]; then
+            echo "❌ Failed to retrieve deployment token"
+            exit 1
+          fi
+
+          echo "token=$DEPLOYMENT_TOKEN" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy Static Web App
+        id: deploy
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ steps.get-swa-token.outputs.token }}
+          action: upload
+          app_location: "1-Presentation/admin-dashboard/out"
+          api_location: ""
+          skip_app_build: true
+          skip_api_build: true
+          config_file_location: "1-Presentation/admin-dashboard"
 
       - name: Deployment Summary
         env:
