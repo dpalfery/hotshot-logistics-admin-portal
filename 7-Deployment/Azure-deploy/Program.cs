@@ -637,7 +637,18 @@ return await Pulumi.Deployment.RunAsync(() =>
                         Weight = 100
                     }
                 },
-                AllowInsecure = false
+                AllowInsecure = false,
+                CorsPolicy = new CorsPolicyArgs
+                {
+                    AllowCredentials = true,
+                    AllowedOrigins = staticWebApp.DefaultHostname.Apply(h => new List<string> 
+                    { 
+                        $"https://{h}", 
+                        "http://localhost:3000" 
+                    }),
+                    AllowedMethods = new[] { "*" },
+                    AllowedHeaders = new[] { "*" }
+                }
             },
             // SECURITY: Registry credentials now obtained from Key Vault via managed identity
             // No longer storing plaintext credentials in Pulumi state

@@ -311,8 +311,8 @@ if (allowedOrigins == null || allowedOrigins.Length == 0)
 app.UseCors(policy =>
 {
     policy.WithOrigins(allowedOrigins)
-          .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // Be specific
-          .WithHeaders("Content-Type", "Authorization", "X-Requested-With") // Be specific
+          .AllowAnyMethod()
+          .AllowAnyHeader()
           .AllowCredentials();
 });
 
