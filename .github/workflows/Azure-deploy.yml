@@ -160,6 +160,7 @@ jobs:
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           ARM_USE_OIDC: true
+          SQL_ADMIN_PASSWORD: ${{ secrets.SQL_ADMIN_PASSWORD }}
           AZURE_AD_B2C_INSTANCE: ${{ secrets.AZURE_AD_B2C_INSTANCE }}
           AZURE_AD_B2C_CLIENT_ID: ${{ secrets.AZURE_AD_B2C_CLIENT_ID }}
           AZURE_AD_B2C_DOMAIN: ${{ secrets.AZURE_AD_B2C_DOMAIN }}
@@ -221,6 +222,7 @@ jobs:
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           ARM_USE_OIDC: true
+          SQL_ADMIN_PASSWORD: ${{ secrets.SQL_ADMIN_PASSWORD }}
           AZURE_AD_B2C_INSTANCE: ${{ secrets.AZURE_AD_B2C_INSTANCE }}
           AZURE_AD_B2C_CLIENT_ID: ${{ secrets.AZURE_AD_B2C_CLIENT_ID }}
           AZURE_AD_B2C_DOMAIN: ${{ secrets.AZURE_AD_B2C_DOMAIN }}
@@ -377,6 +379,7 @@ jobs:
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           ARM_USE_OIDC: true
+          SQL_ADMIN_PASSWORD: ${{ secrets.SQL_ADMIN_PASSWORD }}
         run: |
           pulumi stack select ${{ inputs.stack }}
           pulumi config set location ${{ inputs.region }}
