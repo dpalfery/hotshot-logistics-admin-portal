@@ -119,6 +119,11 @@ jobs:
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
       SQL_ADMIN_PASSWORD: ${{ secrets.SQL_ADMIN_PASSWORD }}
+      AZURE_AD_B2C_INSTANCE: ${{ secrets.AZURE_AD_B2C_INSTANCE }}
+      AZURE_AD_B2C_CLIENT_ID: ${{ secrets.AZURE_AD_B2C_CLIENT_ID }}
+      AZURE_AD_B2C_DOMAIN: ${{ secrets.AZURE_AD_B2C_DOMAIN }}
+      AZURE_AD_B2C_TENANT_ID: ${{ secrets.AZURE_AD_B2C_TENANT_ID }}
+      AZURE_AD_B2C_AUDIENCE: ${{ secrets.AZURE_AD_B2C_AUDIENCE }}
 
   # Deploy Static Web App (Next.js Admin Dashboard)
   deploy-static-web-app:
@@ -129,6 +134,11 @@ jobs:
       (github.event_name == 'push') || 
       (github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_static_web_app == 'true' && github.event.inputs.destroy != 'true')
     environment: ${{ github.event.inputs.github-environment || 'development' }}
+    env:
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AZURE_AD_B2C_TENANT_ID: ${{ secrets.AZURE_AD_B2C_TENANT_ID }}
     
     steps:
       - name: Checkout code
