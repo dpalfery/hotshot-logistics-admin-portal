@@ -72,7 +72,8 @@ export const loginRequest = {
     'User.Read',
     'openid',
     'profile',
-    'email'
+    'email',
+    `api://${clientId}/access_as_user`
   ],
   prompt: process.env.NODE_ENV === 'production' ? 'select_account' : 'consent',
 };
