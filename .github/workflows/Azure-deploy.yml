@@ -23,6 +23,11 @@ on:
         required: false
         default: true
         type: boolean
+      preview:
+        description: 'Run Pulumi preview before deploying'
+        required: false
+        default: true
+        type: boolean
       deploy:
         description: 'Deploy infrastructure (pulumi up)'
         required: false
@@ -107,6 +112,11 @@ on:
         required: false
         default: true
         type: boolean
+      preview:
+        description: 'Run Pulumi preview before deploying'
+        required: false
+        default: true
+        type: boolean
       deploy:
         description: 'Deploy infrastructure (pulumi up)'
         required: false
@@ -126,6 +136,7 @@ jobs:
   preview:
     name: Preview Infrastructure
     runs-on: ubuntu-latest
+    if: ${{ inputs.preview == true && inputs.destroy != true }}
     environment: ${{ inputs.github-environment }}
     steps:
       - name: Checkout code
@@ -185,7 +196,7 @@ jobs:
     name: Deploy Infrastructure
     runs-on: ubuntu-latest
     needs: preview
-    if: ${{ inputs.deploy == true && inputs.destroy != true }}
+    if: ${{ always() && (needs.preview.result == 'success' || needs.preview.result == 'skipped') && inputs.deploy == true && inputs.destroy != true }}
     environment: ${{ inputs.github-environment }}
     outputs:
       acr_name: ${{ steps.outputs.outputs.acr_name }}
@@ -350,7 +361,7 @@ jobs:
     name: ⚠️ Destroy Infrastructure
     runs-on: ubuntu-latest
     needs: preview
-    if: ${{ inputs.destroy == true }}
+    if: ${{ always() && (needs.preview.result == 'success' || needs.preview.result == 'skipped') && inputs.destroy == true }}
     environment: ${{ inputs.github-environment }}
     steps:
       - name: Checkout code

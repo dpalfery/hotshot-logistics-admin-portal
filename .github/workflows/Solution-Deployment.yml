@@ -46,6 +46,11 @@ on:
         required: false
         default: true
         type: boolean
+      preview:
+        description: 'Run Pulumi preview before deploying'
+        required: false
+        default: true
+        type: boolean
       deploy:
         description: 'Deploy infrastructure (pulumi up)'
         required: false
@@ -84,6 +89,7 @@ jobs:
       stack: ${{ github.event.inputs.stack || 'dev' }}
       region: ${{ github.event.inputs.region || 'eastus2' }}
       use_placeholder_image: ${{ github.event_name == 'push' || github.event.inputs.use_placeholder_image == 'true' }}
+      preview: ${{ github.event_name == 'push' || github.event.inputs.preview == 'true' }}
       deploy: ${{ github.event_name == 'push' || github.event.inputs.deploy == 'true' }}
       destroy: ${{ github.event.inputs.destroy == 'true' }}
     secrets:
