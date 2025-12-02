@@ -28,13 +28,34 @@ function generateEnvFile() {
   const finalClientId = process.env.NEXT_PUBLIC_AZURE_CLIENT_ID;
   const finalTenantId = process.env.NEXT_PUBLIC_AZURE_TENANT_ID;
 
-
-  // Determine environment and set appropriate URLs
   const isProduction = process.env.NODE_ENV === 'production';
-  const productionDomain = process.env.NEXT_PUBLIC_PRODUCTION_DOMAIN || 'your-domain.com';
-  const apiBaseUrl = isProduction
-    ? `https://${productionDomain}/api`
-    : 'https://localhost:5001/api';
+
+  const explicitApiBase = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
+  const explicitApiUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
+  const productionDomain = process.env.NEXT_PUBLIC_PRODUCTION_DOMAIN?.trim();
+
+  const normalizeDomain = (url) => url.replace(/\/$/, '');
+  const ensureProtocol = (url) => (/^https?:\/\//i.test(url) ? url : `https://${url}`);
+  const normalizeBase = (url) => ensureProtocol(normalizeDomain(url));
+  const ensureApiPath = (url) => (url.toLowerCase().endsWith('/api') ? url : `${url}/api`);
+
+  let apiBaseUrl;
+
+  if (explicitApiBase) {
+    apiBaseUrl = normalizeBase(explicitApiBase);
+  } else if (explicitApiUrl) {
+    apiBaseUrl = ensureApiPath(normalizeBase(explicitApiUrl));
+  } else if (!isProduction) {
+    apiBaseUrl = 'https://localhost:5001/api';
+  } else if (productionDomain && productionDomain !== 'your-domain.com') {
+    apiBaseUrl = ensureApiPath(normalizeBase(productionDomain));
+  } else {
+    throw new Error(
+      'Missing NEXT_PUBLIC_API_BASE_URL or NEXT_PUBLIC_API_URL for production build. Set one of them to the Container App URL.'
+    );
+  }
+
+  const resolvedProductionDomain = productionDomain || new URL(apiBaseUrl).host;
 
   // Generate .env.local content with production-ready configuration
   const envContent = `# API Configuration
@@ -47,7 +68,7 @@ NEXT_PUBLIC_AZURE_TENANT_ID=${finalTenantId}
 
 # Production Configuration
 NODE_ENV=${isProduction ? 'production' : 'development'}
-NEXT_PUBLIC_PRODUCTION_DOMAIN=${productionDomain}
+NEXT_PUBLIC_PRODUCTION_DOMAIN=${resolvedProductionDomain}
 
 # Security Configuration
 # HTTPS is enforced in production via Next.js config and middleware

@@ -25,7 +25,19 @@ return await Pulumi.Deployment.RunAsync(() =>
     var location = config.Get("location") ?? "eastus";
     var environment = config.Get("environment") ?? "dev";
     var sqlAdminLogin = config.Get("sqlAdminLogin") ?? "sqladmin";
-    var sqlAdminPassword = config.RequireSecret("sqlAdminPassword");
+    // Secrets are injected via GitHub Actions (or local env) to avoid Pulumi stack secrets.
+    string GetRequiredEnv(string name)
+    {
+        var value = Environment.GetEnvironmentVariable(name);
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            throw new InvalidOperationException($"Environment variable '{name}' is required but was not provided.");
+        }
+        return value;
+    }
+
+    var sqlAdminPassword = GetRequiredEnv("SQL_ADMIN_PASSWORD");
+    var sqlAdminPasswordSecret = Output.CreateSecret(sqlAdminPassword);
     
     // App Name for naming standards
     var appName = config.Get("appName") ?? "hotshot";
@@ -121,10 +133,10 @@ return await Pulumi.Deployment.RunAsync(() =>
     
     // Azure AD Tenant ID is required for Key Vault access policies
     // Get from: az account show --query tenantId -o tsv
-    var azureTenantId = config.Require("azureTenantId");
+    var azureTenantId = GetRequiredEnv("AZURE_TENANT_ID");
     // Azure Subscription ID is required for role assignments
     // Get from: az account show --query id -o tsv
-    var subscriptionId = config.Require("subscriptionId");
+    var subscriptionId = GetRequiredEnv("AZURE_SUBSCRIPTION_ID");
     // Container image name (without registry prefix). Default: hotshot-api
     // The full image path will be constructed as: <registry>.azurecr.io/<imageName>:<imageTag>
     var imageName = config.Get("imageName") ?? "hotshot-api";
@@ -141,7 +153,7 @@ return await Pulumi.Deployment.RunAsync(() =>
     // Azure AD B2C / Entra External ID configuration for API authentication
     // These must be configured in Pulumi config or the API will fail to start
     // We prioritize Environment Variables (from GitHub Secrets) over Pulumi Config
-    var azureAdB2cInstance = Environment.GetEnvironmentVariable("AZURE_AD_B2C_INSTANCE") ?? config.Get("azureAdB2cInstance") ?? "";
+    var azureAdB2cInstance = GetRequiredEnv("AZURE_AD_B2C_INSTANCE");
 
     // FIX: Ensure Instance is a valid URL (if user provided just "Palfery", convert to "https://Palfery.b2clogin.com")
     if (!string.IsNullOrEmpty(azureAdB2cInstance) && !azureAdB2cInstance.StartsWith("http"))
@@ -151,10 +163,10 @@ return await Pulumi.Deployment.RunAsync(() =>
         azureAdB2cInstance = fixedInstance;
     }
 
-    var azureAdB2cClientId = Environment.GetEnvironmentVariable("AZURE_AD_B2C_CLIENT_ID") ?? config.Get("azureAdB2cClientId") ?? "";
-    var azureAdB2cDomain = Environment.GetEnvironmentVariable("AZURE_AD_B2C_DOMAIN") ?? config.Get("azureAdB2cDomain") ?? "";
-    var azureAdB2cTenantId = Environment.GetEnvironmentVariable("AZURE_AD_B2C_TENANT_ID") ?? config.Get("azureAdB2cTenantId") ?? "";
-    var azureAdB2cAudience = Environment.GetEnvironmentVariable("AZURE_AD_B2C_AUDIENCE") ?? config.Get("azureAdB2cAudience") ?? "";
+    var azureAdB2cClientId = GetRequiredEnv("AZURE_AD_B2C_CLIENT_ID");
+    var azureAdB2cDomain = GetRequiredEnv("AZURE_AD_B2C_DOMAIN");
+    var azureAdB2cTenantId = GetRequiredEnv("AZURE_AD_B2C_TENANT_ID");
+    var azureAdB2cAudience = GetRequiredEnv("AZURE_AD_B2C_AUDIENCE");
 
     // Resource Group
     var resourceGroupName = GetResourceName("rg");
@@ -387,7 +399,7 @@ return await Pulumi.Deployment.RunAsync(() =>
         ResourceGroupName = resourceGroup.Name,
         Location = location,
         AdministratorLogin = sqlAdminLogin,
-        AdministratorLoginPassword = sqlAdminPassword,
+        AdministratorLoginPassword = sqlAdminPasswordSecret,
         Version = "12.0",
         MinimalTlsVersion = "1.2",
         PublicNetworkAccess = "Enabled",
@@ -449,8 +461,8 @@ return await Pulumi.Deployment.RunAsync(() =>
 
     // Build connection string (marked as secret to prevent exposure in state)
     var connectionString = Output.CreateSecret(
-        Output.Tuple(sqlServer.FullyQualifiedDomainName, database.Name, sqlAdminPassword)
-            .Apply(t => $"Server=tcp:{t.Item1},1433;Initial Catalog={t.Item2};Persist Security Info=False;User ID={sqlAdminLogin};Password={t.Item3};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"));
+        Output.Tuple(sqlServer.FullyQualifiedDomainName, database.Name)
+            .Apply(t => $"Server=tcp:{t.Item1},1433;Initial Catalog={t.Item2};Persist Security Info=False;User ID={sqlAdminLogin};Password={sqlAdminPassword};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"));
 
     // Container Apps Environment (Consumption only - Workload Profiles v2)
     var managedEnvironmentName = GetResourceName("cae");

@@ -156,9 +156,6 @@ pulumi config set environment dev
 # Set SQL admin login (optional, defaults to "sqladmin")
 pulumi config set sqlAdminLogin myadmin
 
-# Set SQL admin password (stored as secret)
-pulumi config set sqlAdminPassword --secret <strong-password>
-
 # Set SQL firewall allowed IP ranges (optional, defaults to "0.0.0.0" for Azure services)
 # Use comma-separated IP addresses for multiple ranges
 # For production, specify known IP ranges or use private endpoints
@@ -170,7 +167,25 @@ pulumi config set sqlAllowedIpRanges "52.123.45.67,52.123.45.68"
 pulumi config set containerImage mcr.microsoft.com/azuredocs/containerapps-helloworld:latest
 ```
 
-### 5. Deploy Infrastructure
+### 5. Set Required Environment Variables
+
+All sensitive values are supplied via environment variables (GitHub Actions secrets in CI). Before running `pulumi up` locally, export the following variables:
+
+```
+# PowerShell example
+$env:SQL_ADMIN_PASSWORD = "<strong-password>"
+$env:AZURE_TENANT_ID = "<tenant-guid>"
+$env:AZURE_SUBSCRIPTION_ID = "<subscription-guid>"
+$env:AZURE_AD_B2C_INSTANCE = "<tenant>.b2clogin.com" # can omit https://
+$env:AZURE_AD_B2C_CLIENT_ID = "<app-guid>"
+$env:AZURE_AD_B2C_DOMAIN = "<b2c-domain>"
+$env:AZURE_AD_B2C_TENANT_ID = "<b2c-tenant-guid>"
+$env:AZURE_AD_B2C_AUDIENCE = "<api-audience>"
+```
+
+> **Important:** Secrets are no longer stored in Pulumi stack config. Local runs or CI/CD executions will fail fast if any variable is missing.
+
+### 6. Deploy Infrastructure
 
 ```bash
 # Preview changes
@@ -180,7 +195,7 @@ pulumi preview
 pulumi up
 ```
 
-### 6. View Outputs
+### 7. View Outputs
 
 ```bash
 # Show all stack outputs
@@ -211,6 +226,13 @@ GitHub Actions uses **OpenID Connect (OIDC) authentication** instead of client s
 
 #### Database
 - `SQL_ADMIN_PASSWORD` - Strong password for SQL Server admin
+
+#### Azure AD B2C
+- `AZURE_AD_B2C_INSTANCE` - B2C instance (with or without `https://`)
+- `AZURE_AD_B2C_CLIENT_ID` - SPA/client application ID
+- `AZURE_AD_B2C_DOMAIN` - B2C domain (e.g., `contoso.onmicrosoft.com`)
+- `AZURE_AD_B2C_TENANT_ID` - B2C directory/tenant ID
+- `AZURE_AD_B2C_AUDIENCE` - API application ID URI / audience value
 
 #### Container Registry (set after first deployment)
 - `ACR_USERNAME` - ACR admin username (from `pulumi stack output`)
