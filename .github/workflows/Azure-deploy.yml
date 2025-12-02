@@ -136,7 +136,7 @@ jobs:
   preview:
     name: Preview Infrastructure
     runs-on: ubuntu-latest
-    if: ${{ inputs.preview == true && inputs.destroy != true }}
+    if: ${{ (inputs.preview == true || inputs.preview == 'true') && inputs.destroy != true }}
     environment: ${{ inputs.github-environment }}
     steps:
       - name: Checkout code
@@ -196,7 +196,7 @@ jobs:
     name: Deploy Infrastructure
     runs-on: ubuntu-latest
     needs: preview
-    if: ${{ always() && (needs.preview.result == 'success' || needs.preview.result == 'skipped') && inputs.deploy == true && inputs.destroy != true }}
+    if: ${{ !failure() && !cancelled() && (needs.preview.result == 'success' || needs.preview.result == 'skipped') && (inputs.deploy == true || inputs.deploy == 'true') && inputs.destroy != true }}
     environment: ${{ inputs.github-environment }}
     outputs:
       acr_name: ${{ steps.outputs.outputs.acr_name }}
@@ -333,14 +333,14 @@ jobs:
           # Set ALLOWED_HOSTS and CORS_ALLOWED_ORIGINS
           echo "Configuring Container App environment variables..."
           echo "  ALLOWED_HOSTS: $CONTAINER_APP_FQDN"
-          echo "  CORS_ALLOWED_ORIGINS: $STATIC_WEB_APP_URL,$CONTAINER_APP_URL,http://localhost:3000"
+          echo "  Cors__AllowedOrigins: $STATIC_WEB_APP_URL,$CONTAINER_APP_URL,http://localhost:3000"
           
           az containerapp update \
             --name "$CONTAINER_APP_NAME" \
             --resource-group "$RESOURCE_GROUP" \
             --set-env-vars \
               "ALLOWED_HOSTS=$CONTAINER_APP_FQDN" \
-              "CORS_ALLOWED_ORIGINS=$STATIC_WEB_APP_URL,$CONTAINER_APP_URL,http://localhost:3000"
+              "Cors__AllowedOrigins=$STATIC_WEB_APP_URL,$CONTAINER_APP_URL,http://localhost:3000"
           
           echo "✅ Container App environment variables configured (new revision created automatically)"
           
@@ -349,7 +349,7 @@ jobs:
           echo "| Variable | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| ALLOWED_HOSTS | \`$CONTAINER_APP_FQDN\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| CORS_ALLOWED_ORIGINS | \`$STATIC_WEB_APP_URL,$CONTAINER_APP_URL,http://localhost:3000\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Cors__AllowedOrigins | \`$STATIC_WEB_APP_URL,$CONTAINER_APP_URL,http://localhost:3000\` |" >> $GITHUB_STEP_SUMMARY
 
       - name: Upload Stack Outputs
         uses: actions/upload-artifact@v4
@@ -361,7 +361,7 @@ jobs:
     name: ⚠️ Destroy Infrastructure
     runs-on: ubuntu-latest
     needs: preview
-    if: ${{ always() && (needs.preview.result == 'success' || needs.preview.result == 'skipped') && inputs.destroy == true }}
+    if: ${{ !failure() && !cancelled() && (needs.preview.result == 'success' || needs.preview.result == 'skipped') && inputs.destroy == true }}
     environment: ${{ inputs.github-environment }}
     steps:
       - name: Checkout code

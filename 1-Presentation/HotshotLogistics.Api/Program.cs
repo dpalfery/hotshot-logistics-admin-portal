@@ -293,6 +293,13 @@ if (allowedOrigins == null || allowedOrigins.Length == 0)
 {
     // Try to get as a single string (common with environment variables)
     var originsString = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string>();
+
+    // Fallback: Check for CORS_ALLOWED_ORIGINS (flat environment variable)
+    if (string.IsNullOrWhiteSpace(originsString))
+    {
+        originsString = builder.Configuration["CORS_ALLOWED_ORIGINS"];
+    }
+
     if (!string.IsNullOrWhiteSpace(originsString))
     {
         // Split by comma and trim whitespace
