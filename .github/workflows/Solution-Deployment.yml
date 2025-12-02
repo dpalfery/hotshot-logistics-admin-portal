@@ -108,6 +108,7 @@ jobs:
     uses: ./.github/workflows/build-and-push-container.yml
     with:
       github-environment: ${{ github.event.inputs.github-environment || 'development' }}
+      stack: ${{ github.event.inputs.stack || 'dev' }}
       acr_name: ${{ needs.infrastructure.outputs.acr_name }}
       resource_group: ${{ needs.infrastructure.outputs.resource_group }}
       container_app_name: ${{ needs.infrastructure.outputs.container_app_name }}
