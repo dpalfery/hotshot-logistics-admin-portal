@@ -14,8 +14,6 @@ Non‑Negotiable Global Rules (apply always)
 
 7. Your work or Task is not complete unless the build compiles with zero warnings and required tests pass or are added. You MUST review and ensure that all code quality rules in  ([`code-quality-general-rule.md`](code-quality-general-rule.md:1)) are followed and true before declaring you are complete
 
-8. For Azure Resources, you MUST follow the naming standard defined in [`8-Agent-Instructions/azure-naming-standards.md`](8-Agent-Instructions/azure-naming-standards.md).
-
 9. When writing scripts follow the rules in [`scripting-rules.md`](scripting-rules.md)
 
 Situational Rule Pointers (consult only when relevant)
@@ -27,3 +25,4 @@ Situational Rule Pointers (consult only when relevant)
 - Process, CLI commands, Windows shell guidance, task tracking → [`process-general-rule.md`](process-general-rule.md:1)
 
 
+always ignore rules in archive folder
