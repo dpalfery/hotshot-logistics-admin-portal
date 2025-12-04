@@ -78,6 +78,11 @@ export const loginRequest = {
   prompt: process.env.NODE_ENV === 'production' ? 'select_account' : 'consent',
 };
 
+// Token request specifically for the Custom API
+export const apiTokenRequest = {
+  scopes: [`api://${clientId}/access_as_user`],
+};
+
 // Graph API configuration for user profile data
 export const graphConfig = {
   graphMeEndpoint: 'https://graph.microsoft.com/v1.0/me',

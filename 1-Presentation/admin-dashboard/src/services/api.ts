@@ -1,5 +1,5 @@
 import { msalInstance } from '@/lib/providers';
-import { loginRequest } from '@/config/auth';
+import { loginRequest, apiTokenRequest } from '@/config/auth';
 import { Job, Driver, Invoice, Customer, PagedResult, JobFilter, PaginationParameters, InvoiceSummaryMetrics, InvoiceAgingBuckets, JobStatusSummary } from '@/types';
 import { logger } from '@/lib/logger';
 
@@ -85,7 +85,7 @@ class ApiService {
 
     try {
       const response = await msalInstance.acquireTokenSilent({
-        ...loginRequest,
+        ...apiTokenRequest,
         account,
       });
       logger.debug('Token acquired silently');
@@ -97,7 +97,7 @@ class ApiService {
       // Fallback to interactive method if silent acquisition fails
       try {
         const response = await msalInstance.acquireTokenPopup({
-          ...loginRequest,
+          ...apiTokenRequest,
           account,
         });
         logger.debug('Token acquired via popup');
