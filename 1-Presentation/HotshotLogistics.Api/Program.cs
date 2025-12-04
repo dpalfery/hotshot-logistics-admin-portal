@@ -102,53 +102,46 @@ builder.Services.AddCommunicationServices();
 // ============================================================
 // AUTHENTICATION CONFIGURATION
 // ============================================================
-var azureAdB2cSection = builder.Configuration.GetSection("AzureAdB2C");
-var azureAdB2cInstance = azureAdB2cSection["Instance"];
-var azureAdB2cDomain = azureAdB2cSection["Domain"];
-var azureAdB2cClientId = azureAdB2cSection["ClientId"];
-// TenantId is often optional if Domain is provided, but good to check
-var azureAdB2cTenantId = azureAdB2cSection["TenantId"];
+var azureAdSection = builder.Configuration.GetSection("AzureAd");
+var azureAdInstance = azureAdSection["Instance"];
+var azureAdDomain = azureAdSection["Domain"];
+var azureAdClientId = azureAdSection["ClientId"];
+var azureAdTenantId = azureAdSection["TenantId"];
 
-// Fix: Ensure Instance is a valid absolute URI (it might be just the instance name like "Palfery")
-if (!string.IsNullOrEmpty(azureAdB2cInstance) && !Uri.TryCreate(azureAdB2cInstance, UriKind.Absolute, out _))
-{
-    // Assume it's the instance name and construct the b2clogin.com URL
-    var fixedInstance = $"https://{azureAdB2cInstance}.b2clogin.com";
-    Console.WriteLine($"⚠️ Correcting AzureAdB2C:Instance from '{azureAdB2cInstance}' to '{fixedInstance}'");
-    azureAdB2cInstance = fixedInstance;
-    // Update the configuration value so MicrosoftIdentityWebApi uses the correct one
-    builder.Configuration["AzureAdB2C:Instance"] = azureAdB2cInstance;
-}
-
-var isAzureAdB2cConfigured = !string.IsNullOrEmpty(azureAdB2cInstance) 
-    && Uri.TryCreate(azureAdB2cInstance, UriKind.Absolute, out _)
-    && !string.IsNullOrEmpty(azureAdB2cDomain)
-    && !string.IsNullOrEmpty(azureAdB2cClientId);
+var isAzureAdConfigured = !string.IsNullOrEmpty(azureAdInstance)
+    && !string.IsNullOrEmpty(azureAdDomain)
+    && !string.IsNullOrEmpty(azureAdClientId)
+    && !string.IsNullOrEmpty(azureAdTenantId);
 
 if (builder.Environment.IsDevelopment())
 {
-    // Use test authentication handler ONLY for local development
-    builder.Services.AddAuthentication("Test")
-        .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("Test", options => { });
-}
-else if (isAzureAdB2cConfigured)
-{
-    Console.WriteLine("Configuring Azure AD B2C with:");
-    Console.WriteLine($"  Instance: {azureAdB2cInstance}");
-    Console.WriteLine($"  Domain: {azureAdB2cDomain}");
-    Console.WriteLine($"  ClientId: {azureAdB2cClientId}");
-    Console.WriteLine($"  TenantId: {azureAdB2cTenantId}");
-    
-    // Production with proper Azure AD B2C configuration
+    // Use test authentication handler ONLY for local development if explicitly requested via header or config
+    // But here we want to support real tokens too
     builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-        .AddMicrosoftIdentityWebApi(azureAdB2cSection);
+        .AddMicrosoftIdentityWebApi(azureAdSection)
+        .EnableTokenAcquisitionToCallDownstreamApi()
+        .AddMicrosoftGraph(builder.Configuration.GetSection("MicrosoftGraph"))
+        .AddInMemoryTokenCaches();
+}
+else if (isAzureAdConfigured)
+{
+    Console.WriteLine("Configuring Azure AD with:");
+    Console.WriteLine($"  Instance: {azureAdInstance}");
+    Console.WriteLine($"  Domain: {azureAdDomain}");
+    Console.WriteLine($"  ClientId: {azureAdClientId}");
+    Console.WriteLine($"  TenantId: {azureAdTenantId}");
+    
+    // Production with proper Azure AD configuration
+    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddMicrosoftIdentityWebApi(azureAdSection)
+        .EnableTokenAcquisitionToCallDownstreamApi()
+        .AddMicrosoftGraph(builder.Configuration.GetSection("MicrosoftGraph"))
+        .AddInMemoryTokenCaches();
 }
 else
 {
     // FAIL SAFE: Warn but do not crash. Allow app to start for health checks.
-    Console.WriteLine("⚠️ WARNING: Azure AD B2C is not configured for production. Authentication will not work.");
-    Console.WriteLine($"  - AzureAdB2C:Instance (Current: '{azureAdB2cInstance}')");
-    Console.WriteLine($"  - AzureAdB2C:ClientId (Current: '{azureAdB2cClientId}')");
+    Console.WriteLine("⚠️ WARNING: Azure AD is not configured for production. Authentication will not work.");
     
     // Register a dummy authentication scheme to prevent startup errors if services expect auth
     builder.Services.AddAuthentication("Broken")
