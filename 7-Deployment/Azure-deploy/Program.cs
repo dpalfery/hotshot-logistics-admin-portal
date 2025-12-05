@@ -40,6 +40,20 @@ return await Pulumi.Deployment.RunAsync(() =>
     var sqlAdminPassword = GetRequiredEnv("SQL_ADMIN_PASSWORD");
     var sqlAdminPasswordSecret = Output.CreateSecret(sqlAdminPassword);
     
+    // Database app user password (optional, defaults to SQL Admin Password if not provided - effectively same permission level for now)
+    // In a production scenario, you'd want separate users with scoped permissions.
+    var dbAppPassword = Environment.GetEnvironmentVariable("HOTSHOT_DB_APP_PASSWORD");
+    if (string.IsNullOrWhiteSpace(dbAppPassword))
+    {
+        // Fallback to SQL Admin Password if not set (to unblock migration job)
+        // WARNING: This grants the app user full admin rights if they share credentials.
+        // The migration script uses this to CREATE the user, so it needs to be passed.
+        // If the script creates the user with this password, then the app will use this password.
+        dbAppPassword = sqlAdminPassword;
+        Pulumi.Log.Info("HOTSHOT_DB_APP_PASSWORD not set. Using SQL_ADMIN_PASSWORD as fallback for migration job.");
+    }
+    var dbAppPasswordSecret = Output.CreateSecret(dbAppPassword);
+
     // App Name for naming standards
     var appName = config.Get("appName") ?? "hotshot";
 
@@ -679,6 +693,11 @@ return await Pulumi.Deployment.RunAsync(() =>
                 {
                     Name = "db-connection-string",
                     Value = connectionString
+                },
+                new Pulumi.AzureNative.App.Inputs.SecretArgs
+                {
+                    Name = "db-app-password",
+                    Value = dbAppPasswordSecret
                 }
             },
             ManualTriggerConfig = new JobConfigurationManualTriggerConfigArgs
@@ -713,6 +732,11 @@ return await Pulumi.Deployment.RunAsync(() =>
                         {
                             Name = "ASPNETCORE_ENVIRONMENT",
                             Value = "Production"
+                        },
+                        new EnvironmentVarArgs
+                        {
+                            Name = "HOTSHOT_DB_APP_PASSWORD",
+                            SecretRef = "db-app-password"
                         }
                     }
                 }

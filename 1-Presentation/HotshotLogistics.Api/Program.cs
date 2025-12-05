@@ -120,11 +120,32 @@ if (builder.Environment.IsDevelopment())
 {
     // Use test authentication handler ONLY for local development if explicitly requested via header or config
     // But here we want to support real tokens too
-    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    builder.Services.AddAuthentication(options =>
+        {
+            // Default to JwtBearer
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        })
         .AddMicrosoftIdentityWebApi(azureAdSection)
         .EnableTokenAcquisitionToCallDownstreamApi()
         .AddMicrosoftGraph(builder.Configuration.GetSection("MicrosoftGraph"))
         .AddInMemoryTokenCaches();
+        
+    // Add the "Test" scheme for integration tests
+    builder.Services.AddAuthentication()
+           .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("Test", options => { });
+
+    // Ensure the "Test" scheme can be used when requested
+    builder.Services.AddAuthorization(options =>
+    {
+        // Adjust policies or default policy if necessary to allow "Test" scheme
+        // Or ensure controllers accept both schemes via [Authorize(AuthenticationSchemes = "Bearer,Test")]
+        // However, a cleaner way for global testing is to set the default policy to allow both schemas:
+        var defaultPolicy = new AuthorizationPolicyBuilder(JwtBearerDefaults.AuthenticationScheme, "Test")
+            .RequireAuthenticatedUser()
+            .Build();
+        options.DefaultPolicy = defaultPolicy;
+    });
 }
 else if (isAzureAdConfigured)
 {
