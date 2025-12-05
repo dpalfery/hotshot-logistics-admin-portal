@@ -17,6 +17,8 @@ using Pulumi.AzureNative.KeyVault.Inputs;
 using Pulumi.AzureNative.AppConfiguration;
 using Pulumi.AzureNative.ManagedIdentity;
 using Pulumi.AzureNative.Authorization;
+using Pulumi.AzureNative.Insights;
+using Pulumi.AzureNative.Insights.Inputs;
 using System.Linq;
 
 return await Pulumi.Deployment.RunAsync(() =>
@@ -259,6 +261,38 @@ return await Pulumi.Deployment.RunAsync(() =>
         }
     });
 
+    // Diagnostic setting for Container Registry
+    var registryDiagnostic = new DiagnosticSetting("registryDiagnostic", new DiagnosticSettingArgs
+    {
+        Name = $"{registryName}-diag",
+        ResourceUri = registry.Id,
+        WorkspaceId = workspace.Id,
+        Logs = new[]
+        {
+            new LogSettingsArgs
+            {
+                CategoryGroup = "allLogs",
+                Enabled = true,
+                RetentionPolicy = new RetentionPolicyArgs { Enabled = false, Days = 0 }
+            },
+            new LogSettingsArgs
+            {
+                CategoryGroup = "audit",
+                Enabled = true,
+                RetentionPolicy = new RetentionPolicyArgs { Enabled = false, Days = 0 }
+            }
+        },
+        Metrics = new[]
+        {
+            new MetricSettingsArgs
+            {
+                Category = "AllMetrics",
+                Enabled = true,
+                RetentionPolicy = new RetentionPolicyArgs { Enabled = false, Days = 0 }
+            }
+        }
+    });
+
     // Assign AcrPull role to managed identity for registry access
     // This allows the container app to pull images without admin credentials
     // AcrPull role definition ID: 7f951dda-4ed3-4680-a7ca-43fe172d538d
@@ -322,6 +356,38 @@ return await Pulumi.Deployment.RunAsync(() =>
         }
     });
 
+    // Diagnostic setting for Key Vault
+    var keyVaultDiagnostic = new DiagnosticSetting("keyVaultDiagnostic", new DiagnosticSettingArgs
+    {
+        Name = $"{keyVaultName}-diag",
+        ResourceUri = keyVault.Id,
+        WorkspaceId = workspace.Id,
+        Logs = new[]
+        {
+            new LogSettingsArgs
+            {
+                CategoryGroup = "audit",
+                Enabled = true,
+                RetentionPolicy = new RetentionPolicyArgs { Enabled = false, Days = 0 }
+            },
+            new LogSettingsArgs
+            {
+                CategoryGroup = "allLogs",
+                Enabled = true,
+                RetentionPolicy = new RetentionPolicyArgs { Enabled = false, Days = 0 }
+            }
+        },
+        Metrics = new[]
+        {
+            new MetricSettingsArgs
+            {
+                Category = "AllMetrics",
+                Enabled = true,
+                RetentionPolicy = new RetentionPolicyArgs { Enabled = false, Days = 0 }
+            }
+        }
+    });
+
     // Azure App Configuration for non-secret configuration
     // Note: Free tier can take 5-10 minutes to provision and doesn't support soft delete
     var appConfigName = GetResourceName("appcs");
@@ -356,6 +422,32 @@ return await Pulumi.Deployment.RunAsync(() =>
         PrincipalType = Pulumi.AzureNative.Authorization.PrincipalType.ServicePrincipal,
         RoleDefinitionId = appConfigDataReaderRoleId,
         Scope = appConfig.Id
+    });
+
+    // Diagnostic setting for App Configuration
+    var appConfigDiagnostic = new DiagnosticSetting("appConfigDiagnostic", new DiagnosticSettingArgs
+    {
+        Name = $"{appConfigName}-diag",
+        ResourceUri = appConfig.Id,
+        WorkspaceId = workspace.Id,
+        Logs = new[]
+        {
+            new LogSettingsArgs
+            {
+                CategoryGroup = "Audit",
+                Enabled = true,
+                RetentionPolicy = new RetentionPolicyArgs { Enabled = false, Days = 0 }
+            }
+        },
+        Metrics = new[]
+        {
+            new MetricSettingsArgs
+            {
+                Category = "AllMetrics",
+                Enabled = true,
+                RetentionPolicy = new RetentionPolicyArgs { Enabled = false, Days = 0 }
+            }
+        }
     });
 
     // Azure AD B2C Configuration Keys in App Configuration
@@ -438,6 +530,38 @@ return await Pulumi.Deployment.RunAsync(() =>
         }
     });
 
+    // Database Diagnostic Settings
+    var databaseDiagnostic = new DiagnosticSetting("databaseDiagnostic", new DiagnosticSettingArgs
+    {
+        Name = $"{databaseName}-diag",
+        ResourceUri = database.Id,
+        WorkspaceId = workspace.Id,
+        Logs = new[]
+        {
+            new LogSettingsArgs
+            {
+                CategoryGroup = "allLogs",
+                Enabled = true,
+                RetentionPolicy = new RetentionPolicyArgs { Enabled = false, Days = 0 }
+            },
+            new LogSettingsArgs
+            {
+                CategoryGroup = "audit",
+                Enabled = true,
+                RetentionPolicy = new RetentionPolicyArgs { Enabled = false, Days = 0 }
+            }
+        },
+        Metrics = new[]
+        {
+            new MetricSettingsArgs
+            {
+                Category = "AllMetrics",
+                Enabled = true,
+                RetentionPolicy = new RetentionPolicyArgs { Enabled = false, Days = 0 }
+            }
+        }
+    });
+
     // Firewall rule to allow Azure services or specified IP ranges
     // NOTE: 0.0.0.0 is a special rule that allows Azure services to access the server
     // For production environments, consider using private endpoints or restricting to known IP ranges
@@ -492,6 +616,32 @@ return await Pulumi.Deployment.RunAsync(() =>
         {
             { "Environment", environment },
             { "Project", "HotshotLogistics" }
+        }
+    });
+
+    // Diagnostic setting for Container Apps Environment
+    var managedEnvironmentDiagnostic = new DiagnosticSetting("managedEnvironmentDiagnostic", new DiagnosticSettingArgs
+    {
+        Name = $"{managedEnvironmentName}-diag",
+        ResourceUri = managedEnvironment.Id,
+        WorkspaceId = workspace.Id,
+        Logs = new[]
+        {
+            new LogSettingsArgs
+            {
+                CategoryGroup = "allLogs",
+                Enabled = true,
+                RetentionPolicy = new RetentionPolicyArgs { Enabled = false, Days = 0 }
+            }
+        },
+        Metrics = new[]
+        {
+            new MetricSettingsArgs
+            {
+                Category = "AllMetrics",
+                Enabled = true,
+                RetentionPolicy = new RetentionPolicyArgs { Enabled = false, Days = 0 }
+            }
         }
     });
 

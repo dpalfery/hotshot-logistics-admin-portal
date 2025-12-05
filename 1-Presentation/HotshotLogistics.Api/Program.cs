@@ -99,6 +99,9 @@ builder.Services.AddApplicationServices();
 builder.Services.AddMappingServices();
 builder.Services.AddCommunicationServices();
 
+// Add Application Insights
+builder.Services.AddApplicationInsightsTelemetry();
+
 // ============================================================
 // AUTHENTICATION CONFIGURATION
 // ============================================================

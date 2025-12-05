@@ -28,6 +28,9 @@ function generateEnvFile() {
   const finalClientId = process.env.NEXT_PUBLIC_AZURE_CLIENT_ID;
   const finalTenantId = process.env.NEXT_PUBLIC_AZURE_TENANT_ID;
 
+  // Application Insights
+  const appInsightsConnectionString = process.env.NEXT_PUBLIC_APPINSIGHTS_CONNECTION_STRING || '';
+
   const isProduction = process.env.NODE_ENV === 'production';
 
   const explicitApiBase = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
@@ -65,6 +68,9 @@ NEXT_PUBLIC_API_BASE_URL=${apiBaseUrl}
 # These values are automatically populated from your system environment variables
 NEXT_PUBLIC_AZURE_CLIENT_ID=${finalClientId}
 NEXT_PUBLIC_AZURE_TENANT_ID=${finalTenantId}
+
+# Application Insights
+NEXT_PUBLIC_APPINSIGHTS_CONNECTION_STRING=${appInsightsConnectionString}
 
 # Production Configuration
 NODE_ENV=${isProduction ? 'production' : 'development'}

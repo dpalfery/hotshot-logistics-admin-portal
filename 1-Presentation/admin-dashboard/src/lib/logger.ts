@@ -80,7 +80,14 @@ class Logger {
       console.error(`[ERROR] ${message}`, sanitized);
     }
     // In production, errors should be sent to a logging service
-    // TODO: Integrate with Azure Application Insights or similar
+    import('./appInsights').then(({ appInsights }) => {
+      if (appInsights) {
+        appInsights.trackException({ 
+          exception: new Error(message), 
+          properties: context ? this.sanitizeContext(context) : undefined 
+        });
+      }
+    });
   }
 
   /**
