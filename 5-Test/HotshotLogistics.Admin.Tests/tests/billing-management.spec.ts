@@ -316,6 +316,9 @@ await page.waitForSelector('table tbody tr', { timeout: 5000 });
       if (await viewButton.isVisible()) {
         await viewButton.click();
         await expect(page.getByText(/invoice.*details|view.*invoice/i)).toBeVisible();
+        // Close the modal
+        await page.getByRole('button', { name: 'Close' }).click();
+        await expect(page.getByRole('dialog')).not.toBeVisible();
       }
 
       // Test edit action if available

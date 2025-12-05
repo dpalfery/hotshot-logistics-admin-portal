@@ -210,20 +210,13 @@ class ApiService {
     });
   }
 
-  // Invoice API methods - Get overdue invoices for dashboard
+  // Invoice API methods
   async getInvoices(): Promise<PagedResult<Invoice>> {
-    // For the dashboard, we want overdue invoices
-    // The backend returns Invoice[] but we need to wrap it in PagedResult format
-    const overdueInvoices = await this.request<Invoice[]>('/billing/invoices/overdue');
+    return this.request<PagedResult<Invoice>>('/billing/invoices');
+  }
 
-    // Convert to PagedResult format to match the expected interface
-    return {
-      items: overdueInvoices,
-      totalCount: overdueInvoices.length,
-      pageNumber: 1,
-      pageSize: overdueInvoices.length,
-      totalPages: 1
-    };
+  async getOverdueInvoices(): Promise<Invoice[]> {
+    return this.request<Invoice[]>('/billing/invoices/overdue');
   }
 
   async getInvoiceById(id: string): Promise<Invoice> {

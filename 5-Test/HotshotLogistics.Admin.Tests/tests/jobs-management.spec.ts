@@ -20,14 +20,14 @@ test.describe('Jobs Management', () => {
       // Check table headers
       await expect(page.getByText('Job Details')).toBeVisible();
       await expect(page.getByText('Status')).toBeVisible();
-      await expect(page.getByText('Driver')).toBeVisible();
+      await expect(page.locator('th').filter({ hasText: 'Driver' })).toBeVisible();
       await expect(page.getByText('Amount')).toBeVisible();
       await expect(page.getByText('Actions')).toBeVisible();
     });
 
     test('should open job creation form when create button is clicked', async ({ page }) => {
       // Click create job button
-      await page.getByRole('button', { name: 'Create Job' }).click();
+      await page.locator('button').filter({ hasText: 'Create Job' }).first().click();
       
       // Check if modal opens
       await expect(page.getByText('Create New Job')).toBeVisible();
@@ -45,10 +45,11 @@ test.describe('Jobs Management', () => {
 
     test('should validate required fields in job creation form', async ({ page }) => {
       // Open create job form
-      await page.getByRole('button', { name: 'Create Job' }).click();
+      await page.locator('button').filter({ hasText: 'Create Job' }).first().click();
       
-      // Try to submit empty form
-      await page.getByRole('button', { name: 'Create Job' }).click();
+      // Try to submit empty form - click the one in the form (likely the second one or inside modal)
+      // Or more robustly, find the submit button inside the form/modal
+      await page.locator('div[role="dialog"] button').filter({ hasText: 'Create Job' }).click();
       
       // Check that form validation prevents submission
       // Note: This assumes HTML5 validation or custom validation
@@ -80,7 +81,7 @@ test.describe('Jobs Management', () => {
       });
 
       // Open create job form
-      await page.getByRole('button', { name: 'Create Job' }).click();
+      await page.locator('button').filter({ hasText: 'Create Job' }).first().click();
       
       // Fill out the form
       await page.getByLabel('Title').fill('Test Delivery');
@@ -93,7 +94,7 @@ test.describe('Jobs Management', () => {
       await page.getByLabel('Special Instructions').fill('Handle with care');
       
       // Submit the form
-      await page.getByRole('button', { name: 'Create Job' }).click();
+      await page.locator('div[role="dialog"] button').filter({ hasText: 'Create Job' }).click();
       
       // Verify form closes (modal should disappear)
       await expect(page.getByText('Create New Job')).not.toBeVisible();
@@ -101,10 +102,10 @@ test.describe('Jobs Management', () => {
 
     test('should cancel job creation and close form', async ({ page }) => {
       // Open create job form
-      await page.getByRole('button', { name: 'Create Job' }).click();
+      await page.locator('button').filter({ hasText: 'Create Job' }).first().click();
       
       // Click cancel button
-      await page.getByRole('button', { name: 'Cancel' }).click();
+      await page.getByRole('button', { name: 'Cancel' }).click({ force: true });
       
       // Verify form closes
       await expect(page.getByText('Create New Job')).not.toBeVisible();
@@ -147,8 +148,8 @@ test.describe('Jobs Management', () => {
       await page.reload();
 
       // Check that different statuses have different styling
-      const pendingStatus = page.locator('text=Pending').first();
-      const inProgressStatus = page.locator('text=InProgress').first();
+      const pendingStatus = page.locator('span').filter({ hasText: 'Pending' }).first();
+      const inProgressStatus = page.locator('span').filter({ hasText: 'InProgress' }).first();
       
       await expect(pendingStatus).toBeVisible();
       await expect(inProgressStatus).toBeVisible();

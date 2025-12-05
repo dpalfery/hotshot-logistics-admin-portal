@@ -54,8 +54,9 @@ async function setupAuthentication(config: FullConfig): Promise<void> {
   console.log('\n🔐 Auth mode: REAL (using test account)');
   console.log('   Setting up authenticated session...');
 
+  const baseURL = config.projects[0]?.use?.baseURL || 'http://localhost:3000';
   const browser = await chromium.launch();
-  const context = await browser.newContext();
+  const context = await browser.newContext({ baseURL });
   const page = await context.newPage();
   const authHelper = new AuthHelper(page, context);
 
