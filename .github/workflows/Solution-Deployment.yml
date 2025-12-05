@@ -190,17 +190,19 @@ jobs:
             # Use the stack from workflow inputs
             STACK="${{ github.event.inputs.stack || 'dev' }}"
             pulumi stack select $STACK --non-interactive 2>/dev/null || true
+            
             API_URL=$(pulumi stack output containerAppFullUrl 2>/dev/null || echo "")
             
             if [ -n "$API_URL" ]; then
               echo "✅ Got API URL from Pulumi: $API_URL"
               echo "api_url=$API_URL" >> $GITHUB_OUTPUT
             else
-              echo "⚠️ Could not get API URL from Pulumi"
-              echo "api_url=" >> $GITHUB_OUTPUT
+               echo "⚠️ Could not get API URL from Pulumi"
+               echo "api_url=" >> $GITHUB_OUTPUT
             fi
+            
           else
-            echo "⚠️ PULUMI_ACCESS_TOKEN not set, cannot fetch API URL"
+            echo "⚠️ PULUMI_ACCESS_TOKEN not set, cannot fetch Pulumi outputs"
             echo "api_url=" >> $GITHUB_OUTPUT
           fi
 
@@ -228,11 +230,13 @@ jobs:
         env:
           NODE_ENV: production
           NEXT_PUBLIC_API_URL: ${{ steps.get-api-url.outputs.api_url }}
+          NEXT_PUBLIC_APPINSIGHTS_CONNECTION_STRING: ${{ secrets.APPINSIGHTS_CONNECTION_STRING }}
           NEXT_PUBLIC_AZURE_CLIENT_ID: ${{ secrets.AZURE_AD_B2C_CLIENT_ID }}
           NEXT_PUBLIC_AZURE_TENANT_ID: ${{ secrets.AZURE_AD_B2C_TENANT_ID }}
         run: |
           echo "Building Next.js app with:"
           echo "  - API URL: ${NEXT_PUBLIC_API_URL:-'not set'}"
+          echo "  - App Insights: ${NEXT_PUBLIC_APPINSIGHTS_CONNECTION_STRING:0:20}... (masked)"
           echo "  - Azure Client ID: ${NEXT_PUBLIC_AZURE_CLIENT_ID:0:8}... (masked)"
           echo "  - Azure Tenant ID: ${NEXT_PUBLIC_AZURE_TENANT_ID:0:8}... (masked)"
           npm run build

@@ -17,8 +17,7 @@ using Pulumi.AzureNative.KeyVault.Inputs;
 using Pulumi.AzureNative.AppConfiguration;
 using Pulumi.AzureNative.ManagedIdentity;
 using Pulumi.AzureNative.Authorization;
-using Pulumi.AzureNative.Insights;
-using Pulumi.AzureNative.Insights.Inputs;
+using Pulumi.AzureNative.Monitor;
 using System.Linq;
 
 return await Pulumi.Deployment.RunAsync(() =>
@@ -269,26 +268,26 @@ return await Pulumi.Deployment.RunAsync(() =>
         WorkspaceId = workspace.Id,
         Logs = new[]
         {
-            new LogSettingsArgs
+            new Pulumi.AzureNative.Monitor.Inputs.LogSettingsArgs
             {
                 CategoryGroup = "allLogs",
                 Enabled = true,
-                RetentionPolicy = new RetentionPolicyArgs { Enabled = false, Days = 0 }
+                RetentionPolicy = new Pulumi.AzureNative.Monitor.Inputs.RetentionPolicyArgs { Enabled = false, Days = 0 }
             },
-            new LogSettingsArgs
+            new Pulumi.AzureNative.Monitor.Inputs.LogSettingsArgs
             {
                 CategoryGroup = "audit",
                 Enabled = true,
-                RetentionPolicy = new RetentionPolicyArgs { Enabled = false, Days = 0 }
+                RetentionPolicy = new Pulumi.AzureNative.Monitor.Inputs.RetentionPolicyArgs { Enabled = false, Days = 0 }
             }
         },
         Metrics = new[]
         {
-            new MetricSettingsArgs
+            new Pulumi.AzureNative.Monitor.Inputs.MetricSettingsArgs
             {
                 Category = "AllMetrics",
                 Enabled = true,
-                RetentionPolicy = new RetentionPolicyArgs { Enabled = false, Days = 0 }
+                RetentionPolicy = new Pulumi.AzureNative.Monitor.Inputs.RetentionPolicyArgs { Enabled = false, Days = 0 }
             }
         }
     });
@@ -364,26 +363,26 @@ return await Pulumi.Deployment.RunAsync(() =>
         WorkspaceId = workspace.Id,
         Logs = new[]
         {
-            new LogSettingsArgs
+            new Pulumi.AzureNative.Monitor.Inputs.LogSettingsArgs
             {
                 CategoryGroup = "audit",
                 Enabled = true,
-                RetentionPolicy = new RetentionPolicyArgs { Enabled = false, Days = 0 }
+                RetentionPolicy = new Pulumi.AzureNative.Monitor.Inputs.RetentionPolicyArgs { Enabled = false, Days = 0 }
             },
-            new LogSettingsArgs
+            new Pulumi.AzureNative.Monitor.Inputs.LogSettingsArgs
             {
                 CategoryGroup = "allLogs",
                 Enabled = true,
-                RetentionPolicy = new RetentionPolicyArgs { Enabled = false, Days = 0 }
+                RetentionPolicy = new Pulumi.AzureNative.Monitor.Inputs.RetentionPolicyArgs { Enabled = false, Days = 0 }
             }
         },
         Metrics = new[]
         {
-            new MetricSettingsArgs
+            new Pulumi.AzureNative.Monitor.Inputs.MetricSettingsArgs
             {
                 Category = "AllMetrics",
                 Enabled = true,
-                RetentionPolicy = new RetentionPolicyArgs { Enabled = false, Days = 0 }
+                RetentionPolicy = new Pulumi.AzureNative.Monitor.Inputs.RetentionPolicyArgs { Enabled = false, Days = 0 }
             }
         }
     });
@@ -432,20 +431,20 @@ return await Pulumi.Deployment.RunAsync(() =>
         WorkspaceId = workspace.Id,
         Logs = new[]
         {
-            new LogSettingsArgs
+            new Pulumi.AzureNative.Monitor.Inputs.LogSettingsArgs
             {
                 CategoryGroup = "Audit",
                 Enabled = true,
-                RetentionPolicy = new RetentionPolicyArgs { Enabled = false, Days = 0 }
+                RetentionPolicy = new Pulumi.AzureNative.Monitor.Inputs.RetentionPolicyArgs { Enabled = false, Days = 0 }
             }
         },
         Metrics = new[]
         {
-            new MetricSettingsArgs
+            new Pulumi.AzureNative.Monitor.Inputs.MetricSettingsArgs
             {
                 Category = "AllMetrics",
                 Enabled = true,
-                RetentionPolicy = new RetentionPolicyArgs { Enabled = false, Days = 0 }
+                RetentionPolicy = new Pulumi.AzureNative.Monitor.Inputs.RetentionPolicyArgs { Enabled = false, Days = 0 }
             }
         }
     });
@@ -538,26 +537,26 @@ return await Pulumi.Deployment.RunAsync(() =>
         WorkspaceId = workspace.Id,
         Logs = new[]
         {
-            new LogSettingsArgs
+            new Pulumi.AzureNative.Monitor.Inputs.LogSettingsArgs
             {
                 CategoryGroup = "allLogs",
                 Enabled = true,
-                RetentionPolicy = new RetentionPolicyArgs { Enabled = false, Days = 0 }
+                RetentionPolicy = new Pulumi.AzureNative.Monitor.Inputs.RetentionPolicyArgs { Enabled = false, Days = 0 }
             },
-            new LogSettingsArgs
+            new Pulumi.AzureNative.Monitor.Inputs.LogSettingsArgs
             {
                 CategoryGroup = "audit",
                 Enabled = true,
-                RetentionPolicy = new RetentionPolicyArgs { Enabled = false, Days = 0 }
+                RetentionPolicy = new Pulumi.AzureNative.Monitor.Inputs.RetentionPolicyArgs { Enabled = false, Days = 0 }
             }
         },
         Metrics = new[]
         {
-            new MetricSettingsArgs
+            new Pulumi.AzureNative.Monitor.Inputs.MetricSettingsArgs
             {
                 Category = "AllMetrics",
                 Enabled = true,
-                RetentionPolicy = new RetentionPolicyArgs { Enabled = false, Days = 0 }
+                RetentionPolicy = new Pulumi.AzureNative.Monitor.Inputs.RetentionPolicyArgs { Enabled = false, Days = 0 }
             }
         }
     });
@@ -627,20 +626,20 @@ return await Pulumi.Deployment.RunAsync(() =>
         WorkspaceId = workspace.Id,
         Logs = new[]
         {
-            new LogSettingsArgs
+            new Pulumi.AzureNative.Monitor.Inputs.LogSettingsArgs
             {
                 CategoryGroup = "allLogs",
                 Enabled = true,
-                RetentionPolicy = new RetentionPolicyArgs { Enabled = false, Days = 0 }
+                RetentionPolicy = new Pulumi.AzureNative.Monitor.Inputs.RetentionPolicyArgs { Enabled = false, Days = 0 }
             }
         },
         Metrics = new[]
         {
-            new MetricSettingsArgs
+            new Pulumi.AzureNative.Monitor.Inputs.MetricSettingsArgs
             {
                 Category = "AllMetrics",
                 Enabled = true,
-                RetentionPolicy = new RetentionPolicyArgs { Enabled = false, Days = 0 }
+                RetentionPolicy = new Pulumi.AzureNative.Monitor.Inputs.RetentionPolicyArgs { Enabled = false, Days = 0 }
             }
         }
     });
