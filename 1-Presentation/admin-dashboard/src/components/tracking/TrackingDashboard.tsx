@@ -1,11 +1,22 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useQuery } from '@tanstack/react-query';
 import { apiService } from '@/services/api';
 import { signalRService } from '@/services/signalr';
 import { LocationUpdate, NotificationMessage, JobStatus } from '@/types';
 import { MapIcon, BellIcon } from '@heroicons/react/24/outline';
+
+// Dynamically import the Map component to avoid SSR issues with Leaflet
+const Map = dynamic(() => import('./Map').then(mod => ({ default: mod.Map })), {
+  ssr: false,
+  loading: () => (
+    <div className="bg-gray-100 h-64 rounded-lg flex items-center justify-center">
+      <p className="text-gray-500">Loading map...</p>
+    </div>
+  ),
+});
 
 export function TrackingDashboard() {
   const [locationUpdates, setLocationUpdates] = useState<LocationUpdate[]>([]);
@@ -55,14 +66,17 @@ export function TrackingDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Map Placeholder */}
+        {/* Interactive Map with OpenStreetMap */}
         <div className="bg-white p-6 rounded-lg shadow">
           <div className="flex items-center mb-4">
             <MapIcon className="h-6 w-6 text-gray-400 mr-2" />
             <h3 className="text-lg font-medium text-gray-900">Live Map</h3>
           </div>
-          <div className="bg-gray-100 h-64 rounded-lg flex items-center justify-center">
-            <p className="text-gray-500">Map integration would be implemented here</p>
+          <div className="h-[400px] rounded-lg overflow-hidden">
+            <Map 
+              activeJobs={activeJobs} 
+              locationUpdates={locationUpdates}
+            />
           </div>
         </div>
 
