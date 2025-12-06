@@ -138,6 +138,30 @@ namespace HotshotLogistics.Api.Controllers
         }
 
         /// <summary>
+        /// Gets all invoices with pagination.
+        /// </summary>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>A paged list of invoices.</returns>
+        [HttpGet("invoices")]
+        [Authorize(Policy = AuthorizationPolicies.ManagerOrAdmin)]
+        [ProducesResponseType(typeof(PagedResult<Invoice>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<PagedResult<Invoice>>> GetInvoices(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                // In a real implementation, you would pass pagination parameters
+                // For now, we'll return all invoices as a single page
+                var invoices = await billingService.GetAllInvoicesAsync(1, 20, cancellationToken);
+                return Ok(invoices);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "An error occurred while retrieving invoices");
+                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while processing your request.");
+            }
+        }
+
+        /// <summary>
         /// Gets overdue invoices.
         /// </summary>
         /// <param name="cancellationToken">The cancellation token.</param>

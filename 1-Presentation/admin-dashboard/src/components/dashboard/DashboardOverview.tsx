@@ -24,6 +24,12 @@ export function DashboardOverview() {
     retry: false,
   });
 
+  const { data: overdueInvoicesData, isLoading: overdueLoading } = useQuery({
+    queryKey: ['overdueInvoices'],
+    queryFn: () => apiService.getOverdueInvoices(),
+    retry: false,
+  });
+
   const stats = {
     totalJobs: jobs?.totalCount || 0,
     // Active jobs are: Pending (0), Assigned (1), EnRoute (2) - but NOT Received (3)
@@ -32,11 +38,11 @@ export function DashboardOverview() {
     totalDrivers: drivers?.length || 0,
     activeDrivers: drivers?.filter(driver => driver.isActive).length || 0,
     totalInvoices: invoices?.totalCount || 0,
-    // Since we're getting overdue invoices directly from the API, just count them
-    overdueInvoices: invoices?.items?.length || 0,
+    // Use the dedicated overdue invoices endpoint count
+    overdueInvoices: overdueInvoicesData?.length || 0,
   };
 
-  if (jobsLoading || driversLoading || invoicesLoading) {
+  if (jobsLoading || driversLoading || invoicesLoading || overdueLoading) {
     return (
       <div className="space-y-6">
         <div className="animate-pulse">

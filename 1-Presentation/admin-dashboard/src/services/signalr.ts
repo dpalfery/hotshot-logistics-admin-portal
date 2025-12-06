@@ -3,11 +3,34 @@ import { LocationUpdate, NotificationMessage } from '@/types';
 
 const SIGNALR_URL = process.env.NEXT_PUBLIC_SIGNALR_URL || 'http://localhost:7071/realtime';
 
+// Interface for test mocking
+interface MockSignalRService {
+  connect: () => Promise<void>;
+  disconnect: () => void;
+  onLocationUpdate: (callback: (update: LocationUpdate) => void) => void;
+  onNotification: (callback: (notification: NotificationMessage) => void) => void;
+  onJobStatusUpdate: (callback: (jobId: string, status: string) => void) => void;
+  onDriverStatusUpdate: (callback: (driverId: number, isAvailable: boolean) => void) => void;
+}
+
+declare global {
+  interface Window {
+    mockSignalRService?: MockSignalRService;
+  }
+}
+
 class SignalRService {
   private connection: HubConnection | null = null;
   private isConnected = false;
 
   async connect(): Promise<void> {
+    // Check for mock service in test environment
+    if (typeof window !== 'undefined' && window.mockSignalRService) {
+      await window.mockSignalRService.connect();
+      this.isConnected = true;
+      return;
+    }
+
     if (this.connection) {
       return;
     }
@@ -29,6 +52,12 @@ class SignalRService {
   }
 
   async disconnect(): Promise<void> {
+    if (typeof window !== 'undefined' && window.mockSignalRService) {
+      window.mockSignalRService.disconnect();
+      this.isConnected = false;
+      return;
+    }
+
     if (this.connection) {
       await this.connection.stop();
       this.isConnected = false;
@@ -38,6 +67,11 @@ class SignalRService {
 
   // Location tracking methods
   onLocationUpdate(callback: (update: LocationUpdate) => void): void {
+    if (typeof window !== 'undefined' && window.mockSignalRService) {
+      window.mockSignalRService.onLocationUpdate(callback);
+      return;
+    }
+
     if (this.connection) {
       this.connection.on('LocationUpdate', callback);
     }
@@ -51,6 +85,11 @@ class SignalRService {
 
   // Job status updates
   onJobStatusUpdate(callback: (jobId: string, status: string) => void): void {
+    if (typeof window !== 'undefined' && window.mockSignalRService && window.mockSignalRService.onJobStatusUpdate) {
+      window.mockSignalRService.onJobStatusUpdate(callback);
+      return;
+    }
+
     if (this.connection) {
       this.connection.on('JobStatusUpdate', callback);
     }
@@ -64,6 +103,11 @@ class SignalRService {
 
   // Notifications
   onNotification(callback: (notification: NotificationMessage) => void): void {
+    if (typeof window !== 'undefined' && window.mockSignalRService) {
+      window.mockSignalRService.onNotification(callback);
+      return;
+    }
+
     if (this.connection) {
       this.connection.on('Notification', callback);
     }
@@ -77,6 +121,11 @@ class SignalRService {
 
   // Driver availability updates
   onDriverStatusUpdate(callback: (driverId: number, isAvailable: boolean) => void): void {
+    if (typeof window !== 'undefined' && window.mockSignalRService && window.mockSignalRService.onDriverStatusUpdate) {
+      window.mockSignalRService.onDriverStatusUpdate(callback);
+      return;
+    }
+
     if (this.connection) {
       this.connection.on('DriverStatusUpdate', callback);
     }

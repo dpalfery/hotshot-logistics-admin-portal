@@ -195,12 +195,14 @@ test.describe('Dashboard Overview', () => {
 
       // Navigate to jobs and check active state
       await page.click('nav a[href="/jobs"]:visible');
+      await expect(page).toHaveURL('/jobs');
       const jobsLink = page.locator('nav a[href="/jobs"]:visible').first();
       // Updated expectation to match current implementation (text-gray-600)
       await expect(jobsLink).toHaveClass(/text-gray-600|text-gray-900/);
 
       // Navigate back to dashboard
       await page.goto('/');
+      await expect(page).toHaveURL('/');
     });
 
     test('should display user profile information', async ({ page }) => {
@@ -450,9 +452,9 @@ test.describe('Dashboard Overview', () => {
         });
       });
 
-      // Mock invoices API with overdue invoices - matches apiService.getInvoices() endpoint
+      // Mock invoices API with overdue invoices - matches apiService.getOverdueInvoices()
       await page.route('**/api/billing/invoices/overdue*', async route => {
-        console.log('Intercepted invoices API call:', route.request().url());
+        console.log('Intercepted overdue invoices API call:', route.request().url());
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
@@ -465,18 +467,38 @@ test.describe('Dashboard Overview', () => {
                 status: 'Overdue'
               },
               {
-                id: 'inv-2',
-                dueDate: '2024-12-15T00:00:00Z', // Future date
-                balanceDue: 2500.00,
-                status: 'Pending'
-              },
-              {
                 id: 'inv-3',
                 dueDate: '2024-11-01T00:00:00Z', // Past date
                 balanceDue: 800.00,
                 status: 'Overdue'
               }
             ])
+        });
+      });
+
+      // Mock invoices API for all invoices - matches apiService.getInvoices()
+      // We must exclude overdue from this match to avoid shadowing
+      await page.route('**/api/billing/invoices', async route => {
+        // Double check it's not the overdue endpoint
+        if (route.request().url().includes('/overdue')) {
+            return route.continue();
+        }
+
+        console.log('Intercepted invoices API call:', route.request().url());
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+              items: [
+                { id: 'inv-1', status: 'Overdue' },
+                { id: 'inv-2', status: 'Pending' },
+                { id: 'inv-3', status: 'Overdue' }
+              ],
+              totalCount: 3,
+              pageNumber: 1,
+              pageSize: 20,
+              totalPages: 1
+          })
         });
       });
 
@@ -540,7 +562,7 @@ test.describe('Dashboard Overview', () => {
       expect(parseInt(activeJobsValue || '0')).toBe(3); 
       expect(parseInt(activeDriversValue || '0')).toBe(2); // 2 active drivers
       // The component counts all items returned by the overdue endpoint
-      expect(parseInt(overdueInvoicesValue || '0')).toBe(3); // 3 items returned by mock
+      expect(parseInt(overdueInvoicesValue || '0')).toBe(2); // 2 items returned by mock
     });
   });
 

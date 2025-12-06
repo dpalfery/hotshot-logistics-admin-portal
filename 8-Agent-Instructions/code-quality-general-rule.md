@@ -11,6 +11,7 @@ rule: |
 - Resolve all warnings before merging or deploying.
 - Treat warnings as errors in CI/CD to prevent technical debt.
 - Never Ever hard code mock testing data in production code.
+- NO PLACEHOLDER CODE: We are enterprise developers. Never create "not implemented" stubs, placeholder returns, or partial implementations. All code must be fully working, tested, and ready for deployment before it is written to the file.
 - Only one object, class, interface, enum per file. never add two objects to a file, yuck!
 
 ### Configuration & Monitoring

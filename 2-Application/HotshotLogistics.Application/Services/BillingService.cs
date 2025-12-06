@@ -307,6 +307,12 @@ namespace HotshotLogistics.Application.Services
         }
 
         /// <inheritdoc/>
+        public Task<PagedResult<Invoice>> GetAllInvoicesAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default)
+        {
+            return invoiceRepository.GetPagedAsync(new InvoiceFilter { PageNumber = pageNumber, PageSize = pageSize });
+        }
+
+        /// <inheritdoc/>
         public async Task<Invoice?> GetInvoiceByIdAsync(string invoiceId, CancellationToken cancellationToken = default)
         {
             logger.LogInformation("Retrieving invoice: {InvoiceId}", invoiceId);

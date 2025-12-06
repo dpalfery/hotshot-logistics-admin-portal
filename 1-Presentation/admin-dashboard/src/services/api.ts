@@ -1,5 +1,5 @@
 import { msalInstance } from '@/lib/providers';
-import { loginRequest, apiTokenRequest } from '@/config/auth';
+import { apiTokenRequest } from '@/config/auth';
 import { Job, Driver, Invoice, Customer, PagedResult, JobFilter, PaginationParameters, InvoiceSummaryMetrics, InvoiceAgingBuckets, JobStatusSummary } from '@/types';
 import { logger } from '@/lib/logger';
 
@@ -224,7 +224,7 @@ class ApiService {
   }
 
   async createInvoice(invoice: Partial<Invoice>): Promise<Invoice> {
-    return this.request<Invoice>('/billing/invoices', {
+    return this.request<Invoice>('/billing/invoices/generate/' + invoice.jobId, {
       method: 'POST',
       body: JSON.stringify(invoice),
     });

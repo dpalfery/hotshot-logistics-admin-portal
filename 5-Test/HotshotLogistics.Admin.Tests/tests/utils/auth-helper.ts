@@ -67,33 +67,35 @@ export class AuthHelper {
     }
 
     // Wait for redirect to Azure AD login page
-    await this.page.waitForURL(/login\.microsoftonline\.com/, { timeout: 10000 });
+    await this.page.waitForURL(/login\.microsoftonline\.com/, { timeout: 30000 });
 
     // Fill in email
-    await this.page.waitForSelector('input[type="email"]', { timeout: 10000 });
+    await this.page.waitForSelector('input[type="email"]', { timeout: 30000 });
     await this.page.fill('input[type="email"]', credentials.email);
     await this.page.click('input[type="submit"]');
 
     // Wait for password page (Azure AD does email first, then password)
-    await this.page.waitForSelector('input[type="password"]', { timeout: 10000 });
+    await this.page.waitForSelector('input[type="password"]', { timeout: 30000 });
     await this.page.fill('input[type="password"]', credentials.password);
     await this.page.click('input[type="submit"]');
 
     // Handle "Stay signed in?" prompt if it appears
     try {
-      const staySignedInButton = this.page.locator('input[value="No"]');
-      if (await staySignedInButton.isVisible({ timeout: 3000 })) {
-        await staySignedInButton.click();
+      // Wait a bit to see if prompt appears
+      await this.page.waitForTimeout(2000);
+      const staySignedInButton = this.page.getByRole('button', { name: /Yes|No/i });
+      if (await staySignedInButton.first().isVisible({ timeout: 5000 })) {
+        await staySignedInButton.filter({ hasText: 'No' }).click();
       }
     } catch {
       // Prompt didn't appear, continue
     }
 
     // Wait for redirect back to app
-    await this.page.waitForURL(/localhost:3000/, { timeout: 15000 });
+    await this.page.waitForURL(/localhost:3000/, { timeout: 60000 });
 
     // Verify authentication succeeded by checking for authenticated content
-    await this.page.waitForSelector('[data-testid="authenticated-content"], nav, h1', { timeout: 10000 });
+    await this.page.waitForSelector('[data-testid="authenticated-content"], nav, h1', { timeout: 30000 });
   }
 
   /**

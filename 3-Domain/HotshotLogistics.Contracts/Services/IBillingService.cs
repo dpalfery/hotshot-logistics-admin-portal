@@ -51,6 +51,15 @@ public interface IBillingService
     Task<IEnumerable<Invoice>> GetCustomerInvoicesAsync(string customerId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Gets all invoices with pagination.
+    /// </summary>
+    /// <param name="pageNumber">The page number.</param>
+    /// <param name="pageSize">The page size.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A paged result of invoices.</returns>
+    Task<PagedResult<Invoice>> GetAllInvoicesAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Gets overdue invoices.
     /// </summary>
     /// <param name="cancellationToken">The cancellation token.</param>
