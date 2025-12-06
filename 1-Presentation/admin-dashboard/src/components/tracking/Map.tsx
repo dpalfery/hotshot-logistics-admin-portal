@@ -23,7 +23,7 @@ interface MapProps {
 export function Map({ activeJobs, locationUpdates, className = '' }: MapProps) {
   const mapRef = useRef<L.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const markersRef = useRef<globalThis.Map<string, L.Marker>>(new globalThis.Map());
+  const markersRef = useRef<Map<string, L.Marker | L.Polyline>>(new Map());
 
   // Initialize map
   useEffect(() => {
@@ -129,7 +129,7 @@ export function Map({ activeJobs, locationUpdates, className = '' }: MapProps) {
           dashArray: '5, 10'
         }).addTo(map);
 
-        markers.set(`${job.id}-route`, routeLine as unknown as L.Marker);
+        markers.set(`${job.id}-route`, routeLine);
       }
     });
 

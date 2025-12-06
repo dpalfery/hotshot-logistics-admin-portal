@@ -32,12 +32,12 @@ test.describe('Tracking Dashboard', () => {
       // Check live map section
       await expect(page.getByRole('heading', { name: 'Live Map' })).toBeVisible();
       
-      // Check for Leaflet map controls (zoom in/out buttons)
+      // Wait for Leaflet map to load by checking for zoom controls
       const zoomInButton = page.getByRole('button', { name: 'Zoom in' });
       const zoomOutButton = page.getByRole('button', { name: 'Zoom out' });
       
-      // Wait for map to load
-      await page.waitForTimeout(1000);
+      // Use proper waiting instead of fixed timeout
+      await page.waitForSelector('button:has-text("Zoom in")', { timeout: 5000 }).catch(() => {});
       
       if (await zoomInButton.isVisible()) {
         await expect(zoomInButton).toBeVisible();
