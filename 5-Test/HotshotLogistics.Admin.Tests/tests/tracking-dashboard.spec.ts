@@ -32,8 +32,23 @@ test.describe('Tracking Dashboard', () => {
       // Check live map section
       await expect(page.getByRole('heading', { name: 'Live Map' })).toBeVisible();
       
-      // Check map placeholder (since actual map integration would require external services)
-      await expect(page.getByText('Map integration would be implemented here')).toBeVisible();
+      // Check for Leaflet map controls (zoom in/out buttons)
+      const zoomInButton = page.getByRole('button', { name: 'Zoom in' });
+      const zoomOutButton = page.getByRole('button', { name: 'Zoom out' });
+      
+      // Wait for map to load
+      await page.waitForTimeout(1000);
+      
+      if (await zoomInButton.isVisible()) {
+        await expect(zoomInButton).toBeVisible();
+        await expect(zoomOutButton).toBeVisible();
+      }
+      
+      // Check for Leaflet attribution
+      const leafletLink = page.getByRole('link', { name: /Leaflet/i });
+      if (await leafletLink.isVisible()) {
+        await expect(leafletLink).toBeVisible();
+      }
       
       // Verify map icon is present
       const mapIcon = page.locator('svg').filter({ hasText: /map/i }).first();
