@@ -2,10 +2,18 @@
 
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
+import { useMsal } from '@azure/msal-react';
 import { apiService } from '@/services/api';
 import JobStatusCards from './JobStatusCards';
 
 export function DashboardOverview() {
+  const { instance } = useMsal();
+  const activeAccount = instance.getActiveAccount();
+  const userName = activeAccount?.name || 'User';
+  const userEmail = activeAccount?.username || '';
+  const userRoles = (activeAccount?.idTokenClaims as any)?.roles || [];
+  const userRole = userRoles.length > 0 ? userRoles[0] : 'User';
+
   const { data: jobs, isLoading: jobsLoading } = useQuery({
     queryKey: ['jobs'],
     queryFn: () => apiService.getJobs(),
@@ -89,9 +97,9 @@ export function DashboardOverview() {
               </div>
             </div>
             <div className="hidden sm:ml-4 sm:flex sm:items-center">
-              <div className="text-sm text-gray-700">
-                <span className="font-medium">Admin User</span>
-                <span className="text-gray-500 ml-2">admin@hotshotlogistics.com</span>
+              <div className="text-sm text-gray-700 flex flex-col items-end">
+                <span className="font-medium">{userName} <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full ml-1">{userRole}</span></span>
+                <span className="text-gray-500 text-xs">{userEmail}</span>
               </div>
             </div>
           </div>
@@ -207,15 +215,15 @@ export function DashboardOverview() {
               <div className="px-4 py-5 sm:p-6">
                 <h3 className="text-lg leading-6 font-medium text-gray-900">Quick Actions</h3>
                 <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
-                  <button className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                  <Link href="/jobs?action=create" className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
                     Create New Job
-                  </button>
-                  <button className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                  </Link>
+                  <Link href="/drivers" className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                     Add Driver
-                  </button>
-                  <button className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                  </Link>
+                  <Link href="/billing" className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                     Generate Invoice
-                  </button>
+                  </Link>
                 </div>
               </div>
             </div>

@@ -1,6 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
 import * as path from 'path';
-import { AuthHelper } from './tests/utils/auth-helper';
 
 const AUTH_STATE_PATH = path.join(__dirname, 'tests', '.auth-state.json');
 
@@ -34,7 +33,7 @@ export default defineConfig({
     baseURL: 'http://localhost:3000',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on-first-retry',
+    trace: 'on',
     /* Action timeout */
     actionTimeout: 15_000,
   },
@@ -51,7 +50,7 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         // Use saved auth state from global setup
-        storageState: AuthHelper.isRealAuthEnabled() ? AUTH_STATE_PATH : undefined,
+        storageState: AUTH_STATE_PATH,
       },
     },
     {
@@ -59,15 +58,16 @@ export default defineConfig({
       use: {
         ...devices['Desktop Firefox'],
         // Use saved auth state from global setup
-        storageState: AuthHelper.isRealAuthEnabled() ? AUTH_STATE_PATH : undefined,
+        storageState: AUTH_STATE_PATH,
       },
     },
     {
       name: 'webkit',
       use: {
         ...devices['Desktop Safari'],
-        // Use saved auth state from global setup
-        storageState: AuthHelper.isRealAuthEnabled() ? AUTH_STATE_PATH : undefined,
+        // WebKit: storageState doesn't reliably restore localStorage
+        // We use a test fixture instead (see tests/fixtures/webkit-auth.ts)
+        storageState: AUTH_STATE_PATH,
       },
     },
 
@@ -94,7 +94,7 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: `npx cross-env NEXT_PUBLIC_AZURE_CLIENT_ID=${process.env.NEXT_PUBLIC_AZURE_CLIENT_ID || 'not-set'} NEXT_PUBLIC_AZURE_TENANT_ID=${process.env.NEXT_PUBLIC_AZURE_TENANT_ID || 'not-set'} npx next dev`,
+    command: `npx cross-env NEXT_PUBLIC_MSAL_CACHE_LOCATION=localStorage NEXT_PUBLIC_AZURE_CLIENT_ID=${process.env.NEXT_PUBLIC_AZURE_CLIENT_ID || 'not-set'} NEXT_PUBLIC_AZURE_TENANT_ID=${process.env.NEXT_PUBLIC_AZURE_TENANT_ID || 'not-set'} npx next dev --webpack`,
     cwd: '../../1-Presentation/admin-dashboard',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,

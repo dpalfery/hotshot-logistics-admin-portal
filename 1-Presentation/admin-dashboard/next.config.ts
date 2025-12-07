@@ -19,19 +19,9 @@ const nextConfig: NextConfig = {
     scrollRestoration: true,
   },
 
-  // Webpack configuration for production
-  webpack: (config, { isServer }) => {
-    if (!isServer) {
-      // Client-side webpack config
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false,
-        net: false,
-        tls: false,
-      };
-    }
-    return config;
-  },
+  // Silence Next.js 16 Turbopack/webpack warning by explicitly providing an empty Turbopack config
+  // (we no longer customize webpack here)
+  turbopack: {},
 };
 
 export default nextConfig;

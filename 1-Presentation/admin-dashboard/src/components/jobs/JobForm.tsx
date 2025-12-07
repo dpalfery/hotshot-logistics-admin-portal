@@ -79,7 +79,7 @@ export function JobForm({ job, onSubmit, onCancel, isLoading }: JobFormProps) {
                   required
                   value={formData.title}
                   onChange={(e) => handleChange('title', e.target.value)}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                 />
               </div>
 
@@ -91,7 +91,7 @@ export function JobForm({ job, onSubmit, onCancel, isLoading }: JobFormProps) {
                   required
                   value={formData.pickupAddress}
                   onChange={(e) => handleChange('pickupAddress', e.target.value)}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                 />
               </div>
 
@@ -103,7 +103,7 @@ export function JobForm({ job, onSubmit, onCancel, isLoading }: JobFormProps) {
                   required
                   value={formData.dropoffAddress}
                   onChange={(e) => handleChange('dropoffAddress', e.target.value)}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                 />
               </div>
 
@@ -117,7 +117,7 @@ export function JobForm({ job, onSubmit, onCancel, isLoading }: JobFormProps) {
                     required
                     value={formData.amount}
                     onChange={(e) => handleChange('amount', parseFloat(e.target.value))}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                   />
                 </div>
 
@@ -127,7 +127,7 @@ export function JobForm({ job, onSubmit, onCancel, isLoading }: JobFormProps) {
                     id="priority"
                     value={formData.priority}
                     onChange={(e) => handleChange('priority', e.target.value as JobPriority)}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                   >
                     <option value="Low">Low</option>
                     <option value="Normal">Normal</option>
@@ -145,7 +145,7 @@ export function JobForm({ job, onSubmit, onCancel, isLoading }: JobFormProps) {
                   required
                   value={formData.scheduledPickupTime}
                   onChange={(e) => handleChange('scheduledPickupTime', e.target.value)}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                 />
               </div>
 
@@ -157,7 +157,7 @@ export function JobForm({ job, onSubmit, onCancel, isLoading }: JobFormProps) {
                   required
                   value={formData.customerId}
                   onChange={(e) => handleChange('customerId', e.target.value)}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                 />
               </div>
 
@@ -168,7 +168,7 @@ export function JobForm({ job, onSubmit, onCancel, isLoading }: JobFormProps) {
                   rows={3}
                   value={formData.specialInstructions}
                   onChange={(e) => handleChange('specialInstructions', e.target.value)}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                 />
               </div>
             </form>

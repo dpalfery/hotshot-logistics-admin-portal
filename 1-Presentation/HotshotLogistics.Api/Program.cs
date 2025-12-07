@@ -118,8 +118,7 @@ var isAzureAdConfigured = !string.IsNullOrEmpty(azureAdInstance)
 
 if (builder.Environment.IsDevelopment())
 {
-    // Use test authentication handler ONLY for local development if explicitly requested via header or config
-    // But here we want to support real tokens too
+    // Use standard Azure AD authentication for development
     builder.Services.AddAuthentication(options =>
         {
             // Default to JwtBearer
@@ -130,22 +129,6 @@ if (builder.Environment.IsDevelopment())
         .EnableTokenAcquisitionToCallDownstreamApi()
         .AddMicrosoftGraph(builder.Configuration.GetSection("MicrosoftGraph"))
         .AddInMemoryTokenCaches();
-        
-    // Add the "Test" scheme for integration tests
-    builder.Services.AddAuthentication()
-           .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("Test", options => { });
-
-    // Ensure the "Test" scheme can be used when requested
-    builder.Services.AddAuthorization(options =>
-    {
-        // Adjust policies or default policy if necessary to allow "Test" scheme
-        // Or ensure controllers accept both schemes via [Authorize(AuthenticationSchemes = "Bearer,Test")]
-        // However, a cleaner way for global testing is to set the default policy to allow both schemas:
-        var defaultPolicy = new AuthorizationPolicyBuilder(JwtBearerDefaults.AuthenticationScheme, "Test")
-            .RequireAuthenticatedUser()
-            .Build();
-        options.DefaultPolicy = defaultPolicy;
-    });
 }
 else if (isAzureAdConfigured)
 {
@@ -168,8 +151,9 @@ else
     Console.WriteLine("⚠️ WARNING: Azure AD is not configured for production. Authentication will not work.");
     
     // Register a dummy authentication scheme to prevent startup errors if services expect auth
+    // We use a simple lambda here instead of a custom handler class to avoid needing extra files
     builder.Services.AddAuthentication("Broken")
-        .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("Broken", options => { });
+        .AddScheme<AuthenticationSchemeOptions, AuthenticationHandler<AuthenticationSchemeOptions>>("Broken", options => { });
 }
 
 builder.Services.AddControllers()

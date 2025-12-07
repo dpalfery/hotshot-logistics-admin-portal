@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using HotshotLogistics.Application.Services;
 using HotshotLogistics.Core.Logging;
 using HotshotLogistics.Domain.Entities;
+using HotshotLogistics.Domain.DTOs;
 using HotshotLogistics.Core.Enums;
 using HotshotLogistics.Contracts.Services;
 using Microsoft.AspNetCore.Authorization;

@@ -30,16 +30,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     checkAuth();
   }, [inProgress]);
 
-  // Always allow access in development mode
-  const isDevelopment = process.env.NODE_ENV === 'development';
-
   useEffect(() => {
-    // Only check authentication in production
-    if (!isDevelopment && isAuthChecked && !isAuthenticated && pathname !== '/login') {
+    // Check authentication in all environments
+    if (isAuthChecked && !isAuthenticated && pathname !== '/login') {
       const redirectUri = pathname !== '/' ? `?redirect_uri=${encodeURIComponent(pathname)}` : '';
       router.push(`/login${redirectUri}`);
     }
-  }, [isAuthenticated, isAuthChecked, isDevelopment, pathname, router]);
+  }, [isAuthenticated, isAuthChecked, pathname, router]);
 
   if (!isAuthChecked || (inProgress !== InteractionStatus.None && inProgress !== InteractionStatus.HandleRedirect)) {
     return <div>Loading...</div>; // Or a proper loading spinner

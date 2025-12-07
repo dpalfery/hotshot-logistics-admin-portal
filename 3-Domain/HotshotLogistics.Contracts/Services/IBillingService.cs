@@ -1,4 +1,5 @@
 using HotshotLogistics.Domain.Entities;
+using HotshotLogistics.Domain.DTOs;
 
 namespace HotshotLogistics.Contracts.Services;
 

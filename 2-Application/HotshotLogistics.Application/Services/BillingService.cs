@@ -13,6 +13,7 @@ using HotshotLogistics.Domain.Repositories;
 using HotshotLogistics.Contracts.Services;
 using HotshotLogistics.Core.Enums;
 using HotshotLogistics.Domain.ValueObjects;
+using HotshotLogistics.Domain.DTOs;
 using Microsoft.Extensions.Logging;
 using Polly;
 using Polly.Retry;

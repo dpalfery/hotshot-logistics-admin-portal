@@ -41,7 +41,7 @@ export const msalConfig: Configuration = {
     navigateToLoginRequestUrl: true,
   },
   cache: {
-    cacheLocation: 'sessionStorage',
+    cacheLocation: (process.env.NEXT_PUBLIC_MSAL_CACHE_LOCATION as 'sessionStorage' | 'localStorage') || 'sessionStorage',
     storeAuthStateInCookie: true, // Enable for production cross-tab authentication
     secureCookies: true, // HTTPS only cookies in production
   },

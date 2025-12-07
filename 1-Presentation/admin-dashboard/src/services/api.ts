@@ -27,11 +27,9 @@ class ApiService {
     const token = await this.getAuthToken();
     const hasToken = !!token;
     if (token) {
-      // Use Test scheme for test token, Bearer for real tokens
-      const scheme = token === 'test-token' ? 'Test' : 'Bearer';
       config.headers = {
         ...config.headers,
-        Authorization: `${scheme} ${token}`,
+        Authorization: `Bearer ${token}`,
       };
     }
 
@@ -71,12 +69,6 @@ class ApiService {
   }
 
   private async getAuthToken(): Promise<string | null> {
-    // Always use test authentication in development
-    if (process.env.NODE_ENV === 'development') {
-      logger.debug('Using test authentication in development mode');
-      return 'test-token';
-    }
-
     const account = msalInstance.getActiveAccount();
     if (!account) {
       logger.debug('No active MSAL account found');

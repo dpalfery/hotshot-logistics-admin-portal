@@ -13,7 +13,7 @@ End-to-end tests for the Hotshot Logistics Admin Dashboard using Playwright with
 ### 1. Install Dependencies
 
 ```bash
-cd 5-Test/HotshotLogistics.Admin.Tests
+cd 5-Test/HotshotLogistics.Playwright-UI.Tests
 npm install
 ```
 

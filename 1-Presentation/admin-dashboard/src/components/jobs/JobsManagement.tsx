@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { apiService } from '@/services/api';
 import { Job, JobStatus } from '@/types';
 import { PlusIcon, PencilIcon, TruckIcon } from '@heroicons/react/24/outline';
@@ -13,6 +14,14 @@ export function JobsManagement() {
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [assigningJob, setAssigningJob] = useState<Job | null>(null);
   const queryClient = useQueryClient();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (searchParams.get('action') === 'create') {
+      setShowCreateForm(true);
+    }
+  }, [searchParams]);
 
   const { data: jobsResult, isLoading } = useQuery({
     queryKey: ['jobs'],
@@ -29,6 +38,10 @@ export function JobsManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['jobs'] });
       setShowCreateForm(false);
+      // Remove the query param if it exists
+      if (searchParams.get('action') === 'create') {
+        router.replace('/jobs');
+      }
     },
   });
 
@@ -184,7 +197,12 @@ export function JobsManagement() {
       {showCreateForm && (
         <JobForm
           onSubmit={handleCreateJob}
-          onCancel={() => setShowCreateForm(false)}
+          onCancel={() => {
+            setShowCreateForm(false);
+            if (searchParams.get('action') === 'create') {
+              router.replace('/jobs');
+            }
+          }}
           isLoading={createJobMutation.isPending}
         />
       )}
