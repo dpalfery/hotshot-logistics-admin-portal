@@ -5,6 +5,7 @@
 namespace HotshotLogistics.IntegrationTests
 {
     using System.Security.Claims;
+    using System.Linq;
     using System.Text.Encodings.Web;
     using Microsoft.AspNetCore.Authentication;
     using Microsoft.Extensions.Logging;
@@ -15,6 +16,8 @@ namespace HotshotLogistics.IntegrationTests
     /// </summary>
     public class TestAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions>
     {
+        private static readonly string[] AllowedTestRoles = { "Admin", "Driver", "Customer" };
+
         public TestAuthHandler(
             IOptionsMonitor<AuthenticationSchemeOptions> options,
             ILoggerFactory logger,
@@ -44,6 +47,12 @@ namespace HotshotLogistics.IntegrationTests
             if (Request.Headers.TryGetValue("X-Test-Role", out var roleHeader) && !string.IsNullOrWhiteSpace(roleHeader.ToString()))
             {
                 requestedRole = roleHeader.ToString().Trim();
+            }
+
+            // Validate requested role against an allowlist to prevent arbitrary role elevation in tests.
+            if (!AllowedTestRoles.Contains(requestedRole, System.StringComparer.OrdinalIgnoreCase))
+            {
+                return Task.FromResult(AuthenticateResult.Fail($"Invalid test role: {requestedRole}"));
             }
 
             // Build a principal with the requested role
