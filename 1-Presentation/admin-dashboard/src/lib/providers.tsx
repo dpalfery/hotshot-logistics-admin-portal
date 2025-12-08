@@ -5,7 +5,9 @@ import { ReactNode, useEffect, useState } from 'react';
 import { PublicClientApplication, EventType, EventMessage, AuthenticationResult } from '@azure/msal-browser';
 import { MsalProvider } from '@azure/msal-react';
 import { msalConfig } from '@/config/auth';
+import { AuthProvider as GlobalAuthProvider } from '@/contexts/AuthContext';
 import { AuthProvider } from '@/components/auth/auth-provider';
+import { apiService } from '@/services/api';
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -47,6 +49,9 @@ export function Providers({ children }: ProvidersProps) {
                 if (!msalInstance.getActiveAccount() && accounts.length > 0) {
                     msalInstance.setActiveAccount(accounts[0]);
                 }
+                
+                // Signal that authentication is ready when MSAL is initialized
+                apiService.signalAuthReady();
             } catch (error) {
                 console.error('MSAL initialization failed', error);
             } finally {
@@ -69,11 +74,13 @@ export function Providers({ children }: ProvidersProps) {
 
     return (
         <MsalProvider instance={msalInstance}>
-            <QueryClientProvider client={queryClient}>
-                <AuthProvider>
-                    {children}
-                </AuthProvider>
-            </QueryClientProvider>
+            <GlobalAuthProvider>
+                <QueryClientProvider client={queryClient}>
+                    <AuthProvider>
+                        {children}
+                    </AuthProvider>
+                </QueryClientProvider>
+            </GlobalAuthProvider>
         </MsalProvider>
     );
 }

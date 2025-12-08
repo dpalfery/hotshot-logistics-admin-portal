@@ -6,11 +6,53 @@ import { logger } from '@/lib/logger';
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || '/api').trim();
 
 class ApiService {
+  private authReadyPromise: Promise<void> | null = null;
+  private authReadyResolve: (() => void) | null = null;
+
+  constructor() {
+    // Initialize the auth readiness promise
+    this.authReadyPromise = new Promise((resolve) => {
+      this.authReadyResolve = resolve;
+    });
+  }
+
+  public signalAuthReady(): void {
+    if (this.authReadyResolve) {
+      this.authReadyResolve();
+      this.authReadyResolve = null;
+    }
+  }
+
+  private async waitForAuthReady(): Promise<void> {
+    if (!this.authReadyPromise) {
+      return;
+    }
+    
+    try {
+      // Wait for authentication to be ready with timeout
+      await Promise.race([
+        this.authReadyPromise,
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Authentication readiness timeout')), 15000)
+        )
+      ]);
+    } catch (error) {
+      logger.error('Authentication readiness wait timed out or failed', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+      // Throw authentication error instead of continuing without auth
+      throw new Error('Authentication not ready: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    }
+  }
+
   private async request<T>(
     endpoint: string,
     options: RequestInit = {},
     query?: string
   ): Promise<T> {
+    // Wait for authentication to be ready before making API calls
+    await this.waitForAuthReady();
+
     const baseUrl = API_BASE_URL.replace(/\/$/, '');
     const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
     const url = `${baseUrl}${normalizedEndpoint}${query ? `?${query}` : ''}`;
@@ -98,7 +140,8 @@ class ApiService {
         logger.error('Token acquisition failed', {
           error: popupError instanceof Error ? popupError.message : 'Unknown error',
         });
-        return null;
+        // Throw authentication error instead of returning null
+        throw new Error('Token acquisition failed: ' + (popupError instanceof Error ? popupError.message : 'Unknown error'));
       }
     }
   }

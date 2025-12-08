@@ -4,10 +4,12 @@ import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useMsal } from '@azure/msal-react';
 import { apiService } from '@/services/api';
+import { useAuth } from '@/contexts/AuthContext';
 import JobStatusCards from './JobStatusCards';
 
 export function DashboardOverview() {
   const { instance } = useMsal();
+  const { isTokenReady, isAuthenticated } = useAuth();
   const activeAccount = instance.getActiveAccount();
   const userName = activeAccount?.name || 'User';
   const userEmail = activeAccount?.username || '';
@@ -18,24 +20,28 @@ export function DashboardOverview() {
     queryKey: ['jobs'],
     queryFn: () => apiService.getJobs(),
     retry: false,
+    enabled: isAuthenticated && isTokenReady, // Only run when auth is ready
   });
 
   const { data: drivers, isLoading: driversLoading } = useQuery({
     queryKey: ['drivers'],
     queryFn: () => apiService.getDrivers(),
     retry: false,
+    enabled: isAuthenticated && isTokenReady, // Only run when auth is ready
   });
 
   const { data: invoices, isLoading: invoicesLoading } = useQuery({
     queryKey: ['invoices'],
     queryFn: () => apiService.getInvoices(),
     retry: false,
+    enabled: isAuthenticated && isTokenReady, // Only run when auth is ready
   });
 
   const { data: overdueInvoicesData, isLoading: overdueLoading } = useQuery({
     queryKey: ['overdueInvoices'],
     queryFn: () => apiService.getOverdueInvoices(),
     retry: false,
+    enabled: isAuthenticated && isTokenReady, // Only run when auth is ready
   });
 
   const stats = {
