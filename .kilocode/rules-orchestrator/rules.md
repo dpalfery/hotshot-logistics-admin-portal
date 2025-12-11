@@ -17,5 +17,6 @@ Non‑Negotiable Global Rules (apply always)
 
 - At the start of a Task you MUST load the Memory Bank rule at ​.kilocode/rules/memory-bank-instructions.md !
 
+
 ### Confirmation
 Once you have read the Security rule you will include `[Orchestrator Rule: Active]` in your response if you successfully read the security rule files

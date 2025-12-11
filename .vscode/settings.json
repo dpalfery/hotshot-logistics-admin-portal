@@ -4,7 +4,7 @@
   "azureFunctions.projectLanguage": "C#",
   "azureFunctions.projectRuntime": "~4",
   "azureFunctions.projectSubpath": "2-Application\\HotshotLogistics.Api",
-  "playwright.reuseBrowser": true,
+  "playwright.reuseBrowser": false,
   "playwright.showTrace": false,
   "chat.edits2.enabled": true,
   "chat.emptyState.history.enabled": true,
