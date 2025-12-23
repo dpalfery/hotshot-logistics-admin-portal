@@ -10,6 +10,7 @@ namespace HotshotLogistics.Api.Controllers
     using System.Threading.Tasks;
     using HotshotLogistics.Contracts.Services;
     using HotshotLogistics.Core.Logging;
+    using HotshotLogistics.Core.Security;
     using HotshotLogistics.Domain.Entities;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
@@ -227,7 +228,7 @@ namespace HotshotLogistics.Api.Controllers
                 var locationTracking = await trackingService.GetCurrentLocationAsync(jobId, cancellationToken);
                 if (locationTracking == null)
                 {
-                    return NotFound($"No location tracking found for job {jobId}");
+                    return NotFound($"No location tracking found for job {HtmlSanitizer.HtmlEncode(jobId)}");
                 }
 
                 return Ok(locationTracking);
@@ -320,7 +321,7 @@ namespace HotshotLogistics.Api.Controllers
 
                 var result = new RouteDeviationResult
                 {
-                    JobId = request.JobId,
+                    JobId = HtmlSanitizer.HtmlEncode(request.JobId),
                     HasDeviated = hasDeviated,
                     CurrentLocation = request.CurrentLocation,
                     CheckedAt = DateTime.UtcNow,
@@ -362,7 +363,7 @@ namespace HotshotLogistics.Api.Controllers
                 var currentLocation = await trackingService.GetCurrentLocationAsync(jobId, cancellationToken);
                 if (currentLocation == null)
                 {
-                    return NotFound($"No tracking information available for job {jobId}");
+                    return NotFound($"No tracking information available for job {HtmlSanitizer.HtmlEncode(jobId)}");
                 }
 
                 var publicInfo = new PublicTrackingInfo

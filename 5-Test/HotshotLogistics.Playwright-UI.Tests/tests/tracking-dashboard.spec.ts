@@ -218,16 +218,16 @@ test.describe('Tracking Dashboard', () => {
     });
 
     test('should display recent location updates section', async ({ page }) => {
-      // Check location updates section
-      await expect(page.getByText('Recent Location Updates')).toBeVisible();
+      // Check location updates section - use heading role for specific selector
+      await expect(page.getByRole('heading', { name: 'Recent Location Updates' })).toBeVisible();
       
       // Initially should show no updates
       await expect(page.getByText('No recent location updates')).toBeVisible();
     });
 
     test('should display notifications section', async ({ page }) => {
-      // Check notifications section
-      await expect(page.getByText('Notifications')).toBeVisible();
+      // Check notifications section - use heading role for specific selector
+      await expect(page.getByRole('heading', { name: 'Notifications' })).toBeVisible();
       
       // Check notification icon
       const bellIcon = page.locator('svg').filter({ hasText: /bell/i }).first();
@@ -326,16 +326,16 @@ test.describe('Tracking Dashboard', () => {
 
       await page.reload();
 
-      // Wait for location updates to appear
-      await expect(page.getByText('Job #job-001 - Driver #1')).toBeVisible();
-      await expect(page.getByText('Job #job-002 - Driver #2')).toBeVisible();
+      // Wait for location updates to appear - use first() since SignalR mock may create duplicates
+      await expect(page.getByText('Job #job-001 - Driver #1').first()).toBeVisible();
+      await expect(page.getByText('Job #job-002 - Driver #2').first()).toBeVisible();
       
       // Check coordinate formatting (4 decimal places)
-      await expect(page.getByText('40.7128, -74.0060')).toBeVisible();
-      await expect(page.getByText('34.0522, -118.2437')).toBeVisible();
+      await expect(page.getByText('40.7128, -74.0060').first()).toBeVisible();
+      await expect(page.getByText('34.0522, -118.2437').first()).toBeVisible();
       
       // Check timestamp formatting
-      await expect(page.getByText(/\d{1,2}:\d{2}:\d{2} [AP]M/)).toBeVisible();
+      await expect(page.getByText(/\d{1,2}:\d{2}:\d{2} [AP]M/).first()).toBeVisible();
     });
 
     test('should display notifications with read/unread status', async ({ page }) => {
@@ -370,20 +370,20 @@ test.describe('Tracking Dashboard', () => {
 
       await page.reload();
 
-      // Wait for notifications to appear
-      await expect(page.getByText('New Job Assigned')).toBeVisible();
-      await expect(page.getByText('Delivery Completed')).toBeVisible();
+      // Wait for notifications to appear - use first() since SignalR mock may create duplicates
+      await expect(page.getByText('New Job Assigned').first()).toBeVisible();
+      await expect(page.getByText('Delivery Completed').first()).toBeVisible();
       
       // Check notification messages
-      await expect(page.getByText('Job #123 has been assigned to Driver #1')).toBeVisible();
-      await expect(page.getByText('Job #122 has been completed successfully')).toBeVisible();
+      await expect(page.getByText('Job #123 has been assigned to Driver #1').first()).toBeVisible();
+      await expect(page.getByText('Job #122 has been completed successfully').first()).toBeVisible();
       
-      // Check read/unread status styling
-      const newStatus = page.locator('text=New').first();
+      // Check read/unread status styling - look for the status badge within notification cards
+      const newStatus = page.locator('span:has-text("New")').first();
       await expect(newStatus).toBeVisible();
       await expect(newStatus).toHaveClass(/bg-blue-100.*text-blue-800/);
       
-      const readStatus = page.locator('text=Read').first();
+      const readStatus = page.locator('span:has-text("Read")').first();
       await expect(readStatus).toBeVisible();
       await expect(readStatus).toHaveClass(/bg-gray-100.*text-gray-800/);
     });
@@ -442,13 +442,13 @@ test.describe('Tracking Dashboard', () => {
         await expect(notifications).toHaveCount(10);
       }
 
-      // Verify the most recent items are shown (job-015, job-014, etc.)
-      await expect(page.getByText('Job #job-015')).toBeVisible();
-      await expect(page.getByText('Notification 15')).toBeVisible();
+      // Verify the most recent items are shown (job-015, job-014, etc.) - use first() to handle duplicates
+      await expect(page.getByText('Job #job-015').first()).toBeVisible();
+      await expect(page.getByText('Notification 15').first()).toBeVisible();
       
-      // Verify older items are not shown (job-001, job-002, etc.)
-      await expect(page.getByText('Job #job-001')).not.toBeVisible();
-      await expect(page.getByText('Notification 1')).not.toBeVisible();
+      // Verify older items are not shown (job-001, job-002, etc.) - check count is 0
+      await expect(page.getByText('Job #job-001')).toHaveCount(0);
+      await expect(page.getByText('Notification 1', { exact: true })).toHaveCount(0);
     });
 
     test('should handle SignalR connection errors gracefully', async ({ page }) => {

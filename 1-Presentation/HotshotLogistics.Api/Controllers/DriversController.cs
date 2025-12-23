@@ -3,6 +3,7 @@
 // </copyright>
 using HotshotLogistics.Application.Authorization;
 using HotshotLogistics.Core.Logging;
+using HotshotLogistics.Core.Security;
 using HotshotLogistics.Domain.ValueObjects;
 using HotshotLogistics.Domain.DTOs;
 using HotshotLogistics.Contracts.Services;
@@ -51,10 +52,10 @@ namespace HotshotLogistics.Api.Controllers
                 var driverDtos = drivers.Select(d => new DriverDto
                 {
                     Id = d.Id,
-                    FirstName = d.PersonalInfo.FirstName,
-                    LastName = d.PersonalInfo.LastName,
-                    Email = d.PersonalInfo.Email,
-                    PhoneNumber = d.PersonalInfo.PhoneNumber,
+                    FirstName = HtmlSanitizer.HtmlEncode(d.PersonalInfo.FirstName),
+                    LastName = HtmlSanitizer.HtmlEncode(d.PersonalInfo.LastName),
+                    Email = HtmlSanitizer.HtmlEncode(d.PersonalInfo.Email),
+                    PhoneNumber = HtmlSanitizer.HtmlEncode(d.PersonalInfo.PhoneNumber),
                     LicenseNumber = d.License.LicenseNumber,
                     LicenseExpiryDate = d.License.LicenseExpiryDate,
                     IsActive = d.IsActive,
@@ -86,15 +87,15 @@ namespace HotshotLogistics.Api.Controllers
                 var driver = await driverService.GetDriverByIdAsync(id);
                 if (driver == null)
                 {
-                    return NotFound($"Driver with ID {id} not found");
+                    return NotFound($"Driver with ID {HtmlSanitizer.HtmlEncode(id.ToString())} not found");
                 }
                 var driverDto = new DriverDto
                 {
                     Id = driver.Id,
-                    FirstName = driver.PersonalInfo.FirstName,
-                    LastName = driver.PersonalInfo.LastName,
-                    Email = driver.PersonalInfo.Email,
-                    PhoneNumber = driver.PersonalInfo.PhoneNumber,
+                    FirstName = HtmlSanitizer.HtmlEncode(driver.PersonalInfo.FirstName),
+                    LastName = HtmlSanitizer.HtmlEncode(driver.PersonalInfo.LastName),
+                    Email = HtmlSanitizer.HtmlEncode(driver.PersonalInfo.Email),
+                    PhoneNumber = HtmlSanitizer.HtmlEncode(driver.PersonalInfo.PhoneNumber),
                     LicenseNumber = driver.License.LicenseNumber,
                     LicenseExpiryDate = driver.License.LicenseExpiryDate,
                     IsActive = driver.IsActive,
@@ -152,10 +153,10 @@ namespace HotshotLogistics.Api.Controllers
                 var createdDriverDto = new DriverDto
                 {
                     Id = createdDriver.Id,
-                    FirstName = createdDriver.PersonalInfo.FirstName,
-                    LastName = createdDriver.PersonalInfo.LastName,
-                    Email = createdDriver.PersonalInfo.Email,
-                    PhoneNumber = createdDriver.PersonalInfo.PhoneNumber,
+                    FirstName = HtmlSanitizer.HtmlEncode(createdDriver.PersonalInfo.FirstName),
+                    LastName = HtmlSanitizer.HtmlEncode(createdDriver.PersonalInfo.LastName),
+                    Email = HtmlSanitizer.HtmlEncode(createdDriver.PersonalInfo.Email),
+                    PhoneNumber = HtmlSanitizer.HtmlEncode(createdDriver.PersonalInfo.PhoneNumber),
                     LicenseNumber = createdDriver.License.LicenseNumber,
                     LicenseExpiryDate = createdDriver.License.LicenseExpiryDate,
                     IsActive = createdDriver.IsActive,
@@ -229,10 +230,10 @@ namespace HotshotLogistics.Api.Controllers
                 var updatedDriverDto = new DriverDto
                 {
                     Id = updatedDriver.Id,
-                    FirstName = updatedDriver.PersonalInfo.FirstName,
-                    LastName = updatedDriver.PersonalInfo.LastName,
-                    Email = updatedDriver.PersonalInfo.Email,
-                    PhoneNumber = updatedDriver.PersonalInfo.PhoneNumber,
+                    FirstName = HtmlSanitizer.HtmlEncode(updatedDriver.PersonalInfo.FirstName),
+                    LastName = HtmlSanitizer.HtmlEncode(updatedDriver.PersonalInfo.LastName),
+                    Email = HtmlSanitizer.HtmlEncode(updatedDriver.PersonalInfo.Email),
+                    PhoneNumber = HtmlSanitizer.HtmlEncode(updatedDriver.PersonalInfo.PhoneNumber),
                     LicenseNumber = updatedDriver.License.LicenseNumber,
                     LicenseExpiryDate = updatedDriver.License.LicenseExpiryDate,
                     IsActive = updatedDriver.IsActive,

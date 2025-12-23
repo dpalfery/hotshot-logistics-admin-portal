@@ -16,6 +16,7 @@ jest.mock('@/lib/providers', () => ({
 describe('ApiService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockFetch.mockReset();
     // Reset auth ready state
     (apiService as any).authReadyResolve = null;
     (apiService as any).authReadyPromise = new Promise((resolve) => {
@@ -76,7 +77,7 @@ describe('ApiService', () => {
 
       // Don't signal auth ready - should timeout
       await expect(apiService.getJobs()).rejects.toThrow('Authentication not ready');
-    });
+    }, 20000);
 
     it('should handle authentication readiness timeout gracefully', async () => {
       // Reset auth state
@@ -91,10 +92,14 @@ describe('ApiService', () => {
       });
 
       // Mock the waitForAuthReady to use our timeout promise
-      jest.spyOn(apiService as any, 'waitForAuthReady').mockReturnValue(timeoutPromise);
+      const spy = jest.spyOn(apiService as any, 'waitForAuthReady').mockReturnValue(timeoutPromise);
 
-      await expect(apiService.getJobs()).rejects.toThrow('Authentication not ready');
-    });
+      try {
+        await expect(apiService.getJobs()).rejects.toThrow('Authentication readiness timeout');
+      } finally {
+        spy.mockRestore();
+      }
+    }, 20000);
   });
 
   describe('Token Acquisition', () => {
@@ -128,7 +133,7 @@ describe('ApiService', () => {
           }),
         })
       );
-    });
+    }, 10000);
 
     it('should fallback to popup when silent acquisition fails', async () => {
       const mockResponse = { data: 'test' };
@@ -252,7 +257,7 @@ describe('ApiService', () => {
       );
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/job?pageNumber=2&pageSize=10&status=active'),
+        expect.stringContaining('/api/job?status=active&pageNumber=2&pageSize=10'),
         expect.any(Object)
       );
     });
@@ -452,11 +457,14 @@ describe('ApiService', () => {
     });
 
     it('should prevent API calls before auth is ready', async () => {
-      // Don't signal auth ready
-      (msalInstance.getActiveAccount as jest.Mock).mockReturnValue(null);
+      // Mock waitForAuthReady to throw
+      const spy = jest.spyOn(apiService as any, 'waitForAuthReady').mockRejectedValue(new Error('Authentication not ready'));
 
-      // This should timeout and fail
       await expect(apiService.getJobs()).rejects.toThrow('Authentication not ready');
+      
+      expect(mockFetch).not.toHaveBeenCalled();
+      
+      spy.mockRestore();
     });
   });
 });

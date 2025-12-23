@@ -55,13 +55,13 @@ export class AuthHelper {
     console.log('Navigating to /login...');
     await this.page.goto('/login');
     
-    // Wait for MSAL initialization to complete (Loading... text from Providers component should disappear)
-    console.log('Waiting for MSAL initialization (Loading... state to clear)...');
+    // Wait for MSAL initialization to complete (Authenticating text from Providers component should disappear)
+    console.log('Waiting for MSAL initialization (Authenticating state to clear)...');
     try {
       // Wait for the loading state to be detached (gone)
-      await this.page.waitForSelector('text=Loading...', { state: 'detached', timeout: 15000 });
+      await this.page.waitForSelector('text=Authenticating', { state: 'detached', timeout: 15000 });
     } catch (e) {
-      console.log('Warning: "Loading..." text did not detach within timeout, or was never present. Proceeding...');
+      console.log('Warning: "Authenticating" text did not detach within timeout, or was never present. Proceeding...');
     }
 
     // Ensure network is idle (scripts loaded)

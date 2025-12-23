@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using HotshotLogistics.Application.Services;
 using HotshotLogistics.Core.Logging;
+using HotshotLogistics.Core.Security;
 using HotshotLogistics.Domain.Entities;
 using HotshotLogistics.Domain.DTOs;
 using HotshotLogistics.Core.Enums;
@@ -103,7 +104,7 @@ namespace HotshotLogistics.Api.Controllers
                 var invoice = await billingService.GetInvoiceByIdAsync(id, cancellationToken);
                 if (invoice == null)
                 {
-                    return NotFound($"Invoice with ID {id} not found");
+                    return NotFound($"Invoice with ID {HtmlSanitizer.HtmlEncode(id)} not found");
                 }
 
                 return Ok(invoice);
@@ -227,9 +228,9 @@ namespace HotshotLogistics.Api.Controllers
                 var result = new PaymentResult
                 {
                     Success = success,
-                    InvoiceId = invoiceId,
+                    InvoiceId = HtmlSanitizer.HtmlEncode(invoiceId),
                     Amount = request.Amount,
-                    PaymentMethod = request.PaymentMethod,
+                    PaymentMethod = HtmlSanitizer.HtmlEncode(request.PaymentMethod),
                     ProcessedAt = DateTime.UtcNow
                 };
 
@@ -288,7 +289,7 @@ namespace HotshotLogistics.Api.Controllers
                 var result = new TaxCalculationResult
                 {
                     Amount = request.Amount,
-                    State = request.State,
+                    State = HtmlSanitizer.HtmlEncode(request.State),
                     TaxAmount = taxAmount,
                     TotalAmount = request.Amount + taxAmount,
                     TaxRate = request.Amount > 0 ? taxAmount / request.Amount : 0

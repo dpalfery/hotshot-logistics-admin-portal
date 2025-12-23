@@ -94,6 +94,21 @@ export function JobsManagement() {
     }
   };
 
+  const getStatusText = (status: JobStatus): string => {
+    switch (status) {
+      case JobStatus.Pending:
+        return 'Pending';
+      case JobStatus.Assigned:
+        return 'Assigned';
+      case JobStatus.EnRoute:
+        return 'InProgress';
+      case JobStatus.Received:
+        return 'Completed';
+      default:
+        return 'Unknown';
+    }
+  };
+
   if (isLoading) {
     return <div className="text-center py-8">Loading jobs...</div>;
   }
@@ -156,7 +171,7 @@ export function JobsManagement() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(job.status)}`}>
-                        {job.status}
+                        {getStatusText(job.status)}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

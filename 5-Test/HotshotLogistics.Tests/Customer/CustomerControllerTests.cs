@@ -509,6 +509,30 @@ namespace HotshotLogistics.Tests.Customer
         }
 
         /// <summary>
+        /// Tests that GetCustomerById sanitizes XSS payload in error message when not found.
+        /// </summary>
+        /// <returns>A task representing the asynchronous test.</returns>
+        [Fact]
+        public async Task GetCustomerById_WithXSSPayloadInId_SanitizesErrorMessage()
+        {
+            // Arrange
+            var xssPayload = "<img src=x onerror=\"alert('xss')\">";
+            mockCustomerService.Setup(s => s.GetCustomerByIdAsync(xssPayload, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Customer?)null);
+
+            // Act
+            var result = await controller.GetCustomerById(xssPayload);
+
+            // Assert
+            result.Should().NotBeNull();
+            var notFoundResult = result.Result.Should().BeOfType<NotFoundObjectResult>().Subject;
+            var errorMessage = notFoundResult.Value.Should().BeOfType<string>().Subject;
+            errorMessage.Should().NotContain("<img");
+            errorMessage.Should().NotContain("onerror");
+            errorMessage.Should().NotContain("alert");
+        }
+
+        /// <summary>
         /// Creates a test customer for testing purposes.
         /// </summary>
         /// <param name="id">The customer ID.</param>

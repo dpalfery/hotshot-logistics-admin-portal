@@ -6,6 +6,28 @@ rule: |
 
 # Clean Architecture + DDD Folder Structure (C#)
 
+## **0-Base Layer**
+
+**Purpose:** Cross-cutting or shared concerns used across all layers.
+
+**Project:** `HotshotLogistics.Core`
+
+**Contents:**
+
+* **Dependency Injection / Config Extensions**
+* **Logging, Email, Caching Adapters**
+* **External API Integrations**
+* **Constants / Enums / Utilities**
+* **Factories / Contracts Shared Across Layers**
+* **Base Exceptions:** Custom exception types used across the solution
+  *Folder:* `Exceptions`
+* **Base Repositories:** Shared repository interfaces and base implementations
+  *Folder:* `Repositories`
+
+> This is the foundational layer that other layers may reference for shared utilities and abstractions.
+
+---
+
 ## **1-Presentation Layer**
 
 **Purpose:** Entry point for all user interactions (HTTP, gRPC, SignalR, etc.)
@@ -115,17 +137,29 @@ rule: |
 
 ---
 
-## **5-Infrastructure / Shared Layer (optional)**
+## **5-Test Layer**
 
-**Purpose:** Cross-cutting or shared concerns.
+**Purpose:** Centralized location for all test projects covering unit, integration, and UI tests.
+
+**Projects:**
+
+* `HotshotLogistics.Tests` → Unit tests for domain, application, and services
+* `HotshotLogistics.IntegrationTests` → Integration tests for API and persistence
+* `HotshotLogistics.Playwright-UI.Tests` → End-to-end UI tests using Playwright
 
 **Contents:**
 
-* **Dependency Injection / Config Extensions**
-* **Logging, Email, Caching Adapters**
-* **External API Integrations**
-* **Constants / Enums / Utilities**
-* **Factories / Contracts Shared Across Layers**
+* **Unit Tests:** Test individual classes, methods, and business logic in isolation
+  *Folder:* `HotshotLogistics.Tests`
+* **Integration Tests:** Test API endpoints, database operations, and cross-layer interactions
+  *Folder:* `HotshotLogistics.IntegrationTests`
+* **UI Tests:** End-to-end browser-based tests for the admin dashboard
+  *Folder:* `HotshotLogistics.Playwright-UI.Tests`
+* **Test Data:** Shared fixtures, mocks, and sample data for tests
+  *Folder:* `data`
+
+> All test projects should reference their target projects but remain isolated from production code paths.
+> Follow naming convention: `{ClassName}Tests.cs` for unit tests, `{Feature}IntegrationTests.cs` for integration tests.
 
 ---
 
@@ -146,3 +180,10 @@ rule: |
 * `Docker files`
 * `scripts`
 * **important rule**: when deciding on which sku to use in Azure you must pick from teh free service skus provided as part of the 1 year azure free account
+
+## **8-Agent-Instructions**
+**Purpose:** Instructions for the AI agent to follow when generating code.
+
+* `architecture-general.md`
+* `interface-cleanup-tasks.md`
+* `agent-instructions.md`

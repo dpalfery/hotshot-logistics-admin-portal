@@ -5,6 +5,7 @@
 using FluentValidation;
 using HotshotLogistics.Application.Validators;
 using HotshotLogistics.Core.Logging;
+using HotshotLogistics.Core.Security;
 using HotshotLogistics.Domain.Entities;
 using HotshotLogistics.Contracts.Repositories;
 using HotshotLogistics.Contracts.Services;
@@ -177,7 +178,7 @@ namespace HotshotLogistics.Api.Controllers
                 var job = await jobService.GetJobByIdAsync(id, cancellationToken);
                 if (job == null)
                 {
-                    return NotFound($"Job with ID {id} not found");
+                    return NotFound($"Job with ID {HtmlSanitizer.HtmlEncode(id)} not found");
                 }
 
                 return Ok(job);
@@ -306,7 +307,7 @@ namespace HotshotLogistics.Api.Controllers
                 var updatedJob = await jobService.UpdateJobAsync(id, jobDto, cancellationToken);
                 if (updatedJob == null)
                 {
-                    return NotFound($"Job with ID {id} not found");
+                    return NotFound($"Job with ID {HtmlSanitizer.HtmlEncode(id)} not found");
                 }
 
                 return Ok(updatedJob);

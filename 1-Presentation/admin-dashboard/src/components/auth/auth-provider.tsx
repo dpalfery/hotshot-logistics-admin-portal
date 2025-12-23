@@ -28,6 +28,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     error
   } = useGlobalAuth();
 
+  // Enhanced loading state that considers both MSAL readiness and token readiness
+  const isLoading = !isAuthChecked || 
+                   (inProgress !== InteractionStatus.None && inProgress !== InteractionStatus.HandleRedirect) ||
+                   !isMsalReady ||
+                   (isAuthenticated && !isTokenReady);
+
   // Timeout handling
   const [isTimedOut, setIsTimedOut] = useState(false);
   useEffect(() => {
@@ -64,17 +70,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     // Check authentication in all environments
-    if (isAuthChecked && !isAuthenticated && pathname !== '/login') {
+    if (isAuthChecked && !isAuthenticated && inProgress === InteractionStatus.None && pathname !== '/login') {
       const redirectUri = pathname !== '/' ? `?redirect_uri=${encodeURIComponent(pathname)}` : '';
       router.push(`/login${redirectUri}`);
     }
-  }, [isAuthenticated, isAuthChecked, pathname, router]);
-
-  // Enhanced loading state that considers both MSAL readiness and token readiness
-  const isLoading = !isAuthChecked || 
-                   (inProgress !== InteractionStatus.None && inProgress !== InteractionStatus.HandleRedirect) ||
-                   !isMsalReady ||
-                   (isAuthenticated && !isTokenReady);
+  }, [isAuthenticated, isAuthChecked, inProgress, pathname, router]);
 
   if (error) {
     return (

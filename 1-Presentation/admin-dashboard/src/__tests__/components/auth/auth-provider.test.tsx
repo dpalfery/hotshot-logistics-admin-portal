@@ -5,6 +5,7 @@ import { useMsal, useIsAuthenticated } from '@azure/msal-react';
 import { useRouter, usePathname } from 'next/navigation';
 import { InteractionStatus } from '@azure/msal-browser';
 import { msalInstance } from '@/lib/providers';
+import { logger } from '@/lib/logger';
 
 // Mock MSAL hooks
 const mockUseMsal = useMsal as jest.MockedFunction<typeof useMsal>;
@@ -23,18 +24,20 @@ jest.mock('@/lib/providers', () => ({
 }));
 
 // Mock the AuthContext to avoid circular dependency
+let mockAuthContextValue = {
+  isMsalReady: true,
+  isAuthChecked: true,
+  isAuthenticated: true,
+  isTokenReady: true,
+  user: { username: 'test@example.com' },
+  error: null,
+  checkTokenReadiness: jest.fn(),
+  resetAuthState: jest.fn(),
+};
+
 jest.mock('@/contexts/AuthContext', () => ({
   AuthProvider: ({ children }: { children: React.ReactNode }) => <div data-testid="mock-auth-provider">{children}</div>,
-  useAuth: jest.fn(() => ({
-    isMsalReady: true,
-    isAuthChecked: true,
-    isAuthenticated: true,
-    isTokenReady: true,
-    user: { username: 'test@example.com' },
-    error: null,
-    checkTokenReadiness: jest.fn(),
-    resetAuthState: jest.fn(),
-  })),
+  useAuth: jest.fn(() => mockAuthContextValue),
 }));
 
 describe('AuthProvider Component', () => {
@@ -52,6 +55,16 @@ describe('AuthProvider Component', () => {
     jest.clearAllMocks();
     mockUseRouter.mockReturnValue(mockRouter);
     mockUsePathname.mockReturnValue('/');
+    mockAuthContextValue = {
+      isMsalReady: true,
+      isAuthChecked: true,
+      isAuthenticated: true,
+      isTokenReady: true,
+      user: { username: 'test@example.com' },
+      error: null,
+      checkTokenReadiness: jest.fn(),
+      resetAuthState: jest.fn(),
+    };
   });
 
   describe('Authentication Check', () => {
@@ -98,14 +111,13 @@ describe('AuthProvider Component', () => {
     });
 
     it('should handle authentication check errors gracefully', async () => {
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-
       mockUseMsal.mockReturnValue({
         inProgress: InteractionStatus.None,
         accounts: [],
         instance: msalInstance,
       } as any);
       mockUseIsAuthenticated.mockReturnValue(false);
+      mockAuthContextValue.isAuthChecked = false;
 
       (msalInstance.getAllAccounts as jest.Mock).mockImplementation(() => {
         throw new Error('MSAL error');
@@ -118,15 +130,13 @@ describe('AuthProvider Component', () => {
       );
 
       await waitFor(() => {
-        expect(consoleSpy).toHaveBeenCalledWith(
+        expect(logger.error).toHaveBeenCalledWith(
           'Authentication check failed',
           expect.objectContaining({
             error: expect.any(String),
           })
         );
       });
-
-      consoleSpy.mockRestore();
     });
   });
 
@@ -149,7 +159,7 @@ describe('AuthProvider Component', () => {
       );
 
       await waitFor(() => {
-        expect(mockRouter.push).toHaveBeenCalledWith('/login');
+        expect(mockRouter.push).toHaveBeenCalledWith('/login?redirect_uri=%2Fdashboard');
       });
     });
 
@@ -235,6 +245,7 @@ describe('AuthProvider Component', () => {
         instance: msalInstance,
       } as any);
       mockUseIsAuthenticated.mockReturnValue(false);
+      mockAuthContextValue.isAuthChecked = false;
 
       render(
         <AuthProvider>
@@ -242,7 +253,7 @@ describe('AuthProvider Component', () => {
         </AuthProvider>
       );
 
-      expect(screen.getByText('Loading...')).toBeInTheDocument();
+      expect(screen.getByText('Authenticating')).toBeInTheDocument();
     });
 
     it('should show loading when MSAL is in progress', () => {
@@ -259,7 +270,7 @@ describe('AuthProvider Component', () => {
         </AuthProvider>
       );
 
-      expect(screen.getByText('Loading...')).toBeInTheDocument();
+      expect(screen.getByText('Authenticating')).toBeInTheDocument();
     });
 
     it('should show loading when authenticated but token not ready', () => {
@@ -269,6 +280,7 @@ describe('AuthProvider Component', () => {
         instance: msalInstance,
       } as any);
       mockUseIsAuthenticated.mockReturnValue(true);
+      mockAuthContextValue.isTokenReady = false;
 
       render(
         <AuthProvider>
@@ -276,7 +288,7 @@ describe('AuthProvider Component', () => {
         </AuthProvider>
       );
 
-      expect(screen.getByText('Loading...')).toBeInTheDocument();
+      expect(screen.getByText('Authenticating')).toBeInTheDocument();
     });
 
     it('should render children when fully authenticated', async () => {
@@ -337,14 +349,13 @@ describe('AuthProvider Component', () => {
 
   describe('Error Handling', () => {
     it('should handle MSAL errors during initialization', async () => {
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-
       mockUseMsal.mockReturnValue({
         inProgress: InteractionStatus.None,
         accounts: [],
         instance: msalInstance,
       } as any);
       mockUseIsAuthenticated.mockReturnValue(false);
+      mockAuthContextValue.isAuthChecked = false;
 
       (msalInstance.getAllAccounts as jest.Mock).mockImplementation(() => {
         throw new Error('MSAL initialization failed');
@@ -357,15 +368,13 @@ describe('AuthProvider Component', () => {
       );
 
       await waitFor(() => {
-        expect(consoleSpy).toHaveBeenCalledWith(
+        expect(logger.error).toHaveBeenCalledWith(
           'Authentication check failed',
           expect.objectContaining({
             error: expect.any(String),
           })
         );
       });
-
-      consoleSpy.mockRestore();
     });
   });
 
@@ -374,11 +383,12 @@ describe('AuthProvider Component', () => {
       let isAuthenticatedValue = false;
 
       mockUseMsal.mockReturnValue({
-        inProgress: InteractionStatus.None,
+        inProgress: InteractionStatus.Login,
         accounts: [],
         instance: msalInstance,
       } as any);
       mockUseIsAuthenticated.mockImplementation(() => isAuthenticatedValue);
+      mockAuthContextValue.isAuthChecked = false;
 
       (msalInstance.getAllAccounts as jest.Mock).mockReturnValue([]);
 
@@ -389,10 +399,18 @@ describe('AuthProvider Component', () => {
       );
 
       // Initially not authenticated - should show loading
-      expect(screen.getByText('Loading...')).toBeInTheDocument();
+      expect(screen.getByText('Authenticating')).toBeInTheDocument();
 
       // Simulate authentication
       isAuthenticatedValue = true;
+      mockAuthContextValue.isAuthChecked = true;
+      mockAuthContextValue.isTokenReady = false;
+
+      mockUseMsal.mockReturnValue({
+        inProgress: InteractionStatus.None,
+        accounts: [mockAccount],
+        instance: msalInstance,
+      } as any);
 
       rerender(
         <AuthProvider>
@@ -401,7 +419,7 @@ describe('AuthProvider Component', () => {
       );
 
       // Should still show loading until token is ready
-      expect(screen.getByText('Loading...')).toBeInTheDocument();
+      expect(screen.getByText('Authenticating')).toBeInTheDocument();
     });
   });
 });

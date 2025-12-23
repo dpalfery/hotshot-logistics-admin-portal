@@ -540,6 +540,27 @@ namespace HotshotLogistics.Tests.Job
         }
 
         /// <summary>
+        /// Tests that GetJobById sanitizes XSS payload in error message when not found.
+        /// </summary>
+        /// <returns>A task representing the asynchronous test.</returns>
+        [Fact]
+        public async Task GetJobById_WithXSSPayloadInId_SanitizesErrorMessage()
+        {
+            var xssPayload = "<img src=x onerror=\"alert('xss')\">";
+            mockJobRepository.Setup(r => r.GetJobByIdAsync(xssPayload, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Domain.Entities.Job?)null);
+
+            var result = await controller.GetJobById(xssPayload);
+
+            result.Should().NotBeNull();
+            var notFoundResult = result.Result.Should().BeOfType<NotFoundObjectResult>().Subject;
+            var errorMessage = notFoundResult.Value.Should().BeOfType<string>().Subject;
+            errorMessage.Should().NotContain("<img");
+            errorMessage.Should().NotContain("onerror");
+            errorMessage.Should().NotContain("alert");
+        }
+
+        /// <summary>
         /// Creates a test job for testing purposes.
         /// </summary>
         /// <param name="id">The job ID.</param>

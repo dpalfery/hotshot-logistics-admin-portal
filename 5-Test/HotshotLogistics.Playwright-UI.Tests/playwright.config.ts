@@ -94,7 +94,7 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: `npx cross-env NEXT_PUBLIC_MSAL_CACHE_LOCATION=localStorage NEXT_PUBLIC_AZURE_CLIENT_ID=${process.env.NEXT_PUBLIC_AZURE_CLIENT_ID || 'not-set'} NEXT_PUBLIC_AZURE_TENANT_ID=${process.env.NEXT_PUBLIC_AZURE_TENANT_ID || 'not-set'} npx next dev --webpack`,
+    command: `npx cross-env NEXT_PUBLIC_FORCE_AUTH=true NEXT_PUBLIC_MSAL_CACHE_LOCATION=localStorage NEXT_PUBLIC_AZURE_CLIENT_ID=${process.env.NEXT_PUBLIC_AZURE_CLIENT_ID || 'not-set'} NEXT_PUBLIC_AZURE_TENANT_ID=${process.env.NEXT_PUBLIC_AZURE_TENANT_ID || 'not-set'} npx next dev --webpack`,
     cwd: '../../1-Presentation/admin-dashboard',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,

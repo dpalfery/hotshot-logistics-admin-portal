@@ -205,6 +205,7 @@ describe('AuthContext', () => {
       mockUseIsAuthenticated.mockReturnValue(false);
 
       (msalInstance.getAllAccounts as jest.Mock).mockReturnValue([]);
+      (msalInstance.getActiveAccount as jest.Mock).mockReturnValue(null);
 
       const TestComponent = () => {
         const { isTokenReady, checkTokenReadiness } = useAuth();

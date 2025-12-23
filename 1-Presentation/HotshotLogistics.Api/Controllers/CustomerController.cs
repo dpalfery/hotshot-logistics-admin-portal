@@ -11,6 +11,7 @@ namespace HotshotLogistics.Api.Controllers
     using HotshotLogistics.Application.Authorization;
     using HotshotLogistics.Contracts.Services;
     using HotshotLogistics.Core.Logging;
+    using HotshotLogistics.Core.Security;
     using HotshotLogistics.Domain.Entities;
     using HotshotLogistics.Domain.ValueObjects;
     using Microsoft.AspNetCore.Authorization;
@@ -81,7 +82,7 @@ namespace HotshotLogistics.Api.Controllers
                 var customer = await customerService.GetCustomerByIdAsync(id, cancellationToken);
                 if (customer == null)
                 {
-                    return NotFound($"Customer with ID {id} not found");
+                    return NotFound($"Customer with ID {HtmlSanitizer.HtmlEncode(id)} not found");
                 }
 
                 return Ok(customer);
@@ -164,7 +165,7 @@ namespace HotshotLogistics.Api.Controllers
                 var updatedCustomer = await customerService.UpdateCustomerAsync(id, customer, cancellationToken);
                 if (updatedCustomer == null)
                 {
-                    return NotFound($"Customer with ID {id} not found");
+                    return NotFound($"Customer with ID {HtmlSanitizer.HtmlEncode(id)} not found");
                 }
 
                 return Ok(updatedCustomer);
@@ -199,7 +200,7 @@ namespace HotshotLogistics.Api.Controllers
                 var result = await customerService.DeleteCustomerAsync(id, cancellationToken);
                 if (!result)
                 {
-                    return NotFound($"Customer with ID {id} not found");
+                    return NotFound($"Customer with ID {HtmlSanitizer.HtmlEncode(id)} not found");
                 }
 
                 return NoContent();
@@ -273,7 +274,7 @@ namespace HotshotLogistics.Api.Controllers
                 var customer = await customerService.GetCustomerByIdAsync(id, cancellationToken);
                 if (customer == null)
                 {
-                    return NotFound($"Customer with ID {id} not found");
+                    return NotFound($"Customer with ID {HtmlSanitizer.HtmlEncode(id)} not found");
                 }
 
                 var jobs = await customerService.GetCustomerJobsAsync(id, cancellationToken);
@@ -304,7 +305,7 @@ namespace HotshotLogistics.Api.Controllers
                 var customer = await customerService.GetCustomerByIdAsync(id, cancellationToken);
                 if (customer == null)
                 {
-                    return NotFound($"Customer with ID {id} not found");
+                    return NotFound($"Customer with ID {HtmlSanitizer.HtmlEncode(id)} not found");
                 }
 
                 var invoices = await customerService.GetCustomerInvoicesAsync(id, cancellationToken);
@@ -349,7 +350,7 @@ namespace HotshotLogistics.Api.Controllers
                 var result = await customerService.UpdateCreditLimitAsync(id, request.NewLimit, cancellationToken);
                 if (!result)
                 {
-                    return NotFound($"Customer with ID {id} not found");
+                    return NotFound($"Customer with ID {HtmlSanitizer.HtmlEncode(id)} not found");
                 }
 
                 return NoContent();

@@ -358,6 +358,30 @@ namespace HotshotLogistics.Tests.Billing
         }
 
         /// <summary>
+        /// Tests that GetInvoice sanitizes XSS payload in error message for not found.
+        /// </summary>
+        /// <returns>A task representing the asynchronous test.</returns>
+        [Fact]
+        public async Task GetInvoice_WithXSSPayloadInId_SanitizesOutput()
+        {
+            // Arrange
+            var xssPayload = "<img src=x onerror=\"alert('xss')\">";
+            mockBillingService.Setup(s => s.GetInvoiceByIdAsync(xssPayload, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Invoice?)null);
+
+            // Act
+            var result = await controller.GetInvoice(xssPayload);
+
+            // Assert
+            result.Should().NotBeNull();
+            var notFoundResult = result.Result.Should().BeOfType<NotFoundObjectResult>().Subject;
+            var errorMessage = notFoundResult.Value.Should().BeOfType<string>().Subject;
+            errorMessage.Should().NotContain("<img");
+            errorMessage.Should().NotContain("onerror");
+            errorMessage.Should().NotContain("alert");
+        }
+
+        /// <summary>
         /// Creates a test invoice for testing purposes.
         /// </summary>
         /// <param name="id">The invoice ID.</param>

@@ -10,6 +10,7 @@ namespace HotshotLogistics.Api.Middleware
     using System.Threading.Tasks;
     using HotshotLogistics.Domain.Entities;
     using HotshotLogistics.Core.Exceptions;
+    using HotshotLogistics.Core.Security;
     using Microsoft.AspNetCore.Http;
     using Microsoft.Extensions.Logging;
     using HotshotLogistics.Domain.DTOs;
@@ -86,6 +87,8 @@ namespace HotshotLogistics.Api.Middleware
 
         private ErrorResponse CreateErrorResponse(Exception exception, string correlationId, string path)
         {
+            var encodedPath = HtmlSanitizer.HtmlEncode(path);
+            
             return exception switch
             {
                 ValidationException validationEx => new ErrorResponse(
@@ -94,7 +97,7 @@ namespace HotshotLogistics.Api.Middleware
                     validationEx.Errors)
                 {
                     CorrelationId = correlationId,
-                    Path = path,
+                    Path = encodedPath,
                     Details = validationEx.Errors
                 },
 
@@ -103,7 +106,7 @@ namespace HotshotLogistics.Api.Middleware
                     "BUSINESS_RULE_VIOLATION")
                 {
                     CorrelationId = correlationId,
-                    Path = path
+                    Path = encodedPath
                 },
 
                 PaymentProcessingException paymentEx => new ErrorResponse(
@@ -111,7 +114,7 @@ namespace HotshotLogistics.Api.Middleware
                     "PAYMENT_PROCESSING_ERROR")
                 {
                     CorrelationId = correlationId,
-                    Path = path,
+                    Path = encodedPath,
                     Details = new
                     {
                         TransactionId = paymentEx.TransactionId,
@@ -124,7 +127,7 @@ namespace HotshotLogistics.Api.Middleware
                     "EXTERNAL_SERVICE_ERROR")
                 {
                     CorrelationId = correlationId,
-                    Path = path,
+                    Path = encodedPath,
                     Details = new
                     {
                         ServiceName = externalEx.ServiceName,
@@ -138,14 +141,13 @@ namespace HotshotLogistics.Api.Middleware
                     "INTERNAL_SERVER_ERROR")
                 {
                     CorrelationId = correlationId,
-                    Path = path,
-                    // Include actual exception details for debugging
+                    Path = encodedPath,
                     Details = new
                     {
-                        ExceptionType = exception.GetType().Name,
-                        Message = exception.Message,
-                        StackTrace = exception.StackTrace,
-                        InnerException = exception.InnerException?.Message
+                        ExceptionType = HtmlSanitizer.HtmlEncode(exception.GetType().Name),
+                        Message = HtmlSanitizer.HtmlEncode(exception.Message),
+                        StackTrace = HtmlSanitizer.HtmlEncode(exception.StackTrace),
+                        InnerException = exception.InnerException != null ? HtmlSanitizer.HtmlEncode(exception.InnerException.Message) : null
                     }
                 }
             };

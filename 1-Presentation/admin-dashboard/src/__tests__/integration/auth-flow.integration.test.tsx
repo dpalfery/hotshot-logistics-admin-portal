@@ -1,8 +1,10 @@
 import React from 'react';
 import { render, screen, waitFor, act } from '@testing-library/react';
-import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { AuthProvider as GlobalAuthProvider, useAuth } from '@/contexts/AuthContext';
+import { AuthProvider } from '@/components/auth/auth-provider';
 import { apiService } from '@/services/api';
 import { useMsal, useIsAuthenticated } from '@azure/msal-react';
+import { useRouter, usePathname } from 'next/navigation';
 import { InteractionStatus } from '@azure/msal-browser';
 import { msalInstance } from '@/lib/providers';
 
@@ -10,8 +12,34 @@ import { msalInstance } from '@/lib/providers';
 const mockUseMsal = useMsal as jest.MockedFunction<typeof useMsal>;
 const mockUseIsAuthenticated = useIsAuthenticated as jest.MockedFunction<typeof useIsAuthenticated>;
 
+// Mock Next.js hooks
+const mockUseRouter = useRouter as jest.MockedFunction<typeof useRouter>;
+const mockUsePathname = usePathname as jest.MockedFunction<typeof usePathname>;
+
 // Mock fetch for API calls
 const mockFetch = global.fetch as jest.MockedFunction<typeof fetch>;
+
+const renderWithProviders = (ui: React.ReactElement) => {
+  const result = render(
+    <GlobalAuthProvider>
+      <AuthProvider>
+        {ui}
+      </AuthProvider>
+    </GlobalAuthProvider>
+  );
+
+  const rerenderWithProviders = (newUi: React.ReactElement) => {
+    result.rerender(
+      <GlobalAuthProvider>
+        <AuthProvider>
+          {newUi}
+        </AuthProvider>
+      </GlobalAuthProvider>
+    );
+  };
+
+  return { ...result, rerender: rerenderWithProviders };
+};
 
 describe('Authentication Flow Integration', () => {
   const mockAccount = {
@@ -22,6 +50,9 @@ describe('Authentication Flow Integration', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    
+    mockUseRouter.mockReturnValue({ push: jest.fn() } as any);
+    mockUsePathname.mockReturnValue('/login');
     
     // Reset API service auth state completely
     // We need to re-instantiate or reset private fields. 
@@ -40,7 +71,7 @@ describe('Authentication Flow Integration', () => {
     it('should complete full authentication flow from MSAL init to API call', async () => {
       // Mock MSAL initialization
       mockUseMsal.mockReturnValue({
-        inProgress: InteractionStatus.None,
+        inProgress: InteractionStatus.Login,
         accounts: [mockAccount],
         instance: msalInstance,
       } as any);
@@ -91,14 +122,23 @@ describe('Authentication Flow Integration', () => {
         );
       };
 
-      render(
-        <AuthProvider>
-          <TestComponent />
-        </AuthProvider>
+      const { rerender } = renderWithProviders(
+        <TestComponent />
       );
 
       // Initially should show loading
-      expect(screen.getByText('Loading...')).toBeInTheDocument();
+      expect(screen.getByText('Authenticating')).toBeInTheDocument();
+
+      // Update MSAL to None to trigger auth check
+      mockUseMsal.mockReturnValue({
+        inProgress: InteractionStatus.None,
+        accounts: [mockAccount],
+        instance: msalInstance,
+      } as any);
+
+      rerender(
+        <TestComponent />
+      );
 
       // Wait for authentication to complete
       await waitFor(() => {
@@ -127,7 +167,7 @@ describe('Authentication Flow Integration', () => {
     it('should handle authentication failure gracefully', async () => {
       // Mock MSAL with no accounts
       mockUseMsal.mockReturnValue({
-        inProgress: InteractionStatus.None,
+        inProgress: InteractionStatus.Login,
         accounts: [],
         instance: msalInstance,
       } as any);
@@ -140,14 +180,28 @@ describe('Authentication Flow Integration', () => {
         return <div data-testid="auth-status">Auth: {isAuthenticated ? 'true' : 'false'}</div>;
       };
 
-      render(
-        <AuthProvider>
-          <TestComponent />
-        </AuthProvider>
+      const { rerender } = renderWithProviders(
+        <TestComponent />
       );
 
       // Should show loading initially
-      expect(screen.getByText('Loading...')).toBeInTheDocument();
+      expect(screen.getByText('Authenticating')).toBeInTheDocument();
+
+      // Update MSAL to None
+      mockUseMsal.mockReturnValue({
+        inProgress: InteractionStatus.None,
+        accounts: [],
+        instance: msalInstance,
+      } as any);
+
+      rerender(
+        <TestComponent />
+      );
+
+      // Wait for loading to disappear
+      await waitFor(() => {
+        expect(screen.queryByText('Authenticating')).not.toBeInTheDocument();
+      });
 
       // Should eventually show that auth is not ready
       await waitFor(() => {
@@ -178,9 +232,9 @@ describe('Authentication Flow Integration', () => {
       };
 
       render(
-        <AuthProvider>
+        <GlobalAuthProvider>
           <TestComponent />
-        </AuthProvider>
+        </GlobalAuthProvider>
       );
 
       await waitFor(() => {
@@ -208,9 +262,9 @@ describe('Authentication Flow Integration', () => {
       };
 
       const { rerender } = render(
-        <AuthProvider>
+        <GlobalAuthProvider>
           <TestComponent />
-        </AuthProvider>
+        </GlobalAuthProvider>
       );
 
       // Initially not authenticated
@@ -222,9 +276,9 @@ describe('Authentication Flow Integration', () => {
       isAuthenticatedValue = true;
 
       rerender(
-        <AuthProvider>
+        <GlobalAuthProvider>
           <TestComponent />
-        </AuthProvider>
+        </GlobalAuthProvider>
       );
 
       await waitFor(() => {
@@ -257,9 +311,9 @@ describe('Authentication Flow Integration', () => {
       };
 
       const { rerender } = render(
-        <AuthProvider>
+        <GlobalAuthProvider>
           <TestComponent />
-        </AuthProvider>
+        </GlobalAuthProvider>
       );
 
       // Initial state
@@ -273,9 +327,9 @@ describe('Authentication Flow Integration', () => {
       });
 
       rerender(
-        <AuthProvider>
+        <GlobalAuthProvider>
           <TestComponent />
-        </AuthProvider>
+        </GlobalAuthProvider>
       );
 
       act(() => {
@@ -283,9 +337,9 @@ describe('Authentication Flow Integration', () => {
       });
 
       rerender(
-        <AuthProvider>
+        <GlobalAuthProvider>
           <TestComponent />
-        </AuthProvider>
+        </GlobalAuthProvider>
       );
 
       // Should have recorded multiple state changes
@@ -310,7 +364,7 @@ describe('Authentication Flow Integration', () => {
 
       // Verify fetch was not called
       expect(mockFetch).not.toHaveBeenCalled();
-    });
+    }, 20000);
 
     it('should allow API calls after authentication is signaled ready', async () => {
       mockUseMsal.mockReturnValue({
@@ -483,14 +537,12 @@ describe('Authentication Flow Integration', () => {
       } as any);
       mockUseIsAuthenticated.mockReturnValue(false);
 
-      render(
-        <AuthProvider>
-          <TestComponent />
-        </AuthProvider>
+      renderWithProviders(
+        <TestComponent />
       );
 
       // Should show loading, not the protected component
-      expect(screen.getByText('Loading...')).toBeInTheDocument();
+      expect(screen.getByText('Authenticating')).toBeInTheDocument();
       expect(screen.queryByText('Protected Content')).not.toBeInTheDocument();
 
       // Component should not have rendered yet

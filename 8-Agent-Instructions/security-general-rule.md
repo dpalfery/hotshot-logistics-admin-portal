@@ -20,10 +20,10 @@ This document is authoritative for security directives; other rule files must re
     *   A secure service like `AzureKeyVault.getSecret("secret-name")`.
 *   **VALIDATE** that any configuration file (e.g., `appsettings.json`, `.env`) loaded in code is excluded from version control via `.gitignore`. If you see a secret in a config file in a code block, flag it.
 
-#### **2. Input Validation & Sanitization (For Every User Input)**
-*   **ESCAPE ALL INPUTS** contextually before use:
-    *   **For SQL:** Use **parameterized queries ONLY**. Never construct queries with string concatenation (`"SELECT ... WHERE id = " + userInput` is forbidden).
-    *   **For HTML/UI:** Encode output (e.g., `HtmlEncode()` in C#, `escape()` in Python) before rendering to prevent XSS.
+#### **2. Input Validation & Output Encoding (For Every User Input & Output)**
+*   **ESCAPE & ENCODE ALL USER DATA** contextually:
+    *   **For SQL Input:** Use **parameterized queries ONLY**. Never string concatenate: `"SELECT ... WHERE id = " + userInput` is forbidden.
+    *   **For HTML/API Output:** Encode user data before returning in responses (e.g., `HtmlEncode()` in C#). Never interpolate user input directly: `$"ID {id} not found"` → use `HtmlEncode(id)`. Applies to error messages, response objects, and exception details.
     *   **For OS Commands:** Avoid if possible. If necessary, use APIs that accept arguments as a list, not a single command string.
 *   **SANITIZE BEFORE LOGGING:** For any user-provided data going into a log, you MUST:
     *   Replace newlines (`\n`, `\r`) and tabs with spaces.

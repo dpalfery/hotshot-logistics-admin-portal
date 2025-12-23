@@ -99,4 +99,4 @@ global.fetch = jest.fn();
 
 // Mock environment variables
 process.env.NEXT_PUBLIC_AZURE_AD_SCOPES = 'api://test/.default';
-process.env.NEXT_PUBLIC_API_BASE_URL = 'http://localhost:3001';
+process.env.NEXT_PUBLIC_API_BASE_URL = 'http://localhost:3001/api';

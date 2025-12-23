@@ -411,6 +411,23 @@ namespace HotshotLogistics.Tests.Tracking
         }
 
         /// <summary>
+        /// Tests that GetPublicTrackingInfo sanitizes XSS payload in error message when not found.
+        /// </summary>
+        /// <returns>A task representing the asynchronous test.</returns>
+        [Fact]
+        public async Task GetPublicTrackingInfo_WithXSSPayloadInJobId_SanitizesErrorMessage()
+        {
+            var xssPayload = "<img src=x onerror=\"alert('xss')\">";
+            mockTrackingService.Setup(s => s.GetCurrentLocationAsync(xssPayload, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((LocationTracking?)null);
+
+            var result = await controller.GetPublicTrackingInfo(xssPayload);
+
+            result.Should().NotBeNull();
+            result.Result.Should().BeOfType<NotFoundObjectResult>();
+        }
+
+        /// <summary>
         /// Creates a test location tracking record for testing purposes.
         /// </summary>
         /// <param name="jobId">The job ID.</param>
