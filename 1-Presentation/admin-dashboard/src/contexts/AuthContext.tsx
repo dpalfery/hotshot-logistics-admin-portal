@@ -66,10 +66,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setAuthState(prev => ({ ...prev, isTokenReady: true }));
         }
       } catch (error) {
-        logger.warn('Token readiness check failed, but this is expected during initialization', {
+        logger.error('Token readiness check failed for authenticated user', {
           error: error instanceof Error ? error.message : 'Unknown error',
         });
-        setAuthState(prev => ({ ...prev, isTokenReady: false }));
+        setAuthState(prev => ({ 
+          ...prev, 
+          isTokenReady: false,
+          error: error instanceof Error ? error : new Error('Failed to verify authentication token')
+        }));
       }
     } catch (error) {
       logger.error('Error during token readiness check', {

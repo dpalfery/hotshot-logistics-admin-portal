@@ -196,6 +196,34 @@ describe('AuthContext', () => {
       });
     });
 
+    it('should set error state when silent token acquisition fails for authenticated user', async () => {
+      mockUseMsal.mockReturnValue({
+        inProgress: InteractionStatus.None,
+        accounts: [mockAccount],
+        instance: msalInstance,
+      } as any);
+      mockUseIsAuthenticated.mockReturnValue(true);
+
+      (msalInstance.getAllAccounts as jest.Mock).mockReturnValue([mockAccount]);
+      (msalInstance.getActiveAccount as jest.Mock).mockReturnValue(mockAccount);
+      (msalInstance.acquireTokenSilent as jest.Mock).mockRejectedValue(new Error('Token acquisition failed'));
+
+      const TestComponent = () => {
+        const { error } = useAuth();
+        return <span data-testid="error">{error?.message || 'no-error'}</span>;
+      };
+
+      render(
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('error')).toHaveTextContent('Token acquisition failed');
+      });
+    });
+
     it('should not check token readiness when not authenticated', async () => {
       mockUseMsal.mockReturnValue({
         inProgress: InteractionStatus.None,
